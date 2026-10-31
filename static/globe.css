@@ -33,3 +33,13 @@
 
 /* a faint deep-space ground behind the sky, scoped to this tab so the other views keep the plain dark ground */
 #globe-wrap { background: radial-gradient(70% 70% at 50% 46%, #0b1626 0%, transparent 78%); }
+
+/* collapse handles: thin tabs on the globe's left and right edges */
+.rail-toggle { position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 56px; display: grid; place-items: center; padding: 0; cursor: pointer;
+  background: rgba(8, 14, 24, .7); border: 1px solid var(--hair2); color: var(--muted); z-index: 3; }
+.rail-toggle:hover { color: var(--ink); border-color: var(--muted); }
+.rail-toggle.left { left: 0; border-radius: 0 8px 8px 0; border-left: 0; }
+.rail-toggle.right { right: 0; border-radius: 8px 0 0 8px; border-right: 0; }
+.rail-toggle.right svg { transform: scaleX(-1); }
+.layout.hide-left .rail-toggle.left svg { transform: scaleX(-1); }
+.layout.hide-right .rail-toggle.right svg { transform: none; }

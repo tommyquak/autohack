@@ -37,6 +37,8 @@ let drag = null;
 let raf = 0, last = 0, clock = 0, ready = false;
 let stars = [], parts = null, orbitR = 1.08;
 
+// One drawn chevron (points left); the right-hand handle is the same shape flipped by CSS.
+const CHEV = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg>`;
 const panel = () => document.getElementById("panel-globe");
 const isOpen = () => panel() && !panel().hidden;
 const lat = (e) => e.latest.geocentric_latitude_deg;
@@ -59,7 +61,7 @@ export function initGlobe() {
   document.head.append(css);
 
   document.getElementById("tabs").firstElementChild.insertAdjacentHTML("afterend", `<button role="tab" aria-selected="false" data-tab="globe">Globe</button>`);
-  document.getElementById("panel-funnel").insertAdjacentHTML(
+  document.getElementById("panel-eval").insertAdjacentHTML(
     "afterend",
     `<div class="panel" id="panel-globe" role="tabpanel" hidden>
       <div class="canvas-wrap" id="globe-wrap">
@@ -69,6 +71,8 @@ export function initGlobe() {
         <div class="globe-key" id="globe-key"></div>
         <p class="globe-hint" id="globe-hint">Click a band for detail. Latitude only: the data has no longitude.</p>
         <section class="globe-card" id="globe-card" hidden aria-live="polite"></section>
+        <button type="button" class="rail-toggle left" id="rail-l" aria-expanded="true" aria-label="Collapse the events panel" title="Collapse the events panel">${CHEV}</button>
+        <button type="button" class="rail-toggle right" id="rail-r" aria-expanded="true" aria-label="Collapse the selected-event panel" title="Collapse the selected-event panel">${CHEV}</button>
       </div>
     </div>`,
   );
@@ -81,10 +85,25 @@ export function initGlobe() {
   pauseBtn = document.getElementById("globe-pause");
 
   // Tab switching itself is the generic data-tab handler in encounter.js; here we only start and stop drawing.
+  // The side panels only collapse while the globe is showing (layout[data-view="globe"] in dashboard.css), so the other
+  // tabs always keep them; the collapsed state is remembered for the next visit to the globe.
+  const layout = document.querySelector(".layout");
+  layout.dataset.view = document.querySelector('#tabs [aria-selected="true"]')?.dataset.tab || "";
   document.getElementById("tabs").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-tab]");
+    if (btn) layout.dataset.view = btn.dataset.tab;
     if (ev.target.closest('[data-tab="globe"]')) queueMicrotask(open);
     else stop();
   });
+  for (const [id, cls, name] of [["rail-l", "hide-left", "events"], ["rail-r", "hide-right", "selected-event"]]) {
+    const b = document.getElementById(id);
+    b.addEventListener("click", () => {
+      const hidden = layout.classList.toggle(cls);
+      b.setAttribute("aria-expanded", String(!hidden));
+      b.setAttribute("aria-label", `${hidden ? "Expand" : "Collapse"} the ${name} panel`);
+      b.title = b.getAttribute("aria-label");
+    });
+  }
   pauseBtn.addEventListener("click", () => ((auto = !auto), paintPause(), kick()));
   new ResizeObserver(resize).observe(wrap);
 

@@ -264,3 +264,17 @@ select { background: var(--bg); border: 1px solid var(--hair2); border-radius: 4
   .top-l { display: none; }
   .spacey { text-align: left; }
 }
+
+
+/* ---- Evaluation tab = funnel on top, metrics below (one scrolling panel) ---- */
+#panel-eval { overflow-y: auto; }
+#panel-eval #funnel-wrap { flex: none; height: 400px; min-height: 0; }
+#panel-eval .ev { flex: none; border-top: 1px solid var(--hair); margin-top: var(--s4); padding-top: var(--s5); }
+
+/* ---- Globe tab: the left and right panels collapse to give the globe the room ---- */
+.layout { transition: grid-template-columns .3s cubic-bezier(.16, 1, .3, 1); }
+.layout[data-view="globe"].hide-left { grid-template-columns: 0 minmax(0, 1fr) 340px; }
+.layout[data-view="globe"].hide-right { grid-template-columns: 300px minmax(0, 1fr) 0; }
+.layout[data-view="globe"].hide-left.hide-right { grid-template-columns: 0 minmax(0, 1fr) 0; }
+.layout[data-view="globe"].hide-left .rail.left,
+.layout[data-view="globe"].hide-right .rail.right { visibility: hidden; overflow: hidden; padding-left: 0; padding-right: 0; border-width: 0; }

@@ -1,4 +1,4 @@
-// Evaluation tab: how well the model works, read straight from /api/metrics (docs/CONTRACT.md §3).
+// Evaluation tab: the triage funnel (see funnel.js) above how well the model works, read straight from /api/metrics (docs/CONTRACT.md §3).
 // Every figure is derived from that file; nothing is typed in. Tiers are "Below threshold", never "safe".
 import { TIERS, esc, pct } from "./fmt.js";
 import { state, subscribe } from "./state.js";
@@ -18,9 +18,6 @@ export function initEval() {
   Object.assign(css, { rel: "stylesheet", href: "/static/eval.css" });
   document.head.append(css);
 
-  const tabs = document.getElementById("tabs");
-  tabs.insertAdjacentHTML("beforeend", `<button role="tab" aria-selected="false" data-tab="eval">Evaluation</button>`);
-  tabs.parentElement.insertAdjacentHTML("beforeend", `<div class="panel" id="panel-eval" role="tabpanel" hidden><div class="ev" id="ev"></div></div>`);
   el = document.getElementById("ev");
   subscribe(["metrics"], render);
   render();

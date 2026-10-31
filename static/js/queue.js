@@ -1,4 +1,4 @@
-// Left rail: the ranked queue and its clear-filters link (windowed, so 2k rows stay cheap).
+// Left rail: tier/review/type filters, a sort control and the ranked queue (windowed, so 2k rows stay cheap).
 import { CAUTIONS, TIERS, esc, fmtDays, fmtDist } from "./fmt.js";
 import { remaining, set, state, subscribe, touchFilters, visible } from "./state.js";
 
@@ -9,15 +9,56 @@ let list = [];
 let spacer;
 
 export function initFilters() {
-  // The filter dropdown is gone; the globe band and the 24 h strip still filter, so keep a way to clear them.
-  const clear = document.getElementById("f-clear");
-  clear.addEventListener("click", () => {
-    Object.assign(state.filters, { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null, lat: null });
+  const chips = document.getElementById("tier-chips");
+  chips.innerHTML = TIERS.map(
+    (t, i) => `<button type="button" data-tier="${i}" style="--c:${t.color}" aria-pressed="true"><span style="color:${t.color}">${t.icon}</span> ${t.name}</button>`,
+  ).join("");
+  chips.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    const t = Number(b.dataset.tier);
+    const tiers = state.filters.tiers;
+    tiers.has(t) ? tiers.delete(t) : tiers.add(t);
+    b.setAttribute("aria-pressed", tiers.has(t));
     touchFilters();
   });
-  subscribe(["filters"], () => {
+  document.getElementById("f-review").addEventListener("change", (ev) => {
+    state.filters.review = ev.target.checked;
+    touchFilters();
+  });
+  const sel = document.getElementById("f-type");
+  for (const type of [...new Set(state.events.map((e) => e.latest.object_type))].sort()) {
+    sel.insertAdjacentHTML("beforeend", `<option value="${esc(type)}">${esc(type.toLowerCase())}</option>`);
+  }
+  sel.addEventListener("change", () => {
+    state.filters.type = sel.value;
+    touchFilters();
+  });
+  const sort = document.getElementById("f-sort");
+  sort.addEventListener("change", () => set({ sort: sort.value }));
+  document.getElementById("f-clear").addEventListener("click", () => {
+    Object.assign(state.filters, { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null, lat: null });
+    document.getElementById("f-review").checked = false;
+    sel.value = "";
+    sort.value = "urgency";
+    state.sort = "urgency";
+    chips.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "true"));
+    touchFilters();
+  });
+  subscribe(["filters", "sort"], () => {
     const f = state.filters;
-    clear.hidden = f.tiers.size === 3 && !f.review && !f.type && f.slot === null && f.lat === null;
+    document.getElementById("f-clear").hidden = f.tiers.size === 3 && !f.review && !f.type && f.slot === null && f.lat === null;
+    // The filter panel is folded by default, so its summary says what is on, including filters set from the strip or globe.
+    const on = [];
+    if (f.tiers.size < 3) on.push(f.tiers.size ? TIERS.filter((_, i) => f.tiers.has(i)).map((t) => t.name).join(" + ") : "no tiers");
+    if (f.review) on.push("needs review");
+    if (f.type) on.push(f.type.toLowerCase());
+    if (f.slot !== null) on.push(`TCA ${(f.slot * 0.5).toFixed(1)}–${((f.slot + 1) * 0.5).toFixed(1)} d`);
+    if (f.lat !== null) on.push("one latitude band");
+    const sum = document.getElementById("filter-sum");
+    if (state.sort !== "urgency") on.push(state.sort === "soonest" ? "soonest first" : "by action queue");
+    sum.textContent = on.length ? on.join(" · ") : "All events";
+    sum.classList.toggle("on", on.length > 0);
   });
 }
 
@@ -40,7 +81,7 @@ export function initQueue() {
     set({ selectedId: next.event_id });
   });
   new ResizeObserver(paint).observe(queueEl);
-  subscribe(["events", "filters"], rebuild);
+  subscribe(["events", "filters", "sort"], rebuild);
   // The replay clock changes TCA text on every frame; repaint at a calmer rate.
   let last = 0;
   subscribe(["elapsed"], () => {
