@@ -150,3 +150,16 @@ well-defined slice.
 
 **Reproduce:** `uv run python -m triage.train` then `uv run python -m triage.evaluate`
 (writes `reports/metrics.json`).
+
+## 5. Forecast extension (in progress)
+
+Everything above is a **nowcast**: the tier of each CDM when it arrives. A separate per-event **forecast** is being
+built on top of it. From an event's CDMs at least 2 days before TCA, it predicts the tier the event will end at. This
+targets the first known limit above: no test CDM is within 2 days of TCA, so the 24 h panel is empty.
+
+It reuses `triage/tiers.py` and the same allowed columns, and `risk` stays label-only. It does not change `predict()`
+or the pipeline in this document.
+
+- Design, evidence and status: [`docs/algorithm/algorithm.md`](algorithm/algorithm.md) (owner: Algorithms forecast,
+  Kalent).
+- Checks of its numbers against the data: [`docs/algorithm/VERIFICATION.md`](algorithm/VERIFICATION.md).

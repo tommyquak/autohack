@@ -104,8 +104,11 @@ PLACEHOLDER = """<!doctype html><meta charset="utf-8"><title>Conjunction Triage<
 
 @app.get("/")
 def index():
-    dashboard = STATIC / "dashboard.html"
-    return FileResponse(dashboard) if dashboard.exists() else HTMLResponse(PLACEHOLDER)
+    """The team dashboard once it exists; until then the working prototype; the API list as a last resort."""
+    for page in ("dashboard.html", "prototype.html"):
+        if (STATIC / page).exists():
+            return FileResponse(STATIC / page)
+    return HTMLResponse(PLACEHOLDER)
 
 
 @app.get("/chat")

@@ -135,3 +135,19 @@ def test_events_carry_baseline_tier(cdms):
     assert all(e["baseline_tier"] >= e["tier"] for e in out["events"])  # the model only ever demotes
     assert all("baseline_tier" in h for e in out["events"] for h in e["history"])
     assert sum(out["summary"]["by_baseline_tier"].values()) == out["summary"]["n_events"]
+
+
+def test_dashboard_page_and_modules_exist():
+    import re
+    from pathlib import Path
+
+    client = TestClient(app)
+    html = client.get("/").text
+    assert "Conjunction Triage" in html
+    refs = re.findall(r'(?:src|href)="(/static/[^"]+)"', html)
+    assert "/static/js/main.js" in refs
+    for ref in refs:
+        assert client.get(ref).status_code == 200, ref
+    # every module main.js pulls in must be served too
+    for name in re.findall(r'from "\./([\w]+\.js)"', Path("static/js/main.js").read_text(encoding="utf-8")):
+        assert client.get(f"/static/js/{name}").status_code == 200, name

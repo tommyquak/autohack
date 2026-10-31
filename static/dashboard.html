@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conjunction Triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/dashboard.css">
+<link rel="stylesheet" href="/static/close_approach.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><b>CONJUNCTION TRIAGE</b><span class="muted" id="source"></span></div>
+  <div class="clock" id="clock" role="group" aria-label="Replay clock"></div>
+</header>
+
+<main class="layout">
+  <aside class="rail left" aria-label="Events">
+    <div class="title">
+      <h1>Which encounters need a maneuver?</h1>
+      <p class="muted" id="stamp">Loading&hellip;</p>
+    </div>
+    <section class="block" aria-labelledby="h-filter">
+      <h2 id="h-filter"><i>01</i> Filter</h2>
+      <div class="chips" id="tier-chips" role="group" aria-label="Tier"></div>
+      <label class="check"><input type="checkbox" id="f-review"> Needs review only</label>
+      <label class="select-row"><span class="label">Object type</span><select id="f-type"><option value="">All</option></select></label>
+      <button type="button" class="link" id="f-clear" hidden>Clear filters</button>
+    </section>
+    <section class="block grow" aria-labelledby="h-queue">
+      <h2 id="h-queue"><i>02</i> Queue <span class="count" id="queue-count"></span></h2>
+      <div class="queue" id="queue" tabindex="0" aria-label="Ranked events, most urgent first"></div>
+    </section>
+  </aside>
+
+  <section class="stage" aria-label="Views">
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" aria-selected="true" data-tab="funnel">Triage funnel</button>
+    </div>
+    <div class="panel" id="panel-funnel" role="tabpanel">
+      <div class="stage-bar">
+        <div class="seg" role="group" aria-label="Show tiers from">
+          <button type="button" data-mode="baseline" aria-pressed="false">Baseline rule</button>
+          <button type="button" data-mode="model" aria-pressed="true">Model</button>
+        </div>
+        <div class="workload" id="workload" aria-live="polite"></div>
+      </div>
+      <div class="canvas-wrap" id="funnel-wrap">
+        <canvas id="funnel" aria-label="Scatter of every event: days to closest approach against miss distance"></canvas>
+        <div class="tip" id="tip" hidden></div>
+        <div class="empty" id="funnel-empty" hidden></div>
+      </div>
+      <p class="note" id="funnel-note"></p>
+    </div>
+  </section>
+
+  <aside class="rail right" aria-label="Selected event and next 24 hours">
+    <div class="legend" aria-label="Legend" id="legend"></div>
+    <section class="block" aria-labelledby="h-sel">
+      <h2 id="h-sel"><i>03</i> Selected event</h2>
+      <div id="detail" class="detail"><p class="muted">Pick an event from the queue or click a dot.</p></div>
+    </section>
+    <section class="block" aria-labelledby="h-24">
+      <h2 id="h-24"><i>04</i> Next 24 hours</h2>
+      <div id="window"></div>
+      <div id="strip" class="strip" role="group" aria-label="Flagged events by half-day"></div>
+    </section>
+    <section class="block" aria-labelledby="h-lat">
+      <h2 id="h-lat"><i>05</i> Where encounters happen</h2>
+      <div id="latitude" class="latitude" aria-label="Events by conjunction latitude band"></div>
+    </section>
+  </aside>
+</main>
+
+<div class="banner" id="banner" role="alert" hidden></div>
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

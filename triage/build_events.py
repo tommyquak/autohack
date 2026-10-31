@@ -18,6 +18,37 @@ REPORTS = Path(__file__).resolve().parent.parent / "reports"
 WARNING_WINDOW_DAYS = 1.0  # "in a 24 hour frame"
 
 
+LAT_BANDS = [(-90, -60), (-60, -30), (-30, 0), (0, 30), (30, 60), (60, 90)]
+
+
+def _opt(row, col: str) -> float | None:
+    return float(row[col]) if col in row.index and pd.notna(row[col]) else None
+
+
+def latitude_bands(events: list[dict]) -> list[dict] | None:
+    """Events per 30-degree band of conjunction-point latitude (display context, not a model input)."""
+    lats = [(e["latest"]["geocentric_latitude_deg"], e["tier"]) for e in events]
+    if any(lat is None for lat, _ in lats):
+        return None
+    out = []
+    for lo, hi in LAT_BANDS:
+        tiers = [t for lat, t in lats if lo <= lat < hi or (hi == 90 and lat == 90)]
+        out.append({"lat_deg": [lo, hi], "events": len(tiers), "critical": sum(t == Tier.CRITICAL for t in tiers)})
+    return out
+
+
+def critical_drivers(events: list[dict]) -> dict:
+    """Which rule makes each Critical event Critical (latest CDM): miss < 1 km only, Pc bound >= 1e-4 only, or both."""
+    out = {"miss_only": 0, "pc_only": 0, "both": 0}
+    for e in events:
+        if e["tier"] != Tier.CRITICAL:
+            continue
+        by_pc = pc_tier(e["latest"]["max_risk_estimate_log10"]) == Tier.CRITICAL
+        by_miss = miss_tier(e["latest"]["miss_distance_m"]) == Tier.CRITICAL
+        out["both" if by_pc and by_miss else "pc_only" if by_pc else "miss_only"] += 1
+    return out
+
+
 def build(df: pd.DataFrame) -> dict:
     df = df.join(model.predict(df))
     # The conservative rule the model improves on: worse of the Pc upper bound and miss distance.
@@ -43,6 +74,11 @@ def build(df: pd.DataFrame) -> dict:
                     "sigma_r_m": {"chaser": float(last["c_sigma_r"]), "target": float(last["t_sigma_r"])},
                     "max_risk_estimate_log10": float(last["max_risk_estimate"]),
                     "object_type": str(last["c_object_type"]),
+                    # Display only (not model inputs): conjunction-point latitude and the satellite's altitude band
+                    "geocentric_latitude_deg": _opt(last, "geocentric_latitude"),
+                    "target_altitude_km": [_opt(last, "t_h_per"), _opt(last, "t_h_apo")]
+                    if "t_h_per" in g and "t_h_apo" in g
+                    else None,
                 },
                 "true_tier": int(last["true_tier"]) if "true_tier" in g else None,
                 "history": [
@@ -69,6 +105,8 @@ def build(df: pd.DataFrame) -> dict:
         "by_baseline_tier": {TIER_NAMES[t]: sum(e["baseline_tier"] == t for e in events) for t in Tier},
         "needs_review": sum(e["needs_review"] for e in events),
         "cautions": {c: sum(c in e["cautions"] for e in events) for c in explain.CAUTIONS},
+        "by_latitude_band": latitude_bands(events),
+        "critical_drivers": critical_drivers(events),
         "warnings_24h": {
             "window_days": WARNING_WINDOW_DAYS,
             "events_in_window": len(window),

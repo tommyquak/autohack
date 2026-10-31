@@ -3,6 +3,7 @@
 //
 //   CloseApproach.render3d(el, event)      geometry at TCA for one event (event shape: docs/CONTRACT.md §2)
 //   CloseApproach.renderCompare(el, events) up to 3 events: miss distance and Pc upper bound over the updates
+//   CloseApproach.theme(colors)            optional: adopt the host page's tier/surface colours
 //
 // Both take the event objects exactly as /api/events/{id} returns them; nothing is recomputed here
 // except unit conversion. The tier always comes from the pipeline.
@@ -37,6 +38,21 @@
   const fmtDist = (m) => (m < 10_000 ? `${m.toFixed(0)} m` : `${(m / 1000).toFixed(1)} km`);
   const fmtKm = (v) => (Math.abs(v) < 10 ? v.toFixed(2) : v.toFixed(0));
   const fmtPc = (log10) => `1e${log10.toFixed(1)}`;
+  const UNKNOWN = '<span class="ca-unknown" title="not in the data">—</span>';
+  // Plain-English position of the miss distance against the two distance lines.
+  const distanceLine = (m) =>
+    m < CRITICAL_KM * 1000 ? "inside the 1 km critical line"
+      : m <= ELEVATED_KM * 1000 ? "inside the 5 km elevated line"
+        : "outside both distance lines";
+  const reading = (label, value, sub = "") =>
+    `<div class="ca-reading"><span class="ca-label">${label}</span><span class="ca-value">${value}</span>${sub ? `<span class="ca-sub">${sub}</span>` : ""}</div>`;
+  function trend(e) {
+    const h = e.history;
+    if (!h || h.length < 2) return '<span class="ca-muted">one update</span>';
+    const a = h[0].miss_distance_m, b = h[h.length - 1].miss_distance_m;
+    const word = b < a ? "closing" : b > a ? "opening" : "steady";
+    return `${word} <span class="ca-muted">${fmtDist(a)} → ${fmtDist(b)}</span>`;
+  }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
   function cautionBadges(event) {
@@ -62,7 +78,7 @@
       x.push(rx); y.push(ry); z.push(rz);
     }
     return {
-      type: "surface", x, y, z, name, opacity, showscale: false, showlegend: true,
+      type: "surface", x, y, z, name, opacity, showscale: false, showlegend: false, // labelled in the scene instead
       colorscale: [[0, color], [1, color]], hoverinfo: "name", contours: { x: { highlight: false }, y: { highlight: false }, z: { highlight: false } },
     };
   }
@@ -74,8 +90,8 @@
     const capped = Math.max(sc, st) > SIGMA_SENTINEL_M;
     const sigmaKm = km(Math.hypot(sc, st));
     const tier = TIER[event.tier];
-    // Zoom to the event: a 200 m miss must not be a dot inside a 5 km shell. Shells are drawn only if they fit.
-    const span = Math.max(Math.abs(r), Math.abs(t), Math.abs(n), 0.4) * 1.5;
+    // Zoom to the event, but always far enough out to show the 1 km critical shell; the 5 km shell only if it fits.
+    const span = Math.max(Math.max(Math.abs(r), Math.abs(t), Math.abs(n)) * 1.5, CRITICAL_KM * 1.15);
     const traces = [
       ...(span >= CRITICAL_KM ? [sphere(CRITICAL_KM, C.critical, 0.18, "1 km (critical)")] : []),
       ...(span >= ELEVATED_KM ? [sphere(ELEVATED_KM, C.warning, 0.06, "5 km (elevated)")] : []),
@@ -116,20 +132,23 @@
       title: { text: title, font: { color: C.muted } }, range: [-span, span], color: C.muted,
       gridcolor: C.grid, zerolinecolor: C.grid, showbackground: false, ticksuffix: "",
     });
-    const uncertainty = capped
-      ? "radial uncertainty unavailable (dataset placeholder)"
-      : `combined radial σ ${fmtDist(Math.hypot(sc, st))}`;
-
+    const obj = esc(L.object_type.toLowerCase());
+    const article = /^[aeiou]/.test(obj) ? "An" : "A";
     el.innerHTML = `
-      <div class="ca-head">
-        ${tierBadge(event.tier)} <strong>Event ${esc(event.event_id)}</strong>
-        <span class="ca-muted">TCA in ${L.time_to_tca_days.toFixed(1)} d · miss ${fmtDist(L.miss_distance_m)} ·
-        ${(L.relative_speed_ms / 1000).toFixed(1)} km/s · Pc ≤ ${fmtPc(L.max_risk_estimate_log10)} · ${uncertainty}</span>
-        ${cautionBadges(event)}
+      <div class="ca-head">${tierBadge(event.tier)} <strong>Event ${esc(event.event_id)}</strong> ${cautionBadges(event)}</div>
+      <p class="ca-sentence">${article} ${obj === "unknown" ? "unidentified object" : obj} passes
+        <b>${fmtDist(L.miss_distance_m)}</b> from our satellite in <b>${L.time_to_tca_days.toFixed(1)} days</b>,
+        ${distanceLine(L.miss_distance_m)}.</p>
+      <div class="ca-readings">
+        ${reading("Miss distance", fmtDist(L.miss_distance_m))}
+        ${reading("Time to closest approach", `${L.time_to_tca_days.toFixed(1)} d`)}
+        ${reading("Closing speed", `${(L.relative_speed_ms / 1000).toFixed(1)} km/s`)}
+        ${reading("Collision probability", `≤ ${fmtPc(L.max_risk_estimate_log10)}`, "upper bound")}
+        ${reading("Radial uncertainty", capped ? UNKNOWN : fmtDist(Math.hypot(sc, st)), capped ? "not in the data" : "1σ, combined")}
       </div>
       <div class="ca-plot"></div>
-      <div class="ca-note">Relative position at closest approach, target-centred RTN frame (km).
-      The data has radial uncertainty only, so it is drawn along R.</div>`;
+      <div class="ca-note">Where the object is at closest approach, with our satellite at the centre. Distances are to scale
+        (km). The data only gives uncertainty in the radial (up/down) direction, so it is drawn along R.</div>`;
     return Plotly.newPlot(
       el.querySelector(".ca-plot"),
       traces,
@@ -137,7 +156,15 @@
         paper_bgcolor: "rgba(0,0,0,0)", font, margin: { l: 0, r: 0, t: 0, b: 0 }, height: 420,
         legend: { orientation: "h", x: 0, y: 1, font: { color: C.muted } },
         scene: {
-          xaxis: axis("R radial"), yaxis: axis("T along-track"), zaxis: axis("N normal"),
+          annotations: [
+            [CRITICAL_KM, "1 km critical", C.critical],
+            [ELEVATED_KM, "5 km elevated", C.warning],
+          ]
+            .filter(([k]) => span >= k)
+            .map(([k, text, color]) => ({
+              x: 0, y: 0, z: k, text, showarrow: false, yshift: 10, font: { color, size: 11 },
+            })),
+          xaxis: axis("R radial (up)"), yaxis: axis("T along-track"), zaxis: axis("N normal"),
           aspectmode: "cube", camera: { eye: { x: 1.4, y: 1.4, z: 0.9 } },
         },
       },
@@ -185,14 +212,16 @@
         (e, i) => `<tr>
           <td><span class="ca-swatch" style="background:${C.series[i]}"></span>${esc(e.event_id)}</td>
           <td>${tierBadge(e.tier)}</td><td>${e.latest.time_to_tca_days.toFixed(1)} d</td>
-          <td>${fmtDist(e.latest.miss_distance_m)}</td><td>${fmtPc(e.latest.max_risk_estimate_log10)}</td>
-          <td>${e.history.length}</td><td>${cautionBadges(e) || '<span class="ca-muted">-</span>'}</td></tr>`,
+          <td>${fmtDist(e.latest.miss_distance_m)}</td><td>${trend(e)}</td><td>${fmtPc(e.latest.max_risk_estimate_log10)}</td>
+          <td>${e.history.length}</td><td>${cautionBadges(e) || '<span class="ca-muted">—</span>'}</td></tr>`,
       )
       .join("");
     el.innerHTML = `
       ${events.length > MAX_COMPARE ? `<div class="ca-note">Comparing the first ${MAX_COMPARE} of ${events.length} selected events.</div>` : ""}
+      <p class="ca-sentence">Is it getting closer? Top: predicted miss distance at each update. Bottom: collision
+        probability upper bound. Dashed lines are the tier thresholds; time runs left to right toward closest approach.</p>
       <div class="ca-plot"></div>
-      <table class="ca-table"><thead><tr><th>Event</th><th>Tier</th><th>TCA</th><th>Miss</th><th>Pc ≤</th><th>Updates</th><th>Cautions</th></tr></thead>
+      <table class="ca-table"><thead><tr><th>Event</th><th>Tier</th><th>Closest in</th><th>Miss now</th><th>Trend</th><th>Pc ≤</th><th>Updates</th><th>Cautions</th></tr></thead>
       <tbody>${rows}</tbody></table>`;
     return Plotly.newPlot(
       el.querySelector(".ca-plot"),
@@ -202,7 +231,7 @@
         margin: { l: 64, r: 16, t: 28, b: 44 }, hovermode: "closest",
         legend: { orientation: "h", x: 0, y: 1.08, font: { color: C.text } },
         xaxis: { title: { text: "days to closest approach", font: { color: C.muted } }, autorange: "reversed", color: C.muted, gridcolor: C.grid, zeroline: false },
-        yaxis: yax("miss distance (km, log)", [0.56, 1], { type: "log" }),
+        yaxis: yax("miss distance (km, log)", [0.56, 1], { type: "log", dtick: 1 }), // decades only: 0.1, 1, 10 km
         yaxis2: yax("Pc upper bound (log10)", [0, 0.44], { anchor: "x" }),
         shapes: lines.map((l) => l.shape),
         annotations: lines.map((l) => l.ann),
@@ -211,5 +240,11 @@
     );
   }
 
-  window.CloseApproach = { render3d, renderCompare, MAX_COMPARE };
+  // Match a host page's palette, e.g. theme({ critical: "#ff4a3d", warning: "#e8a33c", below: "#8a9490" }).
+  function theme(patch) {
+    Object.assign(C, patch);
+    [TIER[0].color, TIER[1].color, TIER[2].color] = [C.below, C.warning, C.critical];
+  }
+
+  window.CloseApproach = { render3d, renderCompare, theme, MAX_COMPARE };
 })();

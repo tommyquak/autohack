@@ -87,3 +87,32 @@ def test_predict_file_keeps_row_order_and_needs_no_labels(cdm_csv, tmp_path):
     assert list(out["row"]) == list(range(len(raw)))
     assert list(out["event_id"]) == list(raw["event_id"])
     assert (out["pred_tier"] <= out["baseline_tier"]).all()  # the model only ever demotes
+
+
+def test_display_only_columns_never_reach_the_model(cdm_csv, tmp_path):
+    import pandas as pd
+
+    from triage.build_events import build
+    from triage.data import DISPLAY_ONLY, feature_matrix, load_cdms
+    from triage.features import build_features
+
+    raw = pd.read_csv(cdm_csv)
+    raw["geocentric_latitude"], raw["t_h_per"], raw["t_h_apo"] = 71.5, 690.0, 710.0
+    path = tmp_path / "with_display.csv"
+    raw.to_csv(path, index=False)
+    df = load_cdms(path)
+    assert set(DISPLAY_ONLY) <= set(df.columns)
+    assert not set(DISPLAY_ONLY) & set(feature_matrix(df).columns)
+    assert not set(DISPLAY_ONLY) & set(build_features(df).columns)
+    out = build(df)
+    assert out["events"][0]["latest"]["geocentric_latitude_deg"] == 71.5
+    assert out["events"][0]["latest"]["target_altitude_km"] == [690.0, 710.0]
+    assert sum(b["events"] for b in out["summary"]["by_latitude_band"]) == out["summary"]["n_events"]
+    assert build(load_cdms(cdm_csv))["summary"]["by_latitude_band"] is None  # columns absent -> None
+
+
+def test_critical_drivers_partition_the_critical_events(cdms):
+    from triage.build_events import build
+
+    out = build(cdms)["summary"]
+    assert sum(out["critical_drivers"].values()) == out["by_tier"]["Critical"]
