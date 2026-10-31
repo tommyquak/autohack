@@ -54,6 +54,9 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
   >= 1 day to TCA. `reasons` are plain English. `summary.by_action` counts queues (sums to `n_events`) and
   `summary.escalation_watch` counts flags. Rules and train-protocol results: `docs/actions.md`. An optional `forecast`
   object (Kalent's planned contract, `docs/algorithm/algorithm.md` §4.1) can only raise the queue.
+- `certificate` (from `triage.certify.certify`, latest CDM): why the tier holds. See §6. Top-level `model_evidence`
+  = `{"source", "threshold", "cv": {oof_recall, recall_target, threshold, candidates, n_folds, ...}}` copied from the
+  trained artifact at build time, or `null` when built with the rules alone.
 - Wording: never "Safe" – tier 0 is **"Below threshold"**.
 
 ## 3. `reports/metrics.json` (producer: `triage.evaluate`, consumer: dashboard "Evaluation" tab)
@@ -81,6 +84,8 @@ All read `reports/*.json` (falling back to the frozen full-test-set copy in `dat
 | `GET /api/events/{event_id}` | one event exactly as in §2, with `history`; `404` if unknown |
 | `GET /api/metrics` | `metrics.json` as in §3 |
 | `GET /api/explain/{event_id}` | see `triage/explain.py` (owner: Integration & trust) |
+| `GET /api/audit` | §6: re-verifies the safety invariants over every served event; `{"status": "PASS"\|"FAIL", "checks", "counts", "cv_evidence", "generated_at_source": "reports"\|"demo"}` |
+| `POST /api/triage` | §6: tiers 1-500 CDM rows sent as JSON, each with its certificate and margin to the next tier; `422` on bad input |
 | `GET /health` | `{"llm": "claude"\|"fallback", "reports": "reports"\|"demo"\|"missing", "model": "<id>", "last_answer": "claude"\|"fallback"\|null}` |
 
 Report loading lives in `triage/reports.py` (shared by `server.py` and the copilot tools in `tools.py`).
@@ -98,3 +103,59 @@ provenance. "Usable credentials" (`triage.explain._has_credentials`, also behind
 alone means `fallback`. `list_events` also filters by `caution` (`needs_review` / `no_covariance` / `pc_diluted`).
 
 Pages: `/` serves `static/dashboard.html` (placeholder until it exists); other dashboard files are served under `/static/` (e.g. `/static/dashboard.js`). The agent chat moved to `/chat`.
+
+## 6. Assured triage: certificates, `GET /api/audit`, `POST /api/triage` (owner: Model & API, `triage/certify.py`)
+"Second Look can never hide a Critical" is checkable per decision. Nothing here reads `risk` or `true_tier`, and nothing
+here changes a tier: certificates describe the decision `triage.model.predict` already made.
+
+**Certificate** (one per CDM decision: `triage.model.predict_with_certificates(df)` adds a `certificate` column next to
+`predict()`'s unchanged columns; `events.json` carries one per event, for its latest CDM):
+```json
+{"tier": 0, "tier_name": "Below threshold", "rule_tier": 1, "rule_tier_name": "Elevated",
+ "rules_fired": ["pc_bound in [1e-6, 1e-4)"], "candidate": true, "why_not_candidate": null, "input_flags": [],
+ "model": "trained", "model_score": 0.0068, "threshold": 0.0083, "recall_target": 0.99, "decision": "demoted",
+ "invariants": {"never_demotes_critical": true, "not_below_miss_rule": true,
+                "unusable_uncertainty_not_demoted": true, "demotion_below_threshold": true}, "holds": true}
+```
+- `rule_tier`: worse of the Pc-upper-bound tier and the miss tier, at least Elevated if either input is missing.
+- `candidate`: the model may act (Elevated purely by the Pc upper bound, miss > 5 km, usable covariance, complete
+  inputs, known object type). Otherwise `why_not_candidate` is one of `Critical`, `Elevated by miss distance`,
+  `below threshold by rule (nothing to remove)`, `sigma placeholder (no usable covariance)`, `unknown object type`,
+  `missing input (<columns>)`. `model_score` / `threshold` are set only for candidates scored by a trained model.
+- `decision`: `demoted` (candidate, tier below rule tier) · `kept` (candidate, rule tier kept) · `not eligible`.
+- `invariants`: Critical by rule stays Critical · tier never below the miss tier · placeholder / missing sigma, unknown
+  object type or missing Pc / miss never below the rule tier · every tier below the rule tier is a candidate with
+  `model_score < threshold`. `holds` = all four.
+
+**`GET /api/audit`** recomputes the rules from each served event's `latest` inputs (and each `history` CDM) and checks,
+without trusting the certificates' own verdicts: `critical_by_rule_stays_critical`, `not_below_miss_rule`,
+`unusable_uncertainty_not_demoted`, `demotions_below_threshold` (the certificate's score is below its threshold),
+`model_only_demotes` (tier <= rule tier, `baseline_tier` matches the rules), `certificates_consistent` (every event
+has a certificate that matches its tier, rule tier and decision, with all invariants true), and
+`every_cdm_respects_rule_floor` (history CDMs). Each check is `{"name", "passed", "count" (decisions covered),
+"violations", "detail"}` and a failing `detail` lists example event ids. `counts` = `{events, cdm_decisions, kept,
+demoted, not_eligible, missing}`. `cv_evidence` reports `model_evidence` (real stored artifact values only:
+`oof_recall`, `recall_target`, `threshold`, `candidates`, `n_folds`) or `{"available": false}`. The result is cached
+per `events.json` file version (about 60 ms cold on the full test set, about 1 ms after).
+
+**`POST /api/triage`** body `{"cdms": [{<every allowed column>, "event_id"?: int}]}`, 1-500 rows. Same pipeline as
+`python -m triage.predict` (`triage.predict.predict_frame`), so the tiers match `predict_file` exactly. Rows sharing an
+`event_id` form one event (history features); a row without one is its own one-CDM event. Every allowed column must be
+present; `null` means unknown and follows the robustness rules (missing Pc / miss -> at least Elevated, missing sigma or
+unknown object type -> never demoted; all flagged `needs_review`). Other keys, `risk` included, are ignored and listed
+in `ignored_columns`. `422` with a plain message for a missing column, a non-number, a non-string object type, a
+non-integer `event_id`, or a row count outside 1-500. Response:
+```json
+{"n": 1, "model": "trained"|"rules only", "all_invariants_hold": true, "ignored_columns": [],
+ "results": [{"row": 0, "event_id": null, "tier": 1, "tier_name": "Elevated", "baseline_tier": 1, "confidence": 0.8,
+   "needs_review": false, "reasons": ["Pc 10^-5.10 in [1e-6, 1e-4) (elevated band)", "miss distance 1.43 km within 1-5 km"],
+   "certificate": {"...": "as above"},
+   "to_escalate": {"next_tier": "Critical", "miss_must_drop_below_m": 1000.0, "miss_now_m": 1430.0,
+                   "pc_bound_must_reach_log10": -4.0, "pc_bound_now_log10": -5.1, "miss_drop_needed_m": 430.0,
+                   "pc_bound_rise_needed_decades": 1.1, "any_of": ["miss distance drops below 1,000 m (now 1,430 m)",
+                   "Pc upper bound reaches 1e-4 (now 1e-5.1)"]}}]}
+```
+`to_escalate` is the margin to the next tier up: for Elevated, the Critical lines (miss < 1 km or Pc bound >= 1e-4);
+for below threshold by rule, the Elevated lines (`miss_must_drop_to_m: 5000`, inclusive, or Pc bound >= 1e-6); for a
+demotion, the miss line plus `model_score_must_reach` / `model_score_now` (its Pc bound is already in the Elevated
+band); `next_tier: null` for Critical. It describes thresholds, never a manoeuvre.

@@ -5,6 +5,9 @@
         confidence   float in [0, 1]
         needs_review bool (uncertain -> escalated, never down-graded)
 
+    predict_detailed(df)          -> the same plus p_elevated (the model's score; NaN where it does not act)
+    predict_with_certificates(df) -> predict() plus `certificate` (triage/certify.py: why the tier holds)
+
 Uses the trained artifact (reports/model.joblib, from `python -m triage.train`) when present,
 otherwise the conservative upper-bound baseline. Either way the deterministic rules hold:
 Critical from the upper bound or miss < 1 km can never be removed by the model.
@@ -75,10 +78,14 @@ def predict_with(artifact: dict, df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+def predict_detailed(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    """predict() plus `p_elevated`: the model's score for demotion candidates (NaN elsewhere, or without a model).
+
+    Same tiers, confidence and needs_review as predict(); certificates (triage.certify) read the score from here.
+    """
     artifact = artifact if artifact is not None else load_artifact()
-    out = predict_with(artifact, df) if artifact else predict_baseline(df)
-    out = out[["pred_tier", "confidence", "needs_review"]].copy()
+    out = predict_with(artifact, df) if artifact else predict_baseline(df).assign(p_elevated=np.nan)
+    out = out[["pred_tier", "confidence", "needs_review", "p_elevated"]].copy()
     # Unknown input means "unknown", not "below threshold": keep at least the rule tier, escalate, flag.
     missing, untrusted = input_flags(df)
     if untrusted.any():
@@ -88,3 +95,18 @@ def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
         out["confidence"] = np.where(untrusted, 0.5, out["confidence"])
         out["needs_review"] = out["needs_review"].to_numpy() | untrusted
     return out
+
+
+def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    return predict_detailed(df, artifact)[["pred_tier", "confidence", "needs_review"]]
+
+
+def predict_with_certificates(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    """predict() plus a `certificate` column (one dict per row, triage.certify.certify): why each tier holds."""
+    from triage.certify import certify
+
+    artifact = artifact if artifact is not None else load_artifact()
+    out = predict_detailed(df, artifact)
+    rows, preds = df.to_dict("records"), out.to_dict("records")
+    certs = [certify(row, pred, artifact) for row, pred in zip(rows, preds, strict=True)]
+    return out[["pred_tier", "confidence", "needs_review"]].assign(certificate=pd.Series(certs, index=df.index))
