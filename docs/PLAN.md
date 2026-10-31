@@ -55,7 +55,7 @@ Reuse: `server.py` app + `SESSIONS` pattern, `static/index.html` styling tokens,
 
 ## Delivery (branch → PR → green CI → user merges)
 - **PR 2 `feat/ps1-scaffold` (me, first ~30 min after data lands):** data README + sample, docs/PLAN.md + CONTRACT.md, `tiers.py`, `data.py`, baseline-only `evaluate.py`, a stub `events.json` from the sample, tests. Unblocks everyone.
-- Then parallel PRs per person:
+- Then parallel PRs per person (names in `docs/TEAM.md`):
   - **A — data & eval:** evaluate.py full metrics, lead-time breakdown, failure case selection.
   - **B — model:** model.py, class weights, uncertainty threshold tuned on CV (optimise Critical recall at bounded false alarms).
   - **C — API & explain:** server endpoints, explain with template fallback, build_events.py.
