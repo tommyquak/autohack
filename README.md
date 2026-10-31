@@ -1,60 +1,109 @@
-# autohack
+# Conjunction triage: fewer false alarms, every Critical kept
 
-Autonomous SG 2026 starter: streaming Claude agent with tools, web search, and a web UI.
+**Autonomous SG 2026 · Airbus Challenge #1 (satellite collision avoidance).** Published rules put
+every conjunction warning into a tier, and a model removes only the over-warnings.
 
-## Challenge track: Satellite collision avoidance (Challenge #1)
-Low earth orbit is crowded with satellites and debris, and operators get thousands of close-approach
-warnings a day. Checking each by hand is slow and error-prone. We are building a **collision-risk
-evaluator** that reads orbital conjunction telemetry, calculates the collision probability (Pc) for
-satellite-debris pairs, and flags events that need a maneuver.
+**CDMs arrive → rules tier every message → model removes only the over-warnings → analyst reviews a ranked queue with reasons → analyst decides**
 
-Risk tiers follow the NASA Spacecraft Conjunction Assessment and Collision Avoidance Best Practices
-Handbook (NASA/SP-20205011318) and ESA Space Debris Office standards:
+## The problem
 
-| Tier | Condition |
-|---|---|
-| Safe | Pc < 1e-6 **and** miss distance > 5.0 km |
-| Elevated | 1e-6 <= Pc < 1e-4, **or** miss distance 1.0-5.0 km |
-| Critical (maneuver required) | Pc >= 1e-4 (`risk` >= -4.0 in the dataset) **or** miss distance < 1.0 km |
+**User:** a conjunction assessment analyst on a satellite operator's flight dynamics team.
+**Status quo:** every CDM whose Pc upper bound (`max_risk_estimate`) or miss distance crosses a
+threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** that rule flags
+**54.2%** of CDMs, and 4,526 of those are truly below threshold.
 
-Deliverables:
-- The evaluator: fit on `train_data`, evaluate on unseen `test_data`.
-- A dashboard of trajectories, risk scores and miss distances.
-- A 24-hour view of how many objects enter the dangerous distance.
+## What it does
 
-Data: `Challenge #1/archive(1).zip`. The `risk` column is log10(Pc). For a simpler model, stick to:
-`event_id`, `time_to_tca`, `miss_distance`, `relative_speed`, `relative_position_r`,
-`relative_position_t`, `relative_position_n`, `c_object_type`, `c_sigma_r`, `t_sigma_r`,
-`max_risk_estimate`, `F10`, `AP`.
+- **Tiers** each CDM with the challenge's NASA (NASA/SP-20205011318) and ESA thresholds: Critical if Pc ≥ 1e-4 or miss < 1 km; Elevated if Pc ≥ 1e-6 or miss 1-5 km.
+- **Demotes** only CDMs that are Elevated *solely* because of a loose Pc bound (miss > 5 km), and only to below threshold. It never touches Critical.
+- **Flags** needs review, placeholder covariance (`no_covariance`) and probability dilution (`pc_diluted`). Flags only escalate.
+- **Explains** each event: Claude rewords structured facts, with a template fallback.
+- **Serves** an API and dashboard views (`/api/*`, `static/`), plus one prediction per test CDM in `predictions/test_predictions.csv`.
 
-## Run
-1. `cp .env.example .env` and paste your API key from platform.claude.com
-2. `uv run uvicorn server:app --reload` → open http://127.0.0.1:8000
-   or from the terminal: `uv run cli.py "your task"`
+## How it works
 
-## Add a tool (tools.py)
-```python
-@tool
-def get_flight(callsign: str) -> str:
-    """Look up a live flight by callsign, e.g. SIA322."""
-    ...
+| Job | Done by | LLM? |
+|---|---|---|
+| Assign the tier | Rules (`triage/tiers.py`) | No |
+| Remove over-warnings | Gradient-boosted classifier with monotonic constraints, event-grouped CV (`triage/model.py`) | No |
+| Detect unreliable inputs | Physics checks: placeholder sigma, sigma > miss/√2 (`triage/explain.py`) | No |
+| Explain the event | Claude rewords fixed facts; template if no key, an error, or the word "safe" (`triage/explain.py`) | Yes |
+| Decide on a manoeuvre | The analyst | No |
+
+The demotion threshold is the 1% quantile of out-of-fold scores on truly-Elevated candidates.
+`risk` (true log10 Pc) is the label only, never an input. Details: [docs/ALGO.md](docs/ALGO.md).
+
+## Results (held-out test set: 24,484 CDMs, 2,167 events)
+
+From [`data/demo/metrics.json`](data/demo/metrics.json). True classes: 15,756 below threshold, 6,501 Elevated, 2,227 Critical.
+
+| Method | Critical recall | False alarms (truly below threshold) | Flagged | Under-tiered CDMs | Macro F1 |
+|---|---|---|---|---|---|
+| Majority class | 0% | 0 | 0.0% | 8,728 | 0.261 |
+| Miss-distance rule | 95.9% | 0 | 31.4% | 1,116 | **0.952** |
+| `max_risk_estimate` rule (status quo) | 100% | 4,534 | 54.2% | 0 | 0.841 |
+| **Ours** | **100%** | **2,214** | **44.7%** | **1** | 0.910 |
+
+**Where we lose:** the miss-distance rule has the highest macro F1 (0.952) but misses 4.1% of
+Critical CDMs (91 of 2,227), so we don't use it.
+
+**Before → after (vs status quo):** false Elevated 4,526 → 2,206 (**-51%**, 2,320 fewer false
+alarms); flagged 54.2% → 44.7%; events in the queue 1,090 → 802 (from `data/demo/events.json`);
+Critical recall stays 100%. These are measured counts; analyst time saved is not measured.
+
+## Where it fails (and how the analyst knows)
+
+- **1 CDM tiered too low.** Event 1278 (test row 14473), 4.62 days to TCA, miss 23,375 m, Pc upper
+  bound 10^-5.61; true Pc 10^-5.92 is just over 1e-6, so the truth is Elevated. We showed it as below
+  threshold with confidence 0.99 and no flag. *Why:* it looks like its neighbours (6 of the event's
+  10 bound-Elevated CDMs are truly below 1e-6). *How they'd know:* not from that CDM. The updates
+  before (5.12 d) and after (4.39 d, needs review) stayed Elevated, and `baseline_tier` is kept next
+  to `tier` on every update, so a demotion always shows as a demotion.
+- **Over-tiered Criticals, by design.** 165 truly-Elevated CDMs (and 8 truly below threshold) are shown
+  as Critical because their Pc bound is ≥ 1e-4. We never demote Critical.
+- **63 events with placeholder sigma** (63,781,360 m). These are never demoted and always flagged `no_covariance` + needs review.
+- **No test CDM within 2 days of TCA** (minimum 2.0002 d), so the 24 h panel is empty and the final window is untested.
+- **The 99% target is not a per-event guarantee.** It holds only for events drawn like the training events.
+
+## Our eval caught our bug
+
+Our first model regressed log Pc and flagged 100% of CDMs. The independent evaluation caught this
+before it shipped, so we redesigned it as targeted demotion.
+
+## Trust and traceability
+
+- Every tier lists the rules that fired (e.g. `Pc 10^-3.20 >= 1e-4 (critical threshold)`).
+- Uncertainty only escalates: needs review and cautions never lower a tier.
+- Claude only rewords structured facts and uses only their numbers. It never recommends a manoeuvre, and each response records `claude` or `template` as its source.
+- Tier 0 is "below threshold", never "safe". The analyst decides the manoeuvre.
+
+## What we don't solve yet
+
+- A calibrated Pc estimate: we use the provided upper bound plus a classifier.
+- Orbit propagation: the 3D view shows relative position at TCA, not to scale.
+- A live CDM feed: `triage.predict --data any.csv` works on new files, but nothing streams.
+- Configurable thresholds: they are fixed to the brief (`triage/tiers.py`).
+
+## Run it
+
+```bash
+uv sync
+uv run uvicorn server:app --reload    # http://127.0.0.1:8000, serves the frozen data/demo reports
 ```
-Type hints + docstring become the tool schema. Use `@tool(side_effect=True)` for anything
-that changes the outside world; it is blocked unless `AUTO_APPROVE=1`.
+Optional: put `ANTHROPIC_API_KEY` in `.env` (see `.env.example`) for Claude explanations; without it the template is used.
 
-## Knobs (.env)
-- `EFFORT`: low (fast/cheap) → max (slowest, smartest). `medium` is a good demo default.
-- `MAX_TURNS`: cap on model calls per message, so a runaway loop can't burn credits.
-- System prompt: `SYSTEM_PROMPT` in agent.py.
+Full pipeline (organisers' CSVs in `data/raw/`, see [data/README.md](data/README.md)):
+```bash
+uv run python -m triage.train          # -> reports/model.joblib
+uv run python -m triage.evaluate       # -> reports/metrics.json
+uv run python -m triage.build_events   # -> reports/events.json
+uv run python -m triage.predict        # -> predictions/test_predictions.csv
+uv run pytest -q                       # runs on data/sample, no key needed
+```
 
-## Team workflow (4 people, 6 hours)
-`main` is protected: every change goes through a pull request, and CI (lint + format + tests) must pass.
-```
-git switch -c feat/<thing>        # one branch per feature, keep them small
-uv run ruff format . && uv run ruff check --fix . && uv run pytest -q   # same checks as CI
-git push -u origin HEAD && gh pr create --fill
-gh pr merge --squash --auto       # merges itself once CI is green
-```
-- Pull `main` often (`git pull --rebase origin main`) - small PRs merged every ~30 min beat one big merge at 5:30pm.
-- Never commit `.env` (it's gitignored). Each teammate uses their own API key.
-- CI never calls the Claude API, so it costs no credits.
+Docs: [ALGO](docs/ALGO.md) (method) · [CONTRACT](docs/CONTRACT.md) (interfaces) · [TEAM](docs/TEAM.md) (roles, workflow).
+
+## Team
+
+Tommy: model, API, PM · Franky: explanation, cautions, 3D close-approach and compare views ·
+Reagan: dashboard · Kalent: independent evaluation
