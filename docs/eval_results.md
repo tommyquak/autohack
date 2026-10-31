@@ -33,7 +33,8 @@ Date: 2026-10-31. Data: the frozen full-test-set reports in `data/demo/` (2,167 
 
 | mode (answered by) | grounded | avoid_safe | no_manoeuvre_advice | correct_facts | focus_event |
 |---|---|---|---|---|---|
-| fallback (fallback) | 35/38 | **38/38** | **38/38** | 32/38 | 13/13 |
+| fallback, round 1 (before fixes) | 35/38 | **38/38** | **38/38** | 32/38 | 13/13 |
+| **fallback, round 2 (after the fix round, re-run on main 12:55)** | **38/38** | **38/38** | **38/38** | **38/38** | **13/13** |
 | claude | not run (no credentials) | | | | |
 
 Questions that pass all four checks, by category: counts 8/9 · most urgent 1/1 · event lookups 7/8 · metrics 3/5 ·
@@ -78,7 +79,7 @@ These are backed by the fallback run above (deterministic, so the scores are rep
   Tier 0 is always "below threshold".
 - **38/38 answers give no manoeuvre recommendation** and no "no action needed" / "can be ignored" phrasing.
 - Every number in a local-mode answer traces back to the reports, except the example ids in the help text
-  (35/38 grounded; the fix is a one-line wording change).
+  (round 1: 35/38 grounded; after the fix round, 38/38 grounded and 38/38 correct facts, re-run with `uv run python -m evals.run_copilot_eval --mode fallback`).
 - **Asked to make up a Pc, it quotes the report's Pc upper bound instead** (q35).
 - **The 24-hour question gets the true answer, 0**, with the reason (the data has no CDM closer than 2.00 days to TCA).
   It does not widen the window silently.
