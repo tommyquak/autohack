@@ -103,3 +103,14 @@ def test_api_explain_route(tmp_path, monkeypatch, events):
     r = client.get(f"/api/explain/{events[0]['event_id']}?llm=false")
     assert r.status_code == 200 and r.json()["source"] == "template"
     assert client.get("/api/explain/999999").status_code == 404
+
+
+def test_review_text_says_close_call_only_for_kept_candidates():
+    # Kept Pc-only Elevated candidate near the bar: a close call (mostly over-warnings), not "riskiest".
+    close = _event("Elevated", miss=20_000.0, pc=-5.5, needs_review=True)
+    assert explain.review_kind(close, ["needs_review"]) == "close_call"
+    assert explain.facts(close)["cautions"] == [explain.REVIEW_TEXT["close_call"]]
+    # Placeholder sigma: review because the input can't be trusted.
+    sentinel = _event("Elevated", miss=20_000.0, pc=-5.5, sigma=(6.4e7, 5.1), needs_review=True)
+    assert explain.review_kind(sentinel, ["needs_review", "no_covariance"]) == "input"
+    assert explain.review_kind(_event(), []) is None

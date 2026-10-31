@@ -1,7 +1,6 @@
 # Algorithm: conjunction risk triage
 
-> **Status.** The model described here lives in PR #3 (`feat/model`), not yet merged into `main`.
-> A v2 is being trialled; this document will be updated if it ships.
+> **Status.** This is the shipped v1 model on `main`. A stronger v2 was tried and not shipped (§4, safety gate).
 > Code: `triage/tiers.py`, `triage/data.py`, `triage/features.py`, `triage/train.py`,
 > `triage/model.py`, `triage/explain.py`, `triage/evaluate.py`.
 
@@ -80,10 +79,11 @@ and it can only lower a tier from Elevated to below threshold.
   its two threshold margins, and only fall with miss distance and log miss distance.
 - *Validation:* event-grouped 5-fold cross-validation (`GroupKFold` on `event_id`), so CDMs of one
   event never sit in both the training and the validation fold.
-- *Threshold (split-conformal style):* take the out-of-fold scores of the candidates that are
-  truly Elevated and set the threshold `t` at their 1% quantile. By construction about 99% of
-  truly-Elevated candidates score at or above `t`, so on new events drawn like the training
-  events, at least 99% of them are expected to stay Elevated. The final model is then refit on
+- *Threshold (recall target):* take the out-of-fold scores of the candidates that are
+  truly Elevated and set the threshold `t` at their 1% quantile. This is a recall target, measured
+  on out-of-fold scores (not a formal guarantee): about 99% of truly-Elevated candidates score at or
+  above `t`, so on new events drawn like the training events, about 99% of them are expected to
+  stay Elevated. The final model is then refit on
   all candidates and saved with `t`.
 
 **needs_review and confidence.** A candidate that stays Elevated with a score below `2t` (close to
@@ -92,6 +92,15 @@ higher tier: uncertainty only ever escalates attention, it never lowers a tier. 
 `1 - p` for a demoted candidate, `max(p, 0.5)` for a kept candidate, and the baseline value for
 non-candidates (0.5 when `max_risk_estimate` is within half a decade of a Pc threshold,
 otherwise 0.8), clipped to [0.5, 0.99].
+
+**What needs_review means.** On a kept candidate, the `[t, 2t)` band marks a **close call** just
+above the demotion bar. Close calls are mostly over-warnings, not the riskiest rows: on train
+nested CV, 2.0% of kept candidates in the band are truly Elevated, against 32.1% for kept
+candidates above `2t` (`scripts/review_errors.py` on `review/baseline`). The explanation and the
+action queue therefore say "close call: near the demotion bar, likely over-warning; analyst can
+clear". On placeholder-sigma, diluted or missing-input rows, `needs_review` instead means the input
+can't be trusted; on test, 61 of the 84 needs-review events also carry `no_covariance`. Tiers and
+the `needs_review` field itself are unchanged by this wording.
 
 **What can never happen**
 - A Critical CDM (by Pc upper bound or by miss < 1 km) is never demoted.
@@ -119,7 +128,9 @@ from the pipeline above; this layer only describes it.
   estimate should not be relied on by itself and that the miss-distance rule still applies.
   *Probability dilution:* if the combined radial sigma exceeds miss distance / sqrt(2) and the
   event is not Critical by Pc, the text warns that a low Pc may reflect poor tracking rather than
-  real separation. *Needs review* is also repeated in plain words.
+  real separation. *Needs review* is repeated in plain words: on a kept Pc-only Elevated candidate
+  as "close call: near the demotion bar, likely over-warning; analyst can clear", otherwise as an
+  input that is missing or unreliable (`triage.explain.review_kind`).
 
 ## 4. Evaluation
 
@@ -132,9 +143,31 @@ Baselines (`triage/evaluate.py`): majority class, miss-distance rule alone, and 
 | `max_risk_estimate` rule (baseline) | 100% | 4,526 | 54.2% | 0 | 0.841 |
 | **Model** | **100%** | **2,206 (-51%)** | **44.7%** | **1 CDM** | **0.910** |
 
+"False Elevated" counts truly-below-threshold CDMs shown as Elevated. EVAL.md's "false alarms"
+(4,534 / 2,214) also counts 8 CDMs whose Pc bound is ≥ 1e-4 (shown Critical, never demoted) but
+whose true tier is below threshold.
+
 The model halves the false Elevated alerts and cuts the share of CDMs an operator must look at
-from 54.2% to 44.7%, while still catching every Critical CDM. The price is one CDM shown at a
-lower tier than its truth; we keep it as our documented failure case rather than hide it.
+from 54.2% to 44.7%, while preserving every rule-defined Critical. Two measurements of the price:
+at event level, all 288 events it removes from the queue were truly below threshold at their latest
+update; at message level, one genuinely Elevated CDM (event 1278) is shown below threshold. We keep
+it as our documented failure case rather than hide it.
+
+**Stronger baselines** (full table in [EVAL.md](EVAL.md)). The untuned rule "miss-distance rule +
+Pc bound for Critical only" has 100% Critical recall, 8 false alarms and 31.5% flagged, but shows
+1,012 truly-Elevated test CDMs as below threshold. "Pc bound OR miss < 1 km" is worse (4,534 false
+alarms, 1,693 under-tiered). On train CV only, a Pc-bound threshold tuned with the same 99% rule
+removes 9.7% of false alarms; the model removes 64.1%. The miss rule's macro F1 is flattering by
+construction: miss distance is half of the label, so it can never raise a false alarm.
+
+**Safety gate.** We fixed the gate "no more under-tiered test CDMs than v1's 1" before testing v2
+and stuck to it: v2 cut test false alarms by a further 23% (2,214 → 1,694) but under-tiered 3, so
+v1 ships. That gate was set on test, where under-tier counts are noisy: v1's CV rate (39 on train)
+predicts about 5.9 on test, so seeing ≤ 1 had about a 2% chance. The stricter, honest gate is
+operator-invisible under-tier on nested CV (not `needs_review`, and no later CDM of the event shown
+at or above its true tier): v1 has 23 CDMs in 10 events. v2 as tested (0.992) has 33 under-tiered
+and 20 invisible on CV. At 0.995, v2 has the same workload (+1.1% false alarms), 17 under-tiered
+and 9 invisible: it halves under-tiering. That is our next step, not shipped, and never run on test.
 
 **A failed first attempt.** Our first model regressed log Pc directly and tiered the prediction.
 The evaluation showed it flagged 100% of CDMs, i.e. no reduction in workload at all. That is why
@@ -146,7 +179,13 @@ well-defined slice.
   untested.
 - 63 test events have a placeholder sigma (no usable covariance). These are never demoted and are
   flagged for review, but their Pc carries little information.
-- The 99% recall target holds for events like those in training; it is not a per-event guarantee.
+- The 99% is a recall target, measured on out-of-fold scores (not a formal guarantee). It holds for
+  events like those in training, and not per event.
+- "Critical recall by construction" relies on `max_risk_estimate` being an upper bound. True risk
+  exceeds it in 101 test CDMs, by at most 0.04 decade (564 train CDMs, at most 0.14 decade); none
+  crosses a tier line, so the Critical recall by construction holds on this data.
+- The `needs_review` band on candidates marks close calls (mostly over-warnings), not the riskiest
+  Elevated rows; ranking the Elevated queue by a calibrated probability is future work.
 
 **Reproduce:** `uv run python -m triage.train` then `uv run python -m triage.evaluate`
 (writes `reports/metrics.json`).

@@ -18,7 +18,7 @@ Local checkout is on `feat/model`.
 | max_risk_estimate rule (baseline) | 100% | 4,526 | 54.2% | 0 | 0.841 |
 | **model** | **100%** | **2,206 (-51%)** | **44.7%** | **1 CDM** | **0.910** |
 
-How: model acts only where the baseline over-warns (Elevated purely from `max_risk_estimate` in [1e-6, 1e-4) with miss > 5 km). HistGradientBoostingClassifier, monotonic constraints, event-grouped 5-fold CV; threshold = 1% quantile of out-of-fold scores of truly-Elevated rows → ≥99% recall guarantee. Never touches Critical, never demotes diluted covariance (sigma sentinel 63,781,360 m).
+How: model acts only where the baseline over-warns (Elevated purely from `max_risk_estimate` in [1e-6, 1e-4) with miss > 5 km). HistGradientBoostingClassifier, monotonic constraints, event-grouped 5-fold CV; threshold = 1% quantile of out-of-fold scores of truly-Elevated rows → 99% recall target, measured on out-of-fold scores (not a formal guarantee). Never touches Critical, never demotes diluted covariance (sigma sentinel 63,781,360 m).
 First attempt (regression on log Pc) flagged 100% of CDMs - eval caught it. Use this in the pitch (lvl 500 style).
 The 1 under-tiered CDM = our honest failure case to show.
 

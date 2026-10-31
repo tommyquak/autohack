@@ -18,7 +18,7 @@ import re
 import anthropic
 
 from triage.features import SIGMA_SENTINEL_M
-from triage.tiers import RISK_CRITICAL, TIER_NAMES
+from triage.tiers import MISS_ELEVATED_M, RISK_CRITICAL, RISK_ELEVATED, TIER_NAMES
 
 LLM_TIMEOUT_S = 20.0
 # Pc peaks when the combined position sigma is about miss/sqrt(2); with a larger sigma, Pc falls
@@ -26,6 +26,13 @@ LLM_TIMEOUT_S = 20.0
 DILUTION_RATIO = 1 / math.sqrt(2)
 CAUTIONS = ("needs_review", "no_covariance", "pc_diluted")
 BANNED = re.compile(r"\bsafe(ly|ty)?\b", re.IGNORECASE)  # tier 0 is "below threshold", never "safe"
+# What needs_review means to a human. On a kept demotion candidate it marks a CLOSE CALL just above the demotion bar:
+# on train CV only 2.0% of these are truly Elevated (32.1% for the other kept candidates), so it is mostly an
+# over-warning, not the riskiest row. Otherwise it means an input (covariance, Pc, miss, sigma, type) is unusable.
+REVIEW_TEXT = {
+    "close_call": "close call: near the demotion bar, likely over-warning; analyst can clear (needs review)",
+    "input": "needs review: an input is missing or unreliable, so the model did not act on it; a human should check it",
+}
 
 SYSTEM_PROMPT = """You write short explanations of satellite conjunction (close-approach) events for
 spacecraft operators. You receive a JSON object of facts that a deterministic risk pipeline
@@ -35,7 +42,8 @@ produced. Write 3-5 plain sentences that:
 - describe the trend across updates if one is given;
 - if `demoted` is true, say that the conservative baseline rule gives `baseline_tier` and the model
   demoted the event to `tier` (with its `confidence`);
-- repeat any caution in `cautions` (needs review, probability dilution, missing uncertainty) in plain words.
+- repeat any caution in `cautions` (close call / needs review, probability dilution, missing uncertainty) in plain
+  words; a close call is most likely an over-warning, so do not describe it as the riskiest case.
 Rules: use only numbers that appear in the facts. Never call an event "safe" - the lowest tier
 is "below threshold". Do not recommend or rule out a manoeuvre; that is the operator's decision.
 No headings, lists or markdown."""
@@ -56,6 +64,20 @@ def cautions(event: dict) -> list[str]:
     return out
 
 
+def review_kind(event: dict, codes: list[str] | set[str]) -> str | None:
+    """Why an event needs review: "close_call" (kept Pc-only Elevated candidate near the bar), "input", or None."""
+    if not event.get("needs_review") and "needs_review" not in codes:
+        return None
+    latest = event["latest"]
+    miss, pc_log = latest["miss_distance_m"], latest["max_risk_estimate_log10"]
+    sigmas = latest["sigma_r_m"]["chaser"], latest["sigma_r_m"]["target"]
+    usable = (
+        all(v is not None and math.isfinite(v) for v in (miss, pc_log, *sigmas)) and max(sigmas) <= SIGMA_SENTINEL_M
+    )
+    pc_only_elevated = usable and miss > MISS_ELEVATED_M and RISK_ELEVATED <= pc_log < RISK_CRITICAL
+    return "close_call" if pc_only_elevated and "no_covariance" not in codes else "input"
+
+
 def facts(event: dict) -> dict:
     """The only information the explanation may use: fields already present in events.json."""
     latest = event["latest"]
@@ -66,8 +88,9 @@ def facts(event: dict) -> dict:
     no_covariance, diluted = "no_covariance" in codes, "pc_diluted" in codes
 
     cautions_text = []
-    if "needs_review" in codes:
-        cautions_text.append("needs review: the pipeline is not confident in this tier, so a human should check it")
+    review = review_kind(event, codes)
+    if review:
+        cautions_text.append(REVIEW_TEXT[review])
     if no_covariance:
         cautions_text.append(
             "no usable position uncertainty: the data reports its ceiling value for at least one object, "

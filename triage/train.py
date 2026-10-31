@@ -1,4 +1,4 @@
-"""Train the demotion classifier with event-grouped CV, pick a recall-guaranteed threshold, save it.
+"""Train the demotion classifier with event-grouped CV, pick a recall-target threshold, save it.
 
     uv run python -m triage.train            # full train_data.csv -> reports/model.joblib (~30 s)
 
@@ -6,7 +6,8 @@ Where the model acts (and only there): CDMs the conservative baseline marks Elev
 because the Pc upper bound (max_risk_estimate) is in [1e-6, 1e-4) while miss distance > 5 km.
 The classifier estimates P(true Pc >= 1e-6). Rows below a threshold are demoted to "below
 threshold". The threshold is the (1 - target) quantile of out-of-fold scores of truly-Elevated
-rows, so >= target of them stay Elevated on held-out events (split-conformal style guarantee).
+rows: a recall target, measured on out-of-fold scores (not a formal guarantee). About `target` of truly-Elevated
+rows are expected to stay Elevated on held-out events drawn like the training events.
 Critical is never touched by the model; diluted covariance is never demoted.
 """
 

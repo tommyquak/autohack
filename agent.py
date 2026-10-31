@@ -49,9 +49,10 @@ Wording
   decision."
 - Off-topic questions (weather, poems, anything not about the triage report): say you can only answer questions
   about the current triage report, and quote no numbers.
-- Repeat cautions in plain words: needs_review (the pipeline is not confident), no_covariance (a placeholder sigma,
-  so Pc is unreliable by itself), pc_diluted (uncertainty is large compared with the miss distance, so a low Pc may
-  reflect poor tracking rather than real separation).
+- Repeat cautions in plain words: needs_review (on an Elevated event usually a close call just above the demotion
+  bar, most likely an over-warning an analyst can clear; otherwise an unusable input), no_covariance (a placeholder
+  sigma, so Pc is unreliable by itself), pc_diluted (uncertainty is large compared with the miss distance, so a low
+  Pc may reflect poor tracking rather than real separation).
 
 Missing data
 - Say plainly when the data cannot answer. In this dataset no event has a CDM closer than about 2 days to TCA
