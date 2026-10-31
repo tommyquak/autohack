@@ -1,11 +1,22 @@
-/* Globe tab (static/js/globe.js). Uses the dashboard tokens from dashboard.css. */
-.globe-key { display: flex; gap: 18px; flex-wrap: wrap; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-.globe-key span { display: inline-flex; align-items: center; gap: 7px; }
-.globe-key i { width: 22px; height: 8px; display: inline-block; border-radius: 1px; }
-.k-ev { background: rgba(230, 235, 232, .55); }
-.k-crit { background: var(--crit); }
-.k-sel { background: none; border-top: 2px dashed var(--own); height: 0 !important; }
+/* Globe tab (static/js/globe.js). Quiet by default; detail opens in a card on click. Tokens come from dashboard.css. */
+#panel-globe .canvas-wrap { min-height: 360px; }
 #globe-wrap canvas { cursor: grab; touch-action: none; }
 #globe-wrap canvas:active { cursor: grabbing; }
-.globe-read { position: absolute; left: 0; bottom: 0; font: 12px var(--mono); color: var(--muted); background: rgba(8, 10, 11, .8); padding: 4px 8px; border: 1px solid var(--hair); border-radius: 4px; }
-.globe-read b { color: var(--ink); font-weight: 500; }
+
+.globe-head { position: absolute; top: 4px; left: 0; margin: 0; max-width: 34ch; font: 500 17px/1.35 var(--sans); letter-spacing: -.005em; text-wrap: balance; color: var(--ink); }
+.globe-hint { position: absolute; left: 0; bottom: 0; margin: 0; max-width: 46ch; font: 12px/1.45 var(--sans); color: var(--muted); }
+.globe-hint[hidden] { display: none; }
+.globe-pause { position: absolute; top: 0; right: 0; background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 5px 10px; cursor: pointer; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.globe-pause:hover { border-color: var(--muted); color: var(--ink); }
+
+.globe-card { position: absolute; left: 0; bottom: 0; width: min(300px, 100%); padding: 14px 16px 14px; background: rgba(8, 10, 11, .94); border: 1px solid var(--hair2); border-radius: 4px; }
+.globe-card[hidden] { display: none; }
+.globe-card h3 { margin: 0 24px 2px 0; font: 600 18px/1.25 var(--sans); }
+.gc-sub { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+.gc-row { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline; padding: 4px 0; border-top: 1px solid var(--hair); font: 13px var(--sans); }
+.gc-row .num { font-size: 13px; }
+.gc-sel { margin: 8px 0 0; font-size: 12px; color: var(--own); }
+.gc-filter { margin-top: 12px; width: 100%; background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 7px 10px; cursor: pointer; font: 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.gc-filter:hover { border-color: var(--own); color: var(--own); }
+.gc-close { position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.gc-close:hover { color: var(--ink); }

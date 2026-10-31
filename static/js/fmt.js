@@ -10,6 +10,8 @@ export const CAUTIONS = {
   no_covariance: "No usable position uncertainty",
 };
 export const SIGMA_SENTINEL_M = 1e7; // dataset placeholder for an unusable sigma is ~63,781 km
+export const LAT_BAND = 10; // degrees of latitude per globe band
+export const latBand = (deg) => Math.min(180 / LAT_BAND - 1, Math.max(0, Math.floor((deg + 90) / LAT_BAND)));
 export const MAX_DAYS = 7; // replay horizon (events are 2.0-6.9 d from TCA)
 
 export const km = (m) => m / 1000;
