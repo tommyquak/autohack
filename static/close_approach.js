@@ -32,6 +32,18 @@
     no_covariance: "No usable position uncertainty",
   };
   const config = { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] };
+  // Low-poly object icons (scripts/build_icons.py -> static/icons.json). Optional: if they fail to load, the plain
+  // markers stay. Icons are drawn ENLARGED at the objects' true relative positions; only the positions are to scale.
+  const OWN_COLOR = "#5ea9ff", OBJECT_COLOR = "#aebfcf";
+  const ICON_FOR = { DEBRIS: "debris", PAYLOAD: "payload", "ROCKET BODY": "rocket_body" };
+  const ICONS = fetch("/static/icons.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  function iconMesh(m, [cx, cy, cz], size, color, opacity, name) {
+    return {
+      type: "mesh3d", name, x: m.x.map((v) => cx + v * size), y: m.y.map((v) => cy + v * size), z: m.z.map((v) => cz + v * size),
+      i: m.i, j: m.j, k: m.k, color, opacity, flatshading: true, showlegend: false, hovertemplate: `${name}<extra></extra>`,
+      lighting: { ambient: 0.55, diffuse: 0.8, specular: 0.15, roughness: 0.6 }, lightposition: { x: 100, y: 200, z: 300 },
+    };
+  }
   const font = { family: "ui-sans-serif, system-ui, sans-serif", size: 12, color: C.text };
 
   const km = (m) => m / 1000;
@@ -121,7 +133,7 @@
       {
         type: "scatter3d", mode: "markers+text", name: L.object_type.toLowerCase(), x: [r], y: [t], z: [n],
         text: [L.object_type.toLowerCase()], textposition: "top center", textfont: { color: C.text }, showlegend: false,
-        marker: { size: 8, color: tier.color, line: { color: C.surface, width: 2 } },
+        marker: { size: 8, color: tier.color, line: { color: C.surface, width: 2 } }, // becomes a tier ring once icons load
         hovertemplate:
           `${esc(L.object_type.toLowerCase())}<br>miss ${fmtDist(L.miss_distance_m)}<br>` +
           `R ${fmtKm(r)} · T ${fmtKm(t)} · N ${fmtKm(n)} km<extra></extra>`,
@@ -148,9 +160,22 @@
       </div>
       <div class="ca-plot"></div>
       <div class="ca-note">Where the object is at closest approach, with our satellite at the centre. Distances are to scale
-        (km). The data only gives uncertainty in the radial (up/down) direction, so it is drawn along R.</div>`;
+        (km); the object icons are enlarged so you can see them, and a faded icon means no usable uncertainty. The data only gives uncertainty in the radial (up/down) direction, so it is drawn along R.</div>`;
+    const plotEl = el.querySelector(".ca-plot");
+    const addIcons = () =>
+      ICONS.then((ic) => {
+        if (!ic || !plotEl.isConnected) return;
+        const size = span * 0.24;
+        const other = ic[ICON_FOR[L.object_type] || "unknown"];
+        Plotly.restyle(plotEl, { "marker.symbol": "circle-open", "marker.size": 34, "marker.line.width": 3, "marker.color": tier.color, "marker.line.color": tier.color }, [traces.length - 1]);
+        Plotly.restyle(plotEl, { "marker.opacity": 0 }, [traces.length - 2]);
+        return Plotly.addTraces(plotEl, [
+          iconMesh(ic.own_satellite, [0, 0, 0], size, OWN_COLOR, 1, "our satellite (icon enlarged)"),
+          iconMesh(other, [r, t, n], size, OBJECT_COLOR, capped ? 0.35 : 1, `${L.object_type.toLowerCase()} (icon enlarged)`),
+        ]);
+      });
     return Plotly.newPlot(
-      el.querySelector(".ca-plot"),
+      plotEl,
       traces,
       {
         paper_bgcolor: "rgba(0,0,0,0)", font, margin: { l: 0, r: 0, t: 0, b: 0 }, height: 420,
@@ -169,7 +194,7 @@
         },
       },
       config,
-    );
+    ).then((gd) => (addIcons(), gd));
   }
 
   function renderCompare(el, events) {
