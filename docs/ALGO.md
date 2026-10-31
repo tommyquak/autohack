@@ -163,3 +163,8 @@ or the pipeline in this document.
 - Design, evidence and status: [`docs/algorithm/algorithm.md`](algorithm/algorithm.md) (owner: Algorithms forecast,
   Kalent).
 - Checks of its numbers against the data: [`docs/algorithm/VERIFICATION.md`](algorithm/VERIFICATION.md).
+
+## 6. Event action queue
+
+`triage/actions.py` turns each event's tier, cautions and trend into one queue (MANEUVER PLANNING / ANALYST REVIEW /
+MONITOR). Rules, train-protocol results against persistence, and limits: [`docs/actions.md`](actions.md).
