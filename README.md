@@ -72,6 +72,10 @@ Critical recall stays 100%. These are measured counts; analyst time saved is not
 Our first model regressed log Pc and flagged 100% of CDMs. Our evaluation caught this
 before it shipped, so we redesigned it as targeted demotion.
 
+We also tried a stronger v2 (more history and physics features, an ensemble scorer). On the test set it cut
+false Elevated from 2,214 to 1,694 (-23%), but showed **3** truly-Elevated CDMs as below threshold, against our
+limit of 1. An independent verifier found no leakage; we kept v1 because our own safety gate said no.
+
 ## Trust and traceability
 
 - Every tier lists the rules that fired (e.g. `Pc 10^-3.20 >= 1e-4 (critical threshold)`).
