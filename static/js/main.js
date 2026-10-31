@@ -4,6 +4,7 @@ import { initClock } from "./clock.js";
 import { initDetail } from "./detail.js";
 import { TIERS } from "./fmt.js";
 import { initFunnel } from "./funnel.js";
+import { initLatitude } from "./latitude.js";
 import { initFilters, initQueue } from "./queue.js";
 import { set, state } from "./state.js";
 import { initStrip } from "./strip.js";
@@ -27,6 +28,7 @@ async function main() {
   initFunnel();
   initDetail();
   initStrip();
+  initLatitude();
   initClock();
   // Open on the most urgent event so the right rail isn't empty.
   if (list.events.length) set({ selectedId: list.events[0].event_id });
