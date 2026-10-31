@@ -18,6 +18,8 @@ threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** t
 - **Demotes** only CDMs that are Elevated *solely* because of a loose Pc bound (miss > 5 km), and only to below threshold. It never touches Critical.
 - **Flags** needs review, placeholder covariance (`no_covariance`) and probability dilution (`pc_diluted`). Flags only escalate.
 - **Explains** each event: Claude rewords structured facts, with a template fallback.
+- **Answers questions** through an operator copilot (`/chat`): every number comes from read-only triage tools, it can jump the dashboard to an event, and a rule-based fallback answers without an API key (`/health` says which path answered). Independent eval: 38/38 grounded, 38/38 avoid "safe", 38/38 no manoeuvre advice, in fallback mode ([docs/eval_results.md](docs/eval_results.md)); Claude mode not yet evaluated.
+- **Handles bad input**: 26/26 junk and edge-case files are rejected clearly or flagged, never quietly tiered too low ([docs/robustness.md](docs/robustness.md)).
 - **Serves** an API and dashboard views (`/api/*`, `static/`), plus one prediction per test CDM in `predictions/test_predictions.csv`.
 
 ## How it works
@@ -80,7 +82,7 @@ before it shipped, so we redesigned it as targeted demotion.
 ## What we don't solve yet
 
 - A calibrated Pc estimate: we use the provided upper bound plus a classifier.
-- Orbit propagation: the 3D view shows relative position at TCA, not to scale.
+- Orbit propagation: the 3D view shows each object's relative position at TCA (distances to scale, no orbits); the globe shows conjunction latitude only, because the data has no longitude.
 - A live CDM feed: `triage.predict --data any.csv` works on new files, but nothing streams.
 - Configurable thresholds: they are fixed to the brief (`triage/tiers.py`).
 
@@ -101,7 +103,7 @@ uv run python -m triage.predict        # -> predictions/test_predictions.csv
 uv run pytest -q                       # runs on data/sample, no key needed
 ```
 
-Docs: [ALGO](docs/ALGO.md) (method) · [CONTRACT](docs/CONTRACT.md) (interfaces) · [TEAM](docs/TEAM.md) (roles, workflow).
+Docs: [ALGO](docs/ALGO.md) (method) · [demo script](docs/demo-script.md) · [robustness](docs/robustness.md) · [copilot eval](docs/eval_results.md) · [CONTRACT](docs/CONTRACT.md) (interfaces) · [TEAM](docs/TEAM.md) (roles, workflow).
 
 ## Team
 
