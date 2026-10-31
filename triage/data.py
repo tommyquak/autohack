@@ -45,17 +45,40 @@ def find_csv(kind: str, data_dir: Path = RAW_DIR) -> Path:
     return hits[0]
 
 
-def load_cdms(path: Path | str) -> pd.DataFrame:
-    """Read a CDM CSV keeping event_id, the allowed features and (if present) the label + true tier."""
-    df = pd.read_csv(path)
+def read_cdm_csv(path: Path | str) -> pd.DataFrame:
+    """Read and validate a CDM CSV: event_id, the allowed features and (if present) the label, in file order.
+
+    Bad input is rejected with a ValueError that says what is wrong; missing *values* are kept (NaN) so the
+    model can escalate those rows for review instead of tiering them (see triage.model.input_flags).
+    """
+    try:
+        df = pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        raise ValueError(f"{path} is empty - expected a CSV header with columns {[EVENT, *FEATURES]}") from None
     missing = [c for c in [EVENT, *FEATURES] if c not in df.columns]
     if missing:
         raise ValueError(f"{path} is missing expected columns: {missing}")
     keep = [EVENT, *FEATURES] + ([LABEL] if LABEL in df.columns else [])
     keep += [c for c in DISPLAY_ONLY if c in df.columns]
     df = df[keep].copy()
+    if df[EVENT].isna().any():
+        raise ValueError(f"{path}: event_id is blank in {int(df[EVENT].isna().sum())} rows")
+    for col in [c for c in keep if c not in CATEGORICAL]:
+        num = pd.to_numeric(df[col], errors="coerce")
+        bad = num.isna() & df[col].notna()
+        if bad.any():
+            i = bad.idxmax()
+            raise ValueError(f"{path}: column {col!r} has non-numeric values, e.g. {df[col][i]!r} in data row {i}")
+        df[col] = num
     for col in CATEGORICAL:
-        df[col] = pd.Categorical(df[col], categories=CATEGORIES[col])
+        known = df[col].where(df[col].isin(CATEGORIES[col]))  # unseen labels -> missing (flagged by the model)
+        df[col] = pd.Categorical(known, categories=CATEGORIES[col])
+    return df
+
+
+def load_cdms(path: Path | str) -> pd.DataFrame:
+    """Read a CDM CSV keeping event_id, the allowed features and (if present) the label + true tier."""
+    df = read_cdm_csv(path)
     if LABEL in df.columns:
         df["true_tier"] = true_tier(df[LABEL], df["miss_distance"])
     return df.sort_values([EVENT, "time_to_tca"], ascending=[True, False]).reset_index(drop=True)

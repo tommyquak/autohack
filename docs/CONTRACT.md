@@ -9,7 +9,7 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 |---|---|---|
 | `pred_tier` | int | 0 below threshold · 1 Elevated · 2 Critical |
 | `confidence` | float 0–1 | model confidence in `pred_tier` |
-| `needs_review` | bool | uncertain → shown as "needs review"; uncertainty only ever escalates |
+| `needs_review` | bool | uncertain → shown as "needs review"; uncertainty only ever escalates. Also set for missing/unknown input (NaN Pc upper bound, miss or sigma; unknown `c_object_type`): never demoted, and NaN Pc/miss is at least Elevated. Malformed files raise `ValueError` (see docs/robustness.md) |
 
 ## 2. `reports/events.json` (producer: `triage.build_events`, consumer: API + dashboard)
 ```json

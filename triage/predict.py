@@ -15,16 +15,14 @@ import numpy as np
 import pandas as pd
 
 from triage import model
-from triage.data import CATEGORICAL, CATEGORIES, EVENT, FEATURES, RAW_DIR, find_csv
+from triage.data import EVENT, FEATURES, RAW_DIR, find_csv, read_cdm_csv
 from triage.tiers import TIER_NAMES, Tier, miss_tier, pc_tier
 
 OUT = Path(__file__).resolve().parent.parent / "predictions" / "test_predictions.csv"
 
 
 def predict_file(path: Path | str) -> pd.DataFrame:
-    df = pd.read_csv(path, usecols=[EVENT, *FEATURES])
-    for col in CATEGORICAL:
-        df[col] = pd.Categorical(df[col], categories=CATEGORIES[col])
+    df = read_cdm_csv(path)[[EVENT, *FEATURES]]  # raises ValueError with a clear message on bad input
     # History features need each event ordered oldest CDM first; keep the original index to restore row order.
     ordered = df.sort_values([EVENT, "time_to_tca"], ascending=[True, False], kind="stable")
     pred = model.predict(ordered).sort_index()
@@ -33,7 +31,9 @@ def predict_file(path: Path | str) -> pd.DataFrame:
     out["pred_tier_name"] = out["pred_tier"].map(lambda t: TIER_NAMES[Tier(t)])
     out["confidence"] = pred["confidence"].round(4)
     out["needs_review"] = pred["needs_review"].astype(bool)
-    out["baseline_tier"] = np.maximum(pc_tier(df["max_risk_estimate"]), miss_tier(df["miss_distance"]))
+    baseline = np.maximum(pc_tier(df["max_risk_estimate"]), miss_tier(df["miss_distance"]))
+    missing, _ = model.input_flags(df)  # the rule cannot clear a CDM whose Pc or miss distance is unknown
+    out["baseline_tier"] = np.where(missing, np.maximum(baseline, Tier.ELEVATED), baseline)
     return out
 
 
