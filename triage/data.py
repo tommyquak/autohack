@@ -26,6 +26,8 @@ FEATURES = [
 EVENT = "event_id"
 LABEL = "risk"  # log10(Pc) - target only, never a feature
 CATEGORICAL = ["c_object_type"]
+# Fixed category order so codes match between train, test and live data.
+CATEGORIES = {"c_object_type": ["DEBRIS", "PAYLOAD", "ROCKET BODY", "TBA", "UNKNOWN"]}
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"
@@ -49,7 +51,7 @@ def load_cdms(path: Path | str) -> pd.DataFrame:
     keep = [EVENT, *FEATURES] + ([LABEL] if LABEL in df.columns else [])
     df = df[keep].copy()
     for col in CATEGORICAL:
-        df[col] = df[col].astype("category")
+        df[col] = pd.Categorical(df[col], categories=CATEGORIES[col])
     if LABEL in df.columns:
         df["true_tier"] = true_tier(df[LABEL], df["miss_distance"])
     return df.sort_values([EVENT, "time_to_tca"], ascending=[True, False]).reset_index(drop=True)

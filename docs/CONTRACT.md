@@ -44,7 +44,7 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
   "split": "test",
   "class_counts": {"SAFE": 0, "ELEVATED": 0, "CRITICAL": 0},
   "results": {"<method>": {"n": 0, "critical_recall": 0.0, "critical_precision": 0.0,
-                            "false_alarm_rate": 0.0, "macro_f1": 0.0, "confusion": [[0,0,0],[0,0,0],[0,0,0]]}},
+                            "false_alarm_rate": 0.0, "macro_f1": 0.0, "flagged_rate": 0.0, "under_tier_rate": 0.0, "confusion": [[0,0,0],[0,0,0],[0,0,0]]}},
   "by_lead_time": {"<method>": [{"days_to_tca": [0, 1], "...": "same fields as results"}]},
   "missed_criticals": [{"event_id": 0, "time_to_tca": 0.0, "miss_distance": 0.0,
                         "max_risk_estimate": 0.0, "risk": 0.0}]

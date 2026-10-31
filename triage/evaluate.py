@@ -37,6 +37,10 @@ def score(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
         "critical_precision": float(precision_score(is_crit, pred_crit, zero_division=0)),
         "false_alarm_rate": float(pred_crit[~is_crit].mean()) if (~is_crit).any() else 0.0,
         "macro_f1": float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)),
+        # Operator workload: share of CDMs flagged Elevated or Critical (need a human look)
+        "flagged_rate": float((y_pred >= Tier.ELEVATED).mean()),
+        # The dangerous error: CDM shown at a lower tier than its truth
+        "under_tier_rate": float((y_pred < y_true).mean()),
         "confusion": confusion_matrix(y_true, y_pred, labels=labels).tolist(),
     }
 
