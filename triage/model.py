@@ -1,29 +1,71 @@
-"""Tier prediction. Person B owns this file: replace `predict` internals with the trained model.
+"""Tier prediction behind a stable contract (see docs/CONTRACT.md).
 
-Contract (keep it stable - evaluate.py, build_events.py and the API depend on it):
     predict(df) -> DataFrame indexed like df with columns
-        pred_tier    int  (0 Safe/below threshold, 1 Elevated, 2 Critical)
+        pred_tier    int  (0 below threshold, 1 Elevated, 2 Critical)
         confidence   float in [0, 1]
         needs_review bool (uncertain -> escalated, never down-graded)
 
-Current implementation is the conservative baseline: max_risk_estimate is an upper
-bound on Pc, so thresholding it can only over-warn on the Pc side. Combined with the
-deterministic miss-distance rule.
+Uses the trained artifact (reports/model.joblib, from `python -m triage.train`) when present,
+otherwise the conservative upper-bound baseline. Either way the deterministic rules hold:
+Critical from the upper bound or miss < 1 km can never be removed by the model.
 """
 
+from functools import cache
+from pathlib import Path
+
+import joblib
 import numpy as np
 import pandas as pd
 
-from triage.tiers import RISK_CRITICAL, RISK_ELEVATED, miss_tier, pc_tier
+from triage.features import build_features, dilution_flag
+from triage.tiers import RISK_CRITICAL, RISK_ELEVATED, Tier, miss_tier, pc_tier
 
-REVIEW_MARGIN = 0.5  # within half a decade of a Pc threshold -> needs review
+ARTIFACT = Path(__file__).resolve().parent.parent / "reports" / "model.joblib"
+REVIEW_MARGIN = 0.5  # baseline only: within half a decade of a Pc threshold -> needs review
 
 
-def predict(df: pd.DataFrame) -> pd.DataFrame:
+@cache
+def load_artifact(path: Path = ARTIFACT):
+    return joblib.load(path) if path.exists() else None
+
+
+def predict_baseline(df: pd.DataFrame) -> pd.DataFrame:
     upper = df["max_risk_estimate"].to_numpy(dtype=float)
     tier = np.maximum(pc_tier(upper), miss_tier(df["miss_distance"]))
     near = np.minimum(np.abs(upper - RISK_CRITICAL), np.abs(upper - RISK_ELEVATED)) < REVIEW_MARGIN
     return pd.DataFrame(
-        {"pred_tier": tier, "confidence": np.where(near, 0.5, 0.8), "needs_review": near},
+        {"pred_tier": tier, "confidence": np.where(near, 0.5, 0.8), "needs_review": near}, index=df.index
+    )
+
+
+def predict_with(artifact: dict, df: pd.DataFrame) -> pd.DataFrame:
+    from triage.train import candidates  # local import: train imports this module's deps
+
+    out = predict_baseline(df)  # conservative upper-bound rule; the model may only demote from here
+    cand = candidates(df)
+    p_elevated = np.full(len(df), np.nan)
+    if cand.any():
+        X = build_features(df)[artifact["columns"]][cand]
+        p_elevated[cand] = artifact["model"].predict_proba(X)[:, 1]
+    t = artifact["threshold"]
+    demote = cand & (p_elevated < t)
+    tier = np.where(demote, Tier.SAFE, out["pred_tier"].to_numpy())
+    # Near the threshold (within 2x either side) -> flag for a human, keep Elevated.
+    near = cand & ~demote & (p_elevated < 2 * t)
+    review = (near | dilution_flag(df)) & (tier < Tier.CRITICAL)
+    confidence = np.where(cand, np.where(demote, 1 - p_elevated, np.maximum(p_elevated, 0.5)), out["confidence"])
+    return pd.DataFrame(
+        {
+            "pred_tier": tier.astype(int),
+            "confidence": np.clip(confidence, 0.5, 0.99),
+            "needs_review": review,
+            "p_elevated": p_elevated,
+        },
         index=df.index,
     )
+
+
+def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    artifact = artifact if artifact is not None else load_artifact()
+    out = predict_with(artifact, df) if artifact else predict_baseline(df)
+    return out[["pred_tier", "confidence", "needs_review"]]
