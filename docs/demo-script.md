@@ -116,6 +116,10 @@ Numbers: event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-
 - **That our safety gate proved v2 worse.** The test under-tier counts (1 vs 3) are noise; see `docs/EVAL.md`.
 - **That the forecast's 90% is a guarantee, or that it beats "keep today's tier" on everything.** It wins on Critical
   recall and F2 and catches escalations; it loses on accuracy and Critical precision [`docs/FORECAST.md`].
+- **That the model beats a simple rule.** Two miss-distance lines on the same floor get Critical F2 0.864 vs 0.875
+  and 73 vs 79 escalations caught; they win on the 80/20 split [`docs/FORECAST.md`].
+- **A probability for the forecast.** The model's numbers are uncalibrated ranking scores; say "score above its
+  threshold", never "P = 0.6".
 - **"Safe".** Tier 0 is "below threshold". Also don't claim a calibrated Pc, live feed, or orbit propagation.
 
 ## Likely judge questions
@@ -133,3 +137,7 @@ Numbers: event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-
   11,942 usable train events. Against "keep today's tier" (miss-only): Critical recall 0.911 vs 0.865, Critical F2
   0.875 vs 0.863, 79 of 270 escalations caught vs 0, at 775 false escalations; accuracy 0.888 vs 0.938 and
   Critical precision 0.757 vs 0.857 are lower [`docs/FORECAST.md`, `forecast_metrics.json`].
+- **Does the model add anything over a distance rule?** A little: against two tuned miss-distance lines on the same
+  floor it is ahead on Critical F2 in 5 of 5 folds but by 0.002-0.022 (0.875 vs 0.864), and the lines win on the 80/20
+  split. On test it marks 255 events Critical (196 by rule); at the Kelvins-cohort precision about 178 of them would
+  end Critical [`docs/FORECAST.md`].

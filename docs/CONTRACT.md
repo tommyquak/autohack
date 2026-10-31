@@ -57,17 +57,25 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
   below-threshold event with `escalation_watch`) · `MONITOR` (below threshold, no caution, no trend flag: keep watching,
   not "no risk"). `escalation_watch` = near the next threshold up and closing / not settled / just above it, with
   >= 1 day to TCA. `reasons` are plain English. `summary.by_action` counts queues (sums to `n_events`) and
-  `summary.escalation_watch` counts flags. Rules and train-protocol results: `docs/actions.md`. An optional `forecast`
-  object (Kalent's planned contract, `docs/algorithm/algorithm.md` §4.1) can only raise the queue.
+  `summary.escalation_watch` counts flags. Rules and train-protocol results: `docs/actions.md`. An optional
+  CALIBRATED `forecast` object (Kalent's planned contract, `docs/algorithm/algorithm.md` §4.1, with
+  `"calibrated": true`) can only raise the queue. The shipped final-tier forecast is `"calibrated": false`, so it never
+  moves a queue.
 - `certificate` (from `triage.certify.certify`, latest CDM): why the tier holds. See §6. Top-level `model_evidence`
   = `{"source", "threshold", "cv": {oof_recall, recall_target, threshold, candidates, n_folds, ...}}` copied from the
   trained artifact at build time, or `null` when built with the rules alone.
 - `forecast` (from `triage.forecast`, docs/FORECAST.md): the final-tier forecast from messages >= 2 days out.
-  `{"predicted_final_tier": 0|1|2, "predicted_final_tier_name", "p_final": [p_below, p_elevated, p_critical]
-  (class-weighted scores, not calibrated), "floor_tier", "decision": "floor kept" | "escalated to Elevated" |
-  "escalated to Critical", "thresholds": {"t_elev", "t_crit"}, "reasons": [<= 3 strings]}`. Always
-  `predicted_final_tier >= floor_tier`, and a Critical `tier` always has a Critical forecast. Currently added to
-  `data/demo/events.json` by `uv run python -m triage.forecast` (not yet by `build_events`).
+  `{"predicted_final_tier": 0|1|2, "predicted_final_tier_name", "floor_tier" (== tier), "floor_tier_name",
+  "decision": "floor kept" | "escalated to Elevated" | "escalated to Critical", "escalation": null |
+  {"rule": "model_score", "to_tier": 1|2, "score": "final_critical" | "final_elevated_or_worse", "value", "threshold"},
+  "scores": {"final_critical", "final_elevated_or_worse"}, "score_note", "calibrated": false,
+  "thresholds": {"t_crit", "t_elev"}, "reasons": [<= 3 strings]}`. There is no probability field (`p_final` is gone):
+  the scores are uncalibrated, class-weighted ranking scores, so a UI shows the decision, the floor and the
+  score-vs-threshold comparison, labelled as a score, never as a probability.
+  Always `predicted_final_tier >= floor_tier == tier`, and a Critical `tier` always has a Critical forecast. Written by
+  `uv run python -m triage.forecast` (to `data/demo/events.json`, and `reports/events.json` when present) and
+  re-attached by `triage.build_events` on the default test CSV from `predictions/test_final_tier.csv`; skipped with a
+  message when that file is missing or stale (a floor that no longer equals the rebuilt tier).
 - Wording: never "Safe" – tier 0 is **"Below threshold"**.
 
 ## 3. `reports/metrics.json` (producer: `triage.evaluate`, consumer: dashboard "Evaluation" tab)
@@ -93,7 +101,7 @@ All read `reports/*.json` (falling back to the frozen full-test-set copy in `dat
 | `GET /api/summary` | `events.json` → `summary` |
 | `GET /api/events[?tier=0\|1\|2][&needs_review=true\|false]` | `{"total": n, "events": [...]}`: each event as in §2 **without `history`** (so with `action`), plus `n_updates` (number of CDMs). Same urgency order. |
 | `GET /api/events/{event_id}` | one event exactly as in §2, with `history`; `404` if unknown |
-| `GET /api/metrics` | `metrics.json` as in §3, plus `"forecast"`: `forecast_metrics.json` (final-tier forecast, docs/FORECAST.md) when it exists |
+| `GET /api/metrics` | `metrics.json` as in §3, plus `"forecast"`: the summaries of `forecast_metrics.json` (final-tier forecast, docs/FORECAST.md; per-fold detail left out) when it exists |
 | `GET /api/explain/{event_id}` | see `triage/explain.py` (owner: Integration & trust) |
 | `GET /api/audit` | §6: re-verifies the safety invariants over every served event; `{"status": "PASS"\|"FAIL", "checks", "counts", "cv_evidence", "generated_at_source": "reports"\|"demo"}` |
 | `POST /api/triage` | §6: tiers 1-500 CDM rows sent as JSON, each with its certificate and margin to the next tier; `422` on bad input |

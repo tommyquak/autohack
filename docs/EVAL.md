@@ -88,15 +88,16 @@ No test CDM is closer than 2 days to TCA, so the 0-2 day buckets are empty.
 The organisers' task (`challenge1_event_labels.xlsx`): predict each event's final tier from its messages with
 `time_to_tca >= 2` only. Cohort: `usable_for_training == yes`, 11,942 train events (8,946 / 2,162 / 834). The xlsx
 labels agree with our recomputed final tier on 13,154 of 13,154 events. Method, decision layer and limits:
-[FORECAST.md](FORECAST.md). Numbers from `data/demo/forecast_metrics.json` (`uv run python -m triage.forecast`),
-except the m* rule row (forecaster verifier's script, same folds).
+[FORECAST.md](FORECAST.md). Every number from `data/demo/forecast_metrics.json` (`uv run python -m triage.forecast`);
+the rule rows use the same folds, the same floor and train-only thresholds for the same 90% target.
 
 | Method (5-fold event CV, mean ± sd; 80/20 split in brackets) | Accuracy | Critical recall | Critical precision | Critical F2 | Escalations caught | False escalations |
 |---|---|---|---|---|---|---|
 | Always below threshold | 0.749 (0.749) | 0 (0) | 0 (0) | 0 (0) | 0/270 (0/50) | 0 (0) |
 | Persistence: miss-only tier (keep today's tier) | **0.938 ± 0.004** (0.943) | 0.865 ± 0.042 (0.886) | **0.857 ± 0.029** (0.902) | 0.863 ± 0.037 (0.889) | 0/270 (0/50) | 0 (0) |
 | Persistence: `max_risk_estimate` + miss | 0.770 ± 0.012 (0.775) | 0.873 ± 0.041 (0.892) | 0.808 ± 0.036 (0.837) | 0.859 ± 0.036 (0.881) | 40/270 (10/50) | 2,135 (430) |
-| Rule: Critical if latest miss < m* (tuned train-only to 90% recall, CV only) | 0.892 ± 0.011 | 0.897 ± 0.044 | 0.755 ± 0.036 | 0.864 ± 0.032 | 47/270 | 687 |
+| Rule: floor + Critical if latest miss <= m* (one line, ~1.1 km, no model) | 0.892 ± 0.011 (0.895) | 0.897 ± 0.044 (0.934) | 0.755 ± 0.036 (0.768) | 0.864 ± 0.032 (0.896) | 47/270 (13/50) | 687 (147) |
+| Rule: floor + two miss lines (Critical ~1.1 km, Elevated ~5.4 km, no model) | 0.888 ± 0.012 (0.887) | 0.897 ± 0.044 (0.934) | 0.755 ± 0.036 (0.768) | 0.864 ± 0.032 (0.896) | 73/270 (18/50) | 766 (172) |
 | *Reference: `risk` + miss (label column)* | *0.946 ± 0.005 (0.951)* | *0.866 ± 0.044 (0.886)* | *0.852 ± 0.029 (0.892)* | *0.863 ± 0.038 (0.887)* | *0/270 (0/50)* | *0 (0)* |
 | **Second Look forecast (bounded, 90% Critical recall target)** | 0.888 ± 0.012 (0.897) | **0.911 ± 0.050 (0.910)** | 0.757 ± 0.036 (0.788) | **0.875 ± 0.037** (0.883) | **79/270 (13/50)** | 775 (142) |
 
@@ -111,7 +112,11 @@ Recall-target sensitivity (CV): 0.85 → Critical recall 0.873, precision 0.808,
 **Where we win and lose:** the forecast wins on Critical recall, Critical F2 and escalations caught; miss-only
 persistence wins on accuracy, macro F1 (0.887 vs 0.834) and Critical precision, and raises no false escalations. 616 of
 the 775 false escalations come from the floor (keeping Pc-only Elevated events at Elevated) before the model escalates
-anything. A single miss-distance rule (m* about 1.1 km) does about as well for Critical escalation (F2 0.864 vs
-0.875); the model's added value is mainly the extra escalations caught (79 vs 47) at the cost of more false escalations
-(775 vs 687). On the 8,293-event Kelvins cohort (final message < 1 day, a better guide to test): Critical recall 0.883
-vs 0.820, F2 0.837 vs 0.817, accuracy 0.876 vs 0.935, 72/244 escalations caught vs 0.
+anything. **Two miss-distance lines with no model come close:** Critical F2 0.864 vs 0.875 (the model is ahead in 5 of
+5 folds, by 0.002 to 0.022), 73 vs 79 escalations caught, 766 vs 775 false; on the 80/20 split the lines win (F2 0.896
+vs 0.883, 18 vs 13 caught). At the original 0.95 target the lines beat the model outright (F2 0.851 vs 0.835, 1,031 vs
+1,139 false). The model's thresholds also move across folds (`t_crit` 0.43-0.68, `t_elev` 0.28-0.67) where the lines
+do not (1.04-1.14 km, 5.18-5.51 km). On the 8,293-event Kelvins cohort (final message < 1 day, the better guide to
+test): Critical recall 0.883 vs 0.820, F2 0.837 vs 0.817, accuracy 0.876 vs 0.935, 72/244 escalations caught vs 0 (the
+two lines: 0.865, 0.829, 0.878, 67/244). Expected test queue: 255 of 2,167 events Critical (196 by rule), of which
+about 178 would end Critical at that cohort's precision (0.699).

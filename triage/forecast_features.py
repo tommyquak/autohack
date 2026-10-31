@@ -25,6 +25,7 @@ LABELS_XLSX = RAW_DIR / "labels" / "challenge1_event_labels.xlsx"
 LABEL_SHEET = "train_event_labels"
 XLSX_TIER = {"Safe": Tier.SAFE, "Elevated": Tier.ELEVATED, "Critical": Tier.CRITICAL}  # xlsx "Safe" = below threshold
 FORBIDDEN = {LABEL, "true_tier", "mission_id"}  # never model inputs
+NOT_MODEL_INPUTS = {"nowcast_untrusted"}  # kept on the feature row for the decision record only
 
 
 # ---------- labels ----------
@@ -118,7 +119,8 @@ MONOTONIC = {
 
 def event_features(inputs: pd.DataFrame, nowcast: pd.DataFrame | None = None) -> pd.DataFrame:
     """One row per event from its >= 2-day messages. `nowcast` (optional, indexed by event_id) adds the team's
-    per-message tier at the latest message (`nowcast_tier`) and its demotion score (`nowcast_p_elevated`)."""
+    per-message tier at the latest message (`nowcast_tier`), its demotion score (`nowcast_p_elevated`) and, for the
+    decision record only (never a model input), whether that message had an untrusted input (`nowcast_untrusted`)."""
     if (inputs["time_to_tca"] < CUTOFF_DAYS).any():
         raise ValueError("event_features got a message < 2 days before TCA: pass cutoff_inputs(df)")
     x = inputs[[EVENT, *FEATURES]].sort_values([EVENT, "time_to_tca"], ascending=[True, False])
@@ -163,5 +165,7 @@ def event_features(inputs: pd.DataFrame, nowcast: pd.DataFrame | None = None) ->
         nc = nowcast.reindex(f.index)
         f["nowcast_tier"] = nc["nowcast_tier"].to_numpy()
         f["nowcast_p_elevated"] = nc["nowcast_p_elevated"].to_numpy()
+        if "nowcast_untrusted" in nc:
+            f["nowcast_untrusted"] = nc["nowcast_untrusted"].fillna(0).astype(int).to_numpy()
     assert not FORBIDDEN & set(f.columns)
     return f

@@ -70,3 +70,15 @@ _events_by_id = events_by_id  # old name from server.py
 def source(name: str = "events.json") -> str:
     found = _locate(name)
     return found[0] if found else "missing"
+
+
+def forecast_summary(metrics: dict) -> dict:
+    """forecast_metrics.json without the per-fold detail (what /api/metrics serves as "forecast")."""
+    out = {k: v for k, v in metrics.items() if k not in ("cv_5fold", "protocol_80_20")}
+    cv = metrics.get("cv_5fold")
+    if isinstance(cv, dict):
+        out["cv_5fold"] = {k: v for k, v in cv.items() if k != "folds"}
+    p8 = metrics.get("protocol_80_20")
+    if isinstance(p8, dict):
+        out["protocol_80_20"] = {k: v for k, v in p8.items() if k != "recall_target_sensitivity"}
+    return out

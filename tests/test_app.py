@@ -163,6 +163,14 @@ def test_api_metrics_adds_forecast_block(api):
     client, reports_dir = api
     (reports_dir / "metrics.json").write_text(json.dumps({"split": "test"}))
     assert "forecast" not in client.get("/api/metrics").json()  # no forecast file: metrics unchanged
-    (reports_dir / "forecast_metrics.json").write_text(json.dumps({"task": "final tier"}))
+    fm = {
+        "task": "final tier",
+        "cv_5fold": {"folds": [{"big": 1}] * 5, "summary": {"m": 1}},
+        "protocol_80_20": {"results": {"m": 1}, "recall_target_sensitivity": {"0.9": {}}},
+    }
+    (reports_dir / "forecast_metrics.json").write_text(json.dumps(fm))
     out = client.get("/api/metrics").json()
     assert out["split"] == "test" and out["forecast"]["task"] == "final tier"
+    # summaries only: the per-fold detail stays in the file
+    assert out["forecast"]["cv_5fold"] == {"summary": {"m": 1}}
+    assert out["forecast"]["protocol_80_20"] == {"results": {"m": 1}}
