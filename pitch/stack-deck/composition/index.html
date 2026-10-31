@@ -781,7 +781,9 @@
       /* cover */
       #s-cover .shot .view { border: 0; border-radius: 0; box-shadow: none; }
       #s-cover .shade {
-        background: linear-gradient(90deg, rgba(7, 9, 11, 0.97) 0%, rgba(7, 9, 11, 0.93) 38%, rgba(7, 9, 11, 0.55) 52%, rgba(7, 9, 11, 0) 62%);
+        background:
+          linear-gradient(0deg, rgba(7, 9, 11, 0.95) 0%, rgba(7, 9, 11, 0.85) 9%, rgba(7, 9, 11, 0) 20%),
+          linear-gradient(90deg, rgba(7, 9, 11, 0.97) 0%, rgba(7, 9, 11, 0.93) 38%, rgba(7, 9, 11, 0.55) 52%, rgba(7, 9, 11, 0) 62%);
       }
       #s-cover .stack { top: 220px; width: 960px; }
       #s-cover .t2 { font-size: 44px; margin-top: 14px; }
@@ -845,6 +847,19 @@
       .code { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 22px; line-height: 1.55; color: #c9d3d0; white-space: pre; }
       .code .v { color: #eef3f1; font-weight: 600; }
       .stamp { font-size: 36px; }
+
+      /* v3: forecast mini table (scene 5) and confusion matrix (scene 11) */
+      .mini { border-collapse: collapse; width: 100%; }
+      .mini th { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: #a3b1ad; text-align: right; padding: 0 0 6px 12px; border-bottom: 2px solid #22303a; }
+      .mini td { font-size: 24px; line-height: 1.2; padding: 7px 0 7px 12px; text-align: right; border-bottom: 1px solid #1a242b; color: #dfe7e4; font-family: 'Spline Sans Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .mini td:first-child { text-align: left; padding-left: 0; font-family: 'Archivo', system-ui, sans-serif; }
+      .mini td.g { color: #3fe0a0; font-weight: 700; }
+      .mini td.a { color: #ffb547; font-weight: 700; }
+      .cm { border-collapse: collapse; }
+      .cm th { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: #a3b1ad; padding: 0 14px 8px; text-align: right; }
+      .cm th.rh { text-align: left; padding-left: 0; }
+      .cm td { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 30px; text-align: right; padding: 10px 14px; border: 1px solid #22303a; color: #c9d3d0; min-width: 150px; }
+      .cm td.diag { color: #eef3f1; font-weight: 700; background: #0f1d19; }
     </style>
   </head>
   <body>
@@ -853,35 +868,35 @@
   "slides": [
     {
       "sceneId": "cover",
-      "notes": "This is Second Look, conjunction triage with bounded, inspectable demotion. It cuts the analyst's review queue by a quarter, shows a decision record for every downgrade, and it's architecturally forbidden from downgrading a rule-defined Critical. Behind me is our Horizon view: the orbits are simulated, but every flag, and the trace under it, is real.\n\n[about 26 s, from 0:00]\nBackground: four real captures of /static/horizon.html (#t=0, #t=41, #t=44, #demo=482), cross-faded. The orbits are simulated for illustration; real: each event's crossing latitude, relative speed, miss distance and time-to-TCA order (the page says so). The trace under EVT 482 comes from its certificate in events.json and the live GET /api/audit (11 checks PASS). Quarter = 1,090 → 802 events (README)."
+      "notes": "This is Second Look, conjunction triage with bounded, inspectable demotion. It cuts the analyst's review queue by a quarter, shows a decision record for every downgrade, and it's architecturally forbidden from downgrading a rule-defined Critical. Behind me is our Horizon prediction replay: each dot is one CDM's predicted miss point, and the trace under it is real.\n\n[about 27 s, from 0:00]\nBackground: four real captures of /static/horizon.html, cross-faded: #demo=482&cdm=1 (1,426 m, Elevated), &cdm=3, &cdm=6 (601 m, inside 1 km, Critical), then #demo=805 (end state: decision, backend trace, illustrative manoeuvre). Each dot is one CDM's predicted miss point at closest approach (R/T/N, to scale). Orbits: real size, shape and tilt from the data; orientation around Earth is not in the data. The manoeuvre is illustrative: no manoeuvre data in the dataset, and Second Look never commands one. The trace comes from each event's certificate in events.json and the live GET /api/audit (11 checks PASS). Quarter = 1,090 → 802 events (README)."
     },
     {
       "sceneId": "problem",
-      "notes": "Our user is the conjunction analyst who looks at every flagged warning. Today's rule flags a warning when its Pc upper bound or its miss distance crosses a threshold. The bound is deliberately loose, so the rule flags 54.2 percent of our test CDMs, and 4,534 of those are truly below threshold. That's 1,090 events in the queue.\n\n[about 27 s, from 0:26]\n54.2% of 24,484 test CDMs; 4,534 false alarms = truly below threshold, flagged at any tier (README \"The problem\", docs/EVAL.md). README also quotes \"false Elevated\" 4,526: the difference is 8 CDMs shown Critical by the Pc bound. 1,090 = baseline Elevated 894 + Critical 196 (events.json summary). Tier 0 is \"below threshold\", never \"safe\"."
+      "notes": "Our user is the conjunction analyst who looks at every flagged warning. Today's rule flags a warning when its Pc upper bound or its miss distance crosses a threshold. The bound is deliberately loose, so the rule flags 54.2 percent of our test CDMs, and 4,534 of those are truly below threshold. That's 1,090 events in the queue.\n\n[about 27 s, from 0:27]\n54.2% of 24,484 test CDMs; 4,534 false alarms = truly below threshold, flagged at any tier (README \"The problem\", docs/EVAL.md). README also quotes \"false Elevated\" 4,526: the difference is 8 CDMs shown Critical by the Pc bound. 1,090 = baseline Elevated 894 + Critical 196 (events.json summary). Tier 0 is \"below threshold\", never \"safe\"."
     },
     {
       "sceneId": "usp",
-      "notes": "So here's what Second Look does differently. One: it cuts the queue by a quarter, 1,090 to 802 events. Two: every one of the 288 downgrades carries a certificate, so you can inspect why. Three: every rule-defined Critical stays Critical, because the model is never allowed to act on one. That's the claim: bounded, inspectable demotion.\n\n[about 26 s, from 0:53]\nEvent level: all 288 removed events were truly below threshold at their latest update. Message level: 1 genuinely Elevated CDM was demoted (event 1278, scene 9). Critical recall 100% on test comes from the rules, not the model. Do NOT say \"never misses a collision\" or \"the only\". Certificate fields: rules_fired, candidate / why_not_candidate, model_score vs threshold, decision, four invariants, holds (docs/CONTRACT.md §6). 196 rule-defined Critical events = audit check critical_by_rule_stays_critical."
+      "notes": "So here's what Second Look does differently. One: it cuts the queue by a quarter, 1,090 to 802 events. Two: every one of the 288 downgrades carries a certificate, so you can inspect why. Three: every rule-defined Critical stays Critical, because the model is never allowed to act on one. That's the claim: bounded, inspectable demotion.\n\n[about 26 s, from 0:54]\nEvent level: all 288 removed events were truly below threshold at their latest update. Message level: 1 genuinely Elevated CDM was demoted (event 1278, scene 9). Critical recall 100% on test comes from the rules, not the model. Do NOT say \"never misses a collision\" or \"the only\". Certificate fields: rules_fired, candidate / why_not_candidate, model_score vs threshold, decision, four invariants, holds (docs/CONTRACT.md §6). 196 rule-defined Critical events = audit check critical_by_rule_stays_critical."
     },
     {
       "sceneId": "stack",
-      "notes": "How it works, in five layers. Data at the bottom, then the risk pipeline, the report files, the web server, and the analyst views on top. Every tier is decided in layer two and frozen in layer three, with its certificate. Claude sits to the side and only writes explanations. It never sets a tier.\n\n[about 26 s, from 1:19]\nLayers: README \"How it works\"; docs/CONTRACT.md. Without an API key a template writes the explanation and the tier is identical. The copilot (/chat) still exists but is not featured in this deck. Views: dashboard (/), review page (feat/review-console, PR open), decision point (/static/decision.html), horizon (/static/horizon.html)."
+      "notes": "How it works, in five layers. Data at the bottom, then the risk pipeline, the report files, the web server, and the analyst views on top. Every tier is decided in layer two and frozen in layer three, with its certificate. Claude sits to the side and only writes explanations. It never sets a tier.\n\n[about 26 s, from 1:20]\nLayers: README \"How it works\"; docs/CONTRACT.md. Without an API key a template writes the explanation and the tier is identical. The copilot (/chat) still exists but is not featured in this deck. Views: dashboard (/), review page (/static/review.html, merged), decision point (/static/decision.html), horizon (/static/horizon.html)."
     },
     {
       "sceneId": "pipeline",
-      "notes": "Layer two decides every tier. The NASA and ESA rules from the brief tier each message first. Then the model gets one narrow job: demote a warning that is Elevated only because of the loose Pc bound, and only when its inputs are usable and its score is under the threshold. Switch the dashboard to the model and the queue drops from 1,090 to 802. Critical is never touched.\n\n[about 32 s, from 1:45]\nRules: triage/tiers.py (Critical Pc ≥ 1e-4 or miss < 1 km; Elevated Pc ≥ 1e-6 or 1-5 km). Model: gradient-boosted trees with monotonic constraints (triage/model.py). Threshold = 1% quantile of out-of-fold scores on truly-Elevated candidates: a 99% recall target, measured out of fold, not a guarantee. Both screenshots are real: the Baseline rule / Model toggle."
+      "notes": "Layer two decides every tier. The NASA and ESA rules from the brief tier each message first. Then the model gets one narrow job: demote a warning that is Elevated only because of the loose Pc bound, and only when its inputs are usable and its score is under the threshold. Switch the dashboard to the model and the queue drops from 1,090 to 802. Critical is never touched.\n\n[about 32 s, from 1:46]\nRules: triage/tiers.py (Critical Pc ≥ 1e-4 or miss < 1 km; Elevated Pc ≥ 1e-6 or 1-5 km). Model: gradient-boosted trees with monotonic constraints (triage/model.py). Threshold = 1% quantile of out-of-fold scores on truly-Elevated candidates: a 99% recall target, measured out of fold, not a guarantee. Both screenshots are real: the Baseline rule / Model toggle."
     },
     {
       "sceneId": "task",
-      "notes": "On 31 October the organisers sharpened the task: predict each event's final tier, with a probability, from the messages received at least two days out, and report Critical recall and a confusion matrix on an 80/20 split by event. This is our Decision point view: real tracks on the left, the forecast on the right. Our forecaster's numbers are still pending.\n\n[about 28 s, from 2:17]\nForecast numbers: [pending: final-tier forecaster] (PR \"Final-tier forecaster\"; docs/FORECAST.md is not on main yet, so we quote no numbers). Until it lands, the right side of /static/decision.html places each event by its current tier and says so on screen. Our current evaluation (later scenes) is per CDM on the organisers' test file, not the 80/20 event split. Every update in the data is ≥ 2 days out (minimum 2.0002 d)."
+      "notes": "On 31 October the organisers sharpened the task: from the updates at least two days out, predict each event's final tier. The bar is keeping today's tier. Our bounded forecast lifts Critical recall from 0.865 to 0.950 on five-fold CV and catches 115 of 270 escalations, against none. The cost is honest: more false escalations, lower accuracy.\n\n[about 27 s, from 2:18]\ndocs/FORECAST.md, data/demo/forecast_metrics.json (shipped operating point: 95% final-Critical recall target, t_crit 0.054, t_elev 0.345). 5-fold event CV, 11,942 cohort events, mean over folds: Critical recall 0.950 ± 0.025 vs 0.865 ± 0.042 for miss-only persistence (\"keep today's tier\"); Critical precision 0.565 vs 0.857; Critical F2 0.835 vs 0.863; escalations caught 115/270 vs 0/270; false escalations 1,139 vs 0; accuracy 0.862 vs 0.938 (lower; macro F1 0.767 vs 0.887). On accuracy, macro F1 and F2 we do NOT beat persistence. Organisers' 80/20 split (2,389 validation events): recall 0.970 vs 0.886, 24/50 escalations caught, 218 false escalations, accuracy 0.871 vs 0.943. Bounded: predicted = max(floor, model escalation); a rule-defined Critical at the latest ≥ 2 d update is never lowered. 616 of the 1,139 false escalations come from the floor (keeping Pc-only Elevated at Elevated). The 95% is a recall target measured out of fold, not a guarantee. p_final is a class-weighted score, not a calibrated probability. Then the dashboard's default \"Final tier\" view (#67; \"Now\" restores per-message tiers): the escalated event card shows why the forecast lifts it (e.g. EVT 1634, Elevated floor → Critical, score 0.06 ≥ threshold 0.05); header 802 → 842 to review (rule floor → forecast, 301 escalated). Last frame: the dashboard's Evaluation tab, which now leads with the official panel (#68): the same 5-fold CV table (Second Look / keep today's tier / Pc-bound persistence, 80/20 on a toggle) and the 3x3 confusion matrix, read live from /api/metrics. Capture: /static/decision.html with real forecasts on the 2,167 test events (no outcomes, never scored): 477 Critical, 365 Elevated, 1,325 below threshold, 301 escalated."
     },
     {
       "sceneId": "record",
-      "notes": "Every downgrade opens to its decision record. Here's event 1071: Elevated by the Pc bound alone, eligible, a score of 0.00074 under the threshold of 0.0083, so it was demoted, and all invariants hold. Event 482 is a rule-defined Critical, so it isn't eligible and stays Critical. The record shows why. The analyst decides what to do.\n\n[about 27 s, from 2:45]\nReview page captured from feat/review-console (open PR, not on main yet); its top bar reads \"Guardrails PASS 7/7\" because that branch predates the 11-check audit on main. Event 1071: demoted Elevated → below threshold, debris, miss 6,388 m, 2.00 d. Event 482: payload, miss 601 m, placeholder sigma (no_covariance), queue MANEUVER PLANNING = start planning; whether to act is the operator's decision."
+      "notes": "Every downgrade opens to its decision record. Here's event 1071: Elevated by the Pc bound alone, eligible, a score of 0.00074 under the threshold of 0.0083, so it was demoted, and all invariants hold. Event 482 is a rule-defined Critical, so it isn't eligible and stays Critical. The record shows why. The analyst decides what to do.\n\n[about 27 s, from 2:45]\nReview page captured from main (/static/review.html, merged in #52); its top bar reads \"Guardrails PASS 11/11\". Event 1071: demoted Elevated → below threshold, debris, miss 6,388 m, 2.00 d. Event 482: payload, miss 601 m, placeholder sigma (no_covariance), queue MANEUVER PLANNING = start planning; whether to act is the operator's decision."
     },
     {
       "sceneId": "live",
-      "notes": "And it proves it live. Every decision carries a certificate, and the Horizon trace reads it: rule fired, model not allowed, audit pass. GET slash api slash audit re-checks eleven invariants over all 2,167 events and 24,484 decisions. POST slash api slash triage tiers any CDM you send, with its certificate. Tamper with the file and the audit fails and names the check.\n\n[about 29 s, from 3:12]\nGET /api/audit on main: status PASS, 11/11 checks (frozen copy in assets/ui/audit.json; README still says 7/7, written before the four newer checks). Counts: 2,167 events, 24,484 CDM decisions, 153 kept, 288 demoted, 1,726 not eligible. All 288 demotions have score < threshold (the audit checks the stored score; it does not re-derive it). POST /api/triage without a model artifact runs \"rules only\"; the deck example is a sample CDM (data/sample) tiered Elevated with all four invariants true. Tamper test: docs/CONTRACT.md §6."
+      "notes": "And it proves it live. Every decision carries a certificate, and the Horizon trace reads it: rule fired, model not allowed, audit pass. GET slash api slash audit re-checks eleven invariants over all 2,167 events and 24,484 decisions. POST slash api slash triage tiers any CDM you send, with its certificate. Tamper with the file and the audit fails and names the check.\n\n[about 29 s, from 3:12]\nCapture: prediction replay flipbook (482 at CDM 1, 482 at CDM 6, 805 end state), then the push-in to event 805's backend trace: Pc 10^-3.96 ≥ 1e-4 and miss 900 m < 1 km; model allowed? No: rule-defined Critical; decision not eligible → Maneuver Planning; audit PASS (11 checks). The manoeuvre on 805 is illustrative. GET /api/audit on main: status PASS, 11/11 checks (frozen copy in assets/ui/audit.json). Counts: 2,167 events, 24,484 CDM decisions, 153 kept, 288 demoted, 1,726 not eligible. All 288 demotions have score < threshold (the audit checks the stored score; it does not re-derive it). POST /api/triage without a model artifact runs \"rules only\"; the deck example is a sample CDM (data/sample) tiered Elevated with all four invariants true. Tamper test: docs/CONTRACT.md §6."
     },
     {
       "sceneId": "eval",
@@ -897,11 +912,11 @@
     },
     {
       "sceneId": "next",
-      "notes": "What's next. The final-tier forecaster for the official task is in an open pull request, and we won't quote its numbers until they're on main. The review page is also in review. And to be clear about limits: the 99 percent is a recall target, not a guarantee, and we don't yet have calibrated Pc, a live feed, orbit propagation, or test data inside two days.\n\n[about 31 s, from 5:09]\nPending: Critical recall and confusion matrix [pending: final-tier forecaster]; use docs/FORECAST.md numbers exactly once it is on main. No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Horizon orbits are simulated. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
+      "notes": "Here's the forecast in full. On five-fold CV, 792 of 834 final-Critical events are forecast Critical, and most errors over-warn rather than under-warn. What's open: a 90 percent target would cut false escalations from 1,139 to 775 but catch 79 escalations, not 115. That's the team's call. And we don't yet have calibrated scores, a live feed, or data inside two days.\n\n[about 29 s, from 5:09]\nConfusion matrix: 5-fold CV, summed over folds, rows = true final tier, columns = forecast (below / Elevated / Critical): below 7,999 / 882 / 65; Elevated 115 / 1,500 / 547; Critical 10 / 32 / 792. Under-tiered: 157 events (115 + 10 + 32). Recall-target sweep (docs/FORECAST.md, re-tuned train-only per target): 0.90 → recall 0.911, precision 0.757, F2 0.875, 79/270 caught, 775 false escalations, accuracy 0.888. The 0.95 target was fixed before the run; choosing 0.90 after seeing CV is a post-hoc choice, so we leave it to the team (a follow-up PR \"Forecaster at 0.90 recall target\" had not merged when this deck was built). No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
     },
     {
       "sceneId": "close",
-      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 5:40]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md. Background: Horizon view pulled back to the globe (simulated orbits)."
+      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 5:38]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md and docs/FORECAST.md. Background: Horizon view pulled back to the globe (#view=globe; orbits real size, shape and tilt, orientation not in the data)."
     }
   ]
 }
@@ -928,10 +943,10 @@
       >
         <div class="shot" id="cover-shot" style="left: 0px; top: 0px; width: 1920px; height: 1080px">
           <div class="view"><div class="cam" data-layout-allow-overflow>
-            <img src="assets/ui/hz-t00.webp" alt="Horizon view: an Elevated pass flagged" />
-            <img src="assets/ui/hz-t41.webp" alt="Horizon view: objects approaching" />
-            <img src="assets/ui/hz-t44.webp" alt="Horizon view: a Critical pass approaching" />
-            <img src="assets/ui/hz-482.webp" alt="Horizon view: event 482 flagged Critical with its backend trace" />
+            <img src="assets/ui/hz-482-c1.webp" alt="Prediction replay, event 482 at CDM 1: Elevated" />
+            <img src="assets/ui/hz-482-c3.webp" alt="Prediction replay, event 482 at CDM 3" />
+            <img src="assets/ui/hz-482-c6.webp" alt="Prediction replay, event 482 at CDM 6: inside 1 km, Critical" />
+            <img src="assets/ui/hz-805.webp" alt="Prediction replay, event 805: decision, backend trace and the illustrative manoeuvre" />
           </div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
@@ -946,9 +961,9 @@
           <div class="hook">Cuts the review queue by a quarter, shows a decision record for every downgrade, and is <b>architecturally forbidden from downgrading a rule-defined Critical.</b></div>
           <div class="team">Tommy · Franky · Reagan · Kalent</div>
         </div>
-        <div class="honest" id="cover-honest" style="left: 1224px; top: 836px; width: 600px">
-          <div class="hc">SIMULATED ORBITS, NOT DATA</div>
-          <div class="hs">Real: each event's latitude, speed, miss distance and pass order.</div>
+        <div class="honest" id="cover-honest" style="left: 1184px; top: 780px; width: 640px">
+          <div class="hc">PREDICTION REPLAY</div>
+          <div class="hs">Each dot is one CDM's predicted miss point at closest approach. Orbits: real size, shape and tilt; orientation not in the data. Manoeuvre illustrative.</div>
         </div>
       </div>
 
@@ -1103,7 +1118,7 @@
         id="s-task"
         class="scene clip"
         data-composition-id="task"
-        data-cap="The decision point is 2 days out. Forecast numbers arrive with the final-tier forecaster."
+        data-cap="Bounded: a rule-defined Critical is never lowered. The 95% is a recall target, not a guarantee."
         data-start="50"
         data-duration="10"
         data-label="5 The official task"
@@ -1115,19 +1130,29 @@
           <h1 class="head">Predict each event's final tier, 2 days out</h1>
         </div>
         <div class="col-text" id="task-col" style="gap: 22px">
-          <div class="pt"><b>Input:</b> CDM updates ≥ 2 days before closest approach</div>
-          <div class="pt"><b>Output:</b> the final tier, with a probability</div>
-          <div class="pt"><b>Score:</b> 80/20 split by event; Critical recall, confusion matrix</div>
-          <div class="card" id="task-res" style="padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; border-color: #ffb547">
-            <div class="label">Our forecast</div>
-            <div class="pend">[pending: final-tier forecaster]</div>
+          <div class="pt"><b>Input:</b> updates ≥ 2 days out. <b>Output:</b> the final tier.</div>
+          <div class="pt"><b>Bar:</b> keep today's tier (miss-distance persistence)</div>
+          <div class="card" id="task-res" style="padding: 16px 22px; display: flex; flex-direction: column; gap: 8px">
+            <div class="label">5-fold CV · 11,942 events</div>
+            <table class="mini" id="task-tbl">
+              <thead><tr><th></th><th>Ours</th><th>Keep tier</th></tr></thead>
+              <tbody>
+                <tr><td>Critical recall</td><td class="g">0.950</td><td>0.865</td></tr>
+                <tr><td>Critical precision</td><td>0.565</td><td>0.857</td></tr>
+                <tr><td>Critical F2</td><td>0.835</td><td>0.863</td></tr>
+                <tr><td>Escalations caught</td><td class="g">115/270</td><td>0/270</td></tr>
+                <tr><td>False escalations</td><td class="a">1,139</td><td>0</td></tr>
+                <tr><td>Accuracy</td><td class="a">0.862 lower</td><td>0.938</td></tr>
+              </tbody>
+            </table>
+            <div class="note" style="font-size: 22px">80/20 split: recall 0.970, 24/50 caught.</div>
           </div>
         </div>
         <div class="shot cap-r" id="task-shot">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/decision.webp" alt="Decision point chart" /></div></div>
+          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/decision.webp" alt="Decision point chart" /><img src="assets/ui/dash-final.webp" alt="Dashboard in Final tier mode: forecast final tier for the 2,167 test events" /><img src="assets/ui/eval.webp" alt="Evaluation tab, official task panel: 5-fold CV results and confusion matrix" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
-          <div class="stag">OUR DECISION POINT VIEW</div>
+          <div class="stag">OUR DECISION POINT · DASHBOARD · EVALUATION TAB</div>
         </div>
       </div>
 
@@ -1156,7 +1181,7 @@
           <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/review-1071.webp" alt="Review page, event 1071, demoted" /><img src="assets/ui/review-482.webp" alt="Review page, event 482, stays Critical" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
-          <div class="stag">OUR REVIEW PAGE · PR OPEN</div>
+          <div class="stag">OUR REVIEW PAGE</div>
         </div>
       </div>
 
@@ -1176,12 +1201,17 @@
           <div class="eyebrow"><span class="num">7</span>It proves it live</div>
           <h1 class="head">Each decision has a certificate; the server audits them live</h1>
         </div>
-        <div class="shot" id="live-shot" style="left: 96px; top: 340px; width: 860px; height: 470px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/hz-482.webp" alt="Horizon view backend trace for event 482" /></div></div>
+        <div class="shot" id="live-shot" style="left: 96px; top: 340px; width: 860px; height: 400px">
+          <div class="view"><div class="cam" data-layout-allow-overflow>
+            <img src="assets/ui/hz-482-c1.webp" alt="Prediction replay, event 482 at CDM 1" />
+            <img src="assets/ui/hz-482-c6.webp" alt="Prediction replay, event 482 at CDM 6: Critical" />
+            <img src="assets/ui/hz-805.webp" alt="Prediction replay, event 805: backend trace from its certificate" />
+          </div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
           <div class="stag">BACKEND TRACE · HORIZON VIEW</div>
         </div>
+        <div class="abs" id="live-cap" style="left: 96px; top: 752px; width: 860px; font-size: 22px; line-height: 1.3; color: #c9d3d0">Each dot is one CDM's predicted miss point at closest approach. Orbits: real size, shape and tilt; orientation not in the data. Manoeuvre illustrative.</div>
         <div class="abs card" id="live-triage" style="left: 96px; top: 834px; width: 860px; padding: 14px 22px">
           <div class="code"><span class="g">POST /api/triage</span>  {"cdms": [ any CDM ]}
 → tier, rules fired, <span class="v">4 of 4 invariants</span>, "holds": <span class="v">true</span></div>
@@ -1298,7 +1328,7 @@
         id="s-next"
         class="scene clip"
         data-composition-id="next"
-        data-cap="No forecast claims until the forecaster's numbers are on main."
+        data-cap="Most forecast errors over-warn. Recall targets are measured out of fold, not guarantees."
         data-start="110"
         data-duration="10"
         data-label="11 In progress"
@@ -1307,20 +1337,25 @@
         <div class="grid-bg"></div>
         <div class="pad">
           <div class="eyebrow"><span class="num">11</span>What's in progress</div>
-          <h1 class="head">Next: the final-tier forecaster</h1>
+          <h1 class="head">The forecast in full, and what is still open</h1>
         </div>
-        <div class="abs card" id="nx-a" style="left: 96px; top: 340px; width: 840px; height: 460px; padding: 30px 34px; display: flex; flex-direction: column; gap: 20px">
-          <div><span class="wip">IN PROGRESS · OPEN PR</span></div>
-          <div class="sub">Final-tier forecaster</div>
-          <div class="pt" style="padding-left: 0; border: 0">Final tier with a probability, from updates ≥ 2 days out.</div>
-          <div class="pend" style="align-self: flex-start">Critical recall [pending: final-tier forecaster]</div>
-          <div class="pend" style="align-self: flex-start">Confusion matrix [pending: final-tier forecaster]</div>
+        <div class="abs card" id="nx-a" style="left: 96px; top: 340px; width: 840px; height: 480px; padding: 26px 34px; display: flex; flex-direction: column; gap: 14px">
+          <div class="label">Confusion matrix · 5-fold CV · 11,942 events</div>
+          <table class="cm" id="nx-cm">
+            <thead><tr><th class="rh">True final ↓</th><th>Below</th><th>Elevated</th><th>Critical</th></tr></thead>
+            <tbody>
+              <tr><th class="rh">Below thr.</th><td class="diag">7,999</td><td>882</td><td>65</td></tr>
+              <tr><th class="rh">Elevated</th><td>115</td><td class="diag">1,500</td><td>547</td></tr>
+              <tr><th class="rh">Critical</th><td>10</td><td>32</td><td class="diag">792</td></tr>
+            </tbody>
+          </table>
+          <div class="note">Columns: forecast final tier. <b style="color: #eef3f1">792 of 834</b> final-Critical events forecast Critical (0.950).</div>
         </div>
-        <div class="abs card" id="nx-b" style="left: 984px; top: 340px; width: 840px; height: 460px; padding: 30px 34px; display: flex; flex-direction: column; gap: 22px">
-          <div><span class="wip">ALSO OPEN</span></div>
-          <div class="pt">Review page: in an open PR</div>
+        <div class="abs card" id="nx-b" style="left: 984px; top: 340px; width: 840px; height: 480px; padding: 30px 34px; display: flex; flex-direction: column; gap: 22px">
+          <div><span class="wip">OPEN</span></div>
+          <div class="pt"><b>Target 0.90, not 0.95?</b> 775 false escalations, not 1,139; 79 escalations caught, not 115. The team's call.</div>
+          <div class="pt">Forecast scores rank events; they are not calibrated probabilities</div>
           <div class="pt">Stricter v2: CV only, not shipped</div>
-          <div class="pt">The 99% is a recall target, not a guarantee</div>
         </div>
         <div class="abs pt" id="nx-gaps" style="left: 96px; top: 860px; width: 1728px; color: #a3b1ad; border-left-color: #6f7d79">
           <b style="color: #eef3f1">Not solved yet:</b> calibrated Pc · live CDM feed · orbit propagation · the final 2 days
@@ -1350,7 +1385,7 @@
           <div class="t3" style="font-family: 'Archivo', system-ui, sans-serif; font-size: 34px; line-height: 1.45; color: #eef3f1">Rules decide every tier.<br />The model only removes over-warnings.<br />Claude only writes explanations.<br />The analyst decides.</div>
           <div class="t4">Thank you.</div>
         </div>
-        <div class="honest" id="close-honest" style="left: 96px; top: 880px"><div class="hc">SIMULATED ORBITS, NOT DATA</div></div>
+        <div class="honest" id="close-honest" style="left: 96px; top: 880px"><div class="hc">ORBITS: REAL SIZE, SHAPE AND TILT</div><div class="hs">Orientation around Earth not in the data.</div></div>
       </div>
     </div>
     <div id="veil"></div>
@@ -1409,14 +1444,17 @@
           head802: { x: 1041, y: 93, w: 190, h: 57 },
           critKept: { x: 1240, y: 93, w: 316, h: 57 },
           headPair: { x: 1021, y: 92, w: 540, h: 58 },
-          hzObj482: { x: 1520, y: 308, w: 90, h: 90 },
-          hzCall482: { x: 1102, y: 114, w: 420, h: 196 },
-          hzTrace: { x: 1104, y: 196, w: 416, h: 104 },
-          hzAllowed: { x: 1110, y: 245, w: 405, h: 20 },
-          hzGuard: { x: 1110, y: 280, w: 405, h: 20 },
+          hzPanel: { x: 1504, y: 64, w: 384, h: 505 },
+          hzTrace: { x: 1505, y: 420, w: 382, h: 149 },
+          hzAllowed: { x: 1521, y: 486, w: 350, h: 18 },
+          hzGuard: { x: 1521, y: 539, w: 350, h: 18 },
           dpChip: { x: 1204, y: 136, w: 188, h: 18 },
           dpLine: { x: 1290, y: 175, w: 16, h: 820 },
-          dpRight: { x: 1310, y: 190, w: 470, h: 470 },
+          dpRight: { x: 1310, y: 195, w: 470, h: 550 },
+          dfCardWhy: { x: 1590, y: 658, w: 300, h: 92 },
+          evo: { x: 324, y: 97, w: 980, h: 534 },
+          evoModel: { x: 324, y: 221, w: 980, h: 48 },
+          evoCm: { x: 324, y: 386, w: 479, h: 219 },
           rvRule: { x: 468, y: 362, w: 720, h: 26 },
           rvElig: { x: 468, y: 393, w: 720, h: 26 },
           rvScore: { x: 468, y: 425, w: 720, h: 26 },
@@ -1506,12 +1544,12 @@
         // shows the finished slide.
         var B = {}, LEN = {};
 
-        // Cover: the Horizon view as a flipbook (four real captures, cross-faded) under one slow push-in.
+        // Cover: the Horizon prediction replay as a flipbook (event 482 at CDM 1, 3, 6, then event 805's end state;
+        // four real captures, cross-faded) under one slow push-in.
         var cover = Shot("cover-shot");
-        var coverC0 = camAt(cover, R.whole, 1), coverC1 = camAt(cover, { x: 1150, y: 230, w: 500, h: 300 }, 1.1);
-        var coverRingObj = ring(cover, coverC1, R.hzObj482, "#ff5a64", 6, true);
+        var coverC0 = camAt(cover, R.whole, 1), coverC1 = camAt(cover, { x: 1300, y: 300, w: 500, h: 400 }, 1.08);
         var coverRingTrace = ring(cover, coverC1, R.hzTrace, "#3fe0a0", 6);
-        var coverTag = tag(cover, coverC1, R.hzObj482, "backend trace, from the decision's certificate", "b", null, 400);
+        var coverTag = tag(cover, coverC1, R.hzTrace, "backend trace, from the decision's certificate", "b", null, 380);
         LEN["s-cover"] = 8.4;
         B["s-cover"] = function (tl, t, k) {
           var m = M(tl, k);
@@ -1525,8 +1563,7 @@
           m.rise($("#s-cover .hook"), t + 1.3 * k);
           m.fade($("#s-cover .team"), t + 2.2 * k);
           m.rise($("#cover-honest"), t + 2.8 * k);
-          m.draw(coverRingObj, t + 6.5 * k);
-          m.draw(coverRingTrace, t + 6.9 * k);
+          m.draw(coverRingTrace, t + 6.7 * k);
           m.rise(coverTag, t + 7.3 * k);
         };
 
@@ -1617,18 +1654,33 @@
         var tRingLine = ring(ts, tC, R.dpLine, "#3fe0a0", 4);
         var tTagLine = tag(ts, tC, R.dpChip, "the decision point: 2 days out", "t", null, 360);
         var tRingRight = ring(ts, tC, R.dpRight, "#ffb547", 4);
-        var tTagRight = tag(ts, tC, R.dpRight, "forecast final tier: shows the current tier until the forecaster lands", "b", "#ffb547", 380);
-        LEN["s-task"] = 7.6;
+        var tTagRight = tag(ts, tC, R.dpRight, "forecast final tier per test event; rings mark escalations", "b", "#ffb547", 380);
+        // then the dashboard's default "Final tier" view (#67): an escalated event's card
+        var tRingDash = ring(ts, tC, R.dfCardWhy, "#ffb547", 4);
+        var tTagDash = tag(ts, tC, R.dfCardWhy, "dashboard default: forecast final tier, 2,167 test events", "l", null, 380);
+        // and the Evaluation tab's official panel (#68): the same 5-fold CV numbers and the confusion matrix
+        var tE = camFit(ts, R.evo, 10);
+        var tRingModel = ring(ts, tE, R.evoModel, "#3fe0a0", 2), tRingCm = ring(ts, tE, R.evoCm, "#3fe0a0", 4);
+        LEN["s-task"] = 11.2;
         B["s-task"] = function (tl, t, k) {
           var m = M(tl, k);
           head(m, "s-task", t);
+          m.hide(ts.imgs.slice(1), t);
           m.rise($$("#task-col > .pt"), t + 0.4 * k, 0.25);
           m.fade(ts.el, t + 0.6 * k);
           tl.set(ts.cam, { x: tW.x, y: tW.y, scale: tW.scale, immediateRender: true }, t);
           m.cam(ts, tC, t + 1.6 * k, 1.6);
           m.draw(tRingLine, t + 3.2 * k, 0.9); m.rise(tTagLine, t + 3.6 * k);
           m.draw(tRingRight, t + 4.8 * k); m.rise(tTagRight, t + 5.2 * k);
-          m.rise($("#task-res"), t + 6.4 * k);
+          m.rise($("#task-res"), t + 5.8 * k);
+          m.rise($$("#task-tbl tbody tr"), t + 6.1 * k, 0.15);
+          m.out([tRingLine, tTagLine, tRingRight, tTagRight], t + 6.9 * k);
+          m.xfade(ts.imgs[1], t + 6.9 * k, 0.9);
+          m.draw(tRingDash, t + 7.8 * k); m.rise(tTagDash, t + 8.1 * k);
+          m.out([tRingDash, tTagDash], t + 9.2 * k);
+          m.xfade(ts.imgs[2], t + 9.2 * k, 0.9);
+          m.cam(ts, tE, t + 9.2 * k, 1.2);
+          m.draw([tRingModel, tRingCm], t + 10.4 * k, 0.6, 0.2);
         };
 
         // Decision record: event 1071 (demoted), then event 482 (not eligible), on the review page
@@ -1659,18 +1711,22 @@
 
         // Proves it live: the trace on the Horizon view, the live audit, POST /api/triage
         var lv = Shot("live-shot");
-        var lW = camFit(lv, { x: 600, y: 60, w: 1300, h: 600 }, 0), lZ = camFit(lv, R.hzCall482, 20);
+        var lW = camFit(lv, { x: 380, y: 40, w: 1520, h: 830 }, 0), lZ = camFit(lv, { x: 1505, y: 380, w: 382, h: 260 }, 16);
         var lRingAllowed = ring(lv, lZ, R.hzAllowed, "#3fe0a0", 4), lRingGuard = ring(lv, lZ, R.hzGuard, "#3fe0a0", 4);
         var lTag = tag(lv, lZ, R.hzGuard, "model not allowed · audit PASS", "b", null, 420);
         LEN["s-live"] = 8;
         B["s-live"] = function (tl, t, k) {
           var m = M(tl, k);
           head(m, "s-live", t);
+          m.hide(lv.imgs.slice(1), t);
           m.fade(lv.el, t + 0.4 * k);
           tl.set(lv.cam, { x: lW.x, y: lW.y, scale: lW.scale, immediateRender: true }, t);
-          m.cam(lv, lZ, t + 1.0 * k, 1.6);
-          m.draw([lRingAllowed, lRingGuard], t + 2.6 * k, 0.6, 0.2);
-          m.rise(lTag, t + 3.1 * k);
+          m.xfade(lv.imgs[1], t + 0.8 * k, 0.6);
+          m.xfade(lv.imgs[2], t + 1.5 * k, 0.6);
+          m.fade($("#live-cap"), t + 0.8 * k);
+          m.cam(lv, lZ, t + 2.1 * k, 1.4);
+          m.draw([lRingAllowed, lRingGuard], t + 3.0 * k, 0.6, 0.2);
+          m.rise(lTag, t + 3.4 * k);
           m.rise($("#live-audit"), t + 3.4 * k);
           m.right($$("#live-checks .chk"), t + 3.8 * k, 0.15);
           m.stamp($("#live-pass"), -3, t + 5.7 * k);
@@ -1739,7 +1795,7 @@
 
         // Close: the globe settles back, the four roles land
         var cl = Shot("close-shot");
-        var clC0 = camAt(cl, { x: 660, y: 340, w: 400, h: 400 }, 1.48), clC1 = camAt(cl, { x: 660, y: 340, w: 400, h: 400 }, 1.4);
+        var clC0 = camAt(cl, { x: 554, y: 335, w: 400, h: 400 }, 1.48), clC1 = camAt(cl, { x: 554, y: 335, w: 400, h: 400 }, 1.4);
         LEN["s-close"] = 4;
         B["s-close"] = function (tl, t, k) {
           var m = M(tl, k);

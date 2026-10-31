@@ -1,8 +1,8 @@
 # Second Look · Conjunction Triage Stack (deck)
 
 An animated 16:9 HyperFrames slideshow for Second Look: bounded, inspectable demotion. It is built on the same
-pattern as the SDTH deck and animates real captures of our product (Horizon view, Decision point, Review page,
-dashboard) plus the live audit.
+pattern as the SDTH deck and animates real captures of our product (Horizon prediction replay, Decision point,
+Review page, dashboard) plus the live audit.
 
 ## Present it
 
@@ -23,19 +23,22 @@ Everything is local, so it works without venue Wi-Fi. Over Google Meet, share th
 - Speaker notes: `notes/script.md`. Text before `--` is spoken; text after it is presenter-only.
   Then run `python3 tools/build.py`, which writes the notes into both copies of the JSON island
   (`composition/index.html` and `index.html`) and the slide timing.
-- Captures: start the app (`uv run uvicorn server:app --port 8090` from the repo root; the Review page needs
-  `feat/review-console` served on 8091 until it merges), then
-  `node tools/capture-ui.mjs http://127.0.0.1:8090 http://127.0.0.1:8091`. Convert the PNGs to webp (commands in
-  the script's header). The script also freezes `GET /api/audit` into `assets/ui/audit.json`.
+- Captures: start the app (`uv run uvicorn server:app --port 8098` from the repo root; copy `reports/model.joblib`
+  in first), then `node tools/capture-ui.mjs http://127.0.0.1:8098`. Horizon frames use `#demo=<id>&cdm=<n>`
+  (paused at CDM n; no `cdm` = the case's end state) and `#view=globe`. Convert the PNGs to webp (commands in the
+  script's header). The script also freezes `GET /api/audit` into `assets/ui/audit.json`.
 - Type scale (1920x1080): headline 72 · subhead 44 · body 30 · note 24 · label 24 mono caps · callout 24 ·
   minimum 22. Content sits on a 96 px margin grid between y 340 and 952.
 - Check: `npm run check` (HyperFrames lint plus the runtime, layout and contrast audits).
 
 ## Slides (13)
 
-Cover (Horizon flipbook, "simulated orbits, not data") · 1 The problem · 2 Why Second Look (the USP) ·
-3 The stack · 4 Risk pipeline · 5 The official task (decision point, forecast pending) · 6 Decision record ·
-7 It proves it live (certificate + /api/audit + /api/triage) · 8 Honest evaluation · 9 Where it fails (event
-1278) · 10 Safety gate (v2 didn't ship) · 11 In progress · Close
+Cover (Horizon prediction replay flipbook: event 482 at CDM 1, 3, 6, then event 805) · 1 The problem ·
+2 Why Second Look (the USP) · 3 The stack · 4 Risk pipeline · 5 The official task (decision point, final-tier
+forecast vs keep today's tier, 5-fold CV) · 6 Decision record · 7 It proves it live (replay trace + /api/audit +
+/api/triage) · 8 Honest evaluation · 9 Where it fails (event 1278) · 10 Safety gate (v2 didn't ship) ·
+11 In progress (forecast confusion matrix, the 0.90 vs 0.95 choice) · Close
 
-Forecast numbers are marked "[pending: final-tier forecaster]" until docs/FORECAST.md is on main.
+Forecast numbers come from docs/FORECAST.md and data/demo/forecast_metrics.json at the shipped operating point
+(95% final-Critical recall target). dash-final is the dashboard's default Final tier view (#67); eval is the Evaluation tab's official panel
+(#68); the per-message captures (dash-model, dash-baseline, compare-1278) are from deck v2 (the dashboard's Now view).
