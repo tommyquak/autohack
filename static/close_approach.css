@@ -18,10 +18,10 @@
 /* Readable header: one plain sentence, then big tabular readings (SDTH "Night Instrument"). */
 .ca-sentence { margin: 4px 0 10px; font-size: 15px; line-height: 1.45; color: var(--ink, #e6ebe8); max-width: 75ch; }
 .ca-sentence b { font-family: var(--mono, ui-monospace, monospace); font-weight: 600; font-variant-numeric: tabular-nums; }
-.ca-readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); border-top: 1px solid var(--hair2, #2a3532); border-bottom: 1px solid var(--hair2, #2a3532); margin-bottom: 6px; }
+.ca-readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); border-top: 1px solid var(--hair2, #2a3532); border-bottom: 1px solid var(--hair2, #2a3532); margin-bottom: 6px; }
 .ca-reading { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px 8px 0; }
 .ca-reading + .ca-reading { border-left: 1px solid var(--hair, #1b2220); padding-left: 12px; }
 .ca-label { font: 500 11px/1.3 var(--mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #7d8a85); }
-.ca-value { font: 600 22px/1.15 var(--mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; color: var(--ink, #e6ebe8); }
+.ca-value { font: 600 20px/1.15 var(--mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; color: var(--ink, #e6ebe8); }
 .ca-sub { font-size: 11px; color: var(--muted, #7d8a85); }
 .ca-unknown { color: var(--muted, #7d8a85); border-bottom: 1px dotted currentColor; }

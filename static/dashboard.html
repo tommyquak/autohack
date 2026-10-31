@@ -22,15 +22,20 @@
       <h1>Which encounters need a maneuver?</h1>
       <p class="muted" id="stamp">Loading&hellip;</p>
     </div>
-    <section class="block" aria-labelledby="h-filter">
-      <h2 id="h-filter"><i>01</i> Filter</h2>
-      <div class="chips" id="tier-chips" role="group" aria-label="Tier"></div>
-      <label class="check"><input type="checkbox" id="f-review"> Needs review only</label>
-      <label class="select-row"><span class="label">Object type</span><select id="f-type"><option value="">All</option></select></label>
-      <button type="button" class="link" id="f-clear" hidden>Clear filters</button>
-    </section>
+    <details class="fold" id="filter-fold">
+      <summary><h2 id="h-filter">Filter</h2><span class="fold-sum" id="filter-sum">All events</span></summary>
+      <div class="fold-body">
+        <div class="chips" id="tier-chips" role="group" aria-label="Tier"></div>
+        <label class="check"><input type="checkbox" id="f-review"> Needs review only</label>
+        <label class="select-row"><span class="label">Object type</span><select id="f-type"><option value="">All</option></select></label>
+      </div>
+    </details>
     <section class="block grow" aria-labelledby="h-queue">
-      <h2 id="h-queue"><i>02</i> Queue <span class="count" id="queue-count"></span></h2>
+      <div class="qhead">
+        <h2 id="h-queue">Queue</h2>
+        <button type="button" class="link" id="f-clear" hidden>Clear filters</button>
+        <span class="count num" id="queue-count"></span>
+      </div>
       <div class="queue" id="queue" tabindex="0" aria-label="Ranked events, most urgent first"></div>
     </section>
   </aside>
@@ -52,25 +57,31 @@
         <div class="tip" id="tip" hidden></div>
         <div class="empty" id="funnel-empty" hidden></div>
       </div>
-      <p class="note" id="funnel-note"></p>
+      <div class="funnel-foot">
+        <div class="legend" aria-label="Legend" id="legend"></div>
+        <p class="note" id="funnel-note"></p>
+      </div>
     </div>
   </section>
 
   <aside class="rail right" aria-label="Selected event and next 24 hours">
-    <div class="legend" aria-label="Legend" id="legend"></div>
-    <section class="block" aria-labelledby="h-sel">
-      <h2 id="h-sel"><i>03</i> Selected event</h2>
+    <section class="block sel" aria-labelledby="h-sel">
+      <h2 id="h-sel">Selected event</h2>
       <div id="detail" class="detail"><p class="muted">Pick an event from the queue or click a dot.</p></div>
     </section>
-    <section class="block" aria-labelledby="h-24">
-      <h2 id="h-24"><i>04</i> Next 24 hours</h2>
-      <div id="window"></div>
-      <div id="strip" class="strip" role="group" aria-label="Flagged events by half-day"></div>
-    </section>
-    <section class="block" aria-labelledby="h-lat">
-      <h2 id="h-lat"><i>05</i> Where encounters happen</h2>
-      <div id="latitude" class="latitude" aria-label="Events by conjunction latitude band"></div>
-    </section>
+    <details class="fold" id="window-fold">
+      <summary><h2 id="h-24">Next 24 hours</h2><span class="fold-sum num" id="window-sum"></span></summary>
+      <div class="fold-body">
+        <div id="window"></div>
+        <div id="strip" class="strip" role="group" aria-label="Flagged events by half-day"></div>
+      </div>
+    </details>
+    <details class="fold" id="lat-fold">
+      <summary><h2 id="h-lat">Where encounters happen</h2><span class="fold-sum num" id="lat-sum"></span></summary>
+      <div class="fold-body">
+        <div id="latitude" class="latitude" aria-label="Events by conjunction latitude band"></div>
+      </div>
+    </details>
   </aside>
 </main>
 

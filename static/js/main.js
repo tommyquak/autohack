@@ -16,7 +16,7 @@ const fail = (msg) => ((banner.textContent = msg), (banner.hidden = false));
 
 document.getElementById("legend").innerHTML =
   TIERS.map((t) => `<span><b style="color:${t.color}">${t.icon}</b> ${t.name}</span>`).join("") +
-  `<span><b style="color:${TIERS[1].color}">◌</b> Needs review</span>`;
+  `<span><b style="color:${TIERS[1].color}">◌</b> Ring: needs review</span>`;
 
 async function main() {
   const [summary, list, metrics] = await Promise.all([api.summary(), api.events(), api.metrics().catch(() => null)]);

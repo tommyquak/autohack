@@ -203,15 +203,16 @@ function updateWorkload() {
   const shown = Math.round(lerp(base, model, progress));
   const m = state.metrics?.results?.model;
   const el = document.getElementById("workload");
+  // The drop only reads once the toggle has crossed to the model; on the rule side it is the rule's own count.
+  const delta = progress >= 0.5 && model < base ? `<span class="down">−${(base - model).toLocaleString("en")} vs rule</span>` : `<span class="muted">${progress >= 0.5 ? "model" : "rule alone"}</span>`;
   el.innerHTML =
-    `<span>Flagged for review <b class="num">${shown.toLocaleString("en")}</b> ` +
-    `<span class="down">${model < base ? `−${(base - model).toLocaleString("en")} vs rule` : ""}</span></span>` +
-    `<span>Critical kept <b class="num">${crit.toLocaleString("en")}</b></span>` +
-    (m ? `<span>Critical recall <b class="num">${pct(m.critical_recall)}</b> <span class="muted">on ${m.n.toLocaleString("en")} test CDMs</span></span>` : "");
+    `<div class="wl main"><span class="wl-k">Flagged for review</span><span class="wl-v"><b class="num">${shown.toLocaleString("en")}</b>${delta}</span></div>` +
+    `<div class="wl"><span class="wl-k">Critical kept</span><span class="wl-v"><b class="num">${crit.toLocaleString("en")}</b></span></div>` +
+    (m ? `<div class="wl"><span class="wl-k">Critical recall</span><span class="wl-v"><b class="num">${pct(m.critical_recall)}</b><span class="muted">${m.n.toLocaleString("en")} test CDMs</span></span></div>` : "");
   const empty = document.getElementById("funnel-empty");
   empty.hidden = up.length > 0;
   empty.textContent = "Every event has passed closest approach. Press Reset on the replay clock.";
   document.getElementById("funnel-note").textContent =
     (state.elapsed > 0 ? "REPLAY: each event's latest prediction carried forward in time; no new CDMs arrive. " : "") +
-    "Position shows distance only: Pc also sets the tier, so a dot above 5 km can still be Critical. Rings mark events needing review.";
+    "Position shows distance only: Pc also sets the tier, so a dot above 5 km can still be Critical.";
 }

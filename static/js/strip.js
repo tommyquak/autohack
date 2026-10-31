@@ -5,6 +5,7 @@ import { remaining, state, subscribe, touchFilters, upcoming } from "./state.js"
 const SLOTS = MAX_DAYS * 2; // half-day buckets from "now"
 const win = document.getElementById("window");
 const strip = document.getElementById("strip");
+const sum = document.getElementById("window-sum");
 
 export function initStrip() {
   strip.innerHTML =
@@ -25,11 +26,13 @@ function paint() {
   const up = upcoming();
   // Same definition as triage/build_events.py warnings_24h: TCA inside the window, miss < 1 km, tier Critical.
   const inWin = up.filter((e) => remaining(e) <= 1);
+  const critIn = inWin.filter((e) => e.tier === 2).length;
+  if (sum) sum.textContent = inWin.length ? `${inWin.length} in window · ${critIn} critical` : "none yet";
   const stat = (n, label) => `<div class="stat"><b>${n}</b><span>${label}</span></div>`;
   win.innerHTML =
     stat(inWin.length, "in window") +
     stat(inWin.filter((e) => e.latest.miss_distance_m < 1000).length, "under 1 km") +
-    stat(inWin.filter((e) => e.tier === 2).length, "critical") +
+    stat(critIn, "critical") +
     (inWin.length === 0
       ? `<p class="window-note">${upcoming().length ? `No event is inside 24 h of closest approach yet; the nearest is ${(Math.min(...up.map(remaining))).toFixed(1)} d out. ` : "Every event has passed closest approach. "}This test set has no CDMs under 2 days to TCA, so press play on the replay clock to watch events arrive.</p>`
       : "");

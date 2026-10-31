@@ -44,6 +44,16 @@ export function initFilters() {
   subscribe(["filters"], () => {
     const f = state.filters;
     document.getElementById("f-clear").hidden = f.tiers.size === 3 && !f.review && !f.type && f.slot === null && f.lat === null;
+    // The filter panel is folded by default, so its summary says what is on, including filters set from the strip or globe.
+    const on = [];
+    if (f.tiers.size < 3) on.push(f.tiers.size ? TIERS.filter((_, i) => f.tiers.has(i)).map((t) => t.name).join(" + ") : "no tiers");
+    if (f.review) on.push("needs review");
+    if (f.type) on.push(f.type.toLowerCase());
+    if (f.slot !== null) on.push(`TCA ${(f.slot * 0.5).toFixed(1)}–${((f.slot + 1) * 0.5).toFixed(1)} d`);
+    if (f.lat !== null) on.push("one latitude band");
+    const sum = document.getElementById("filter-sum");
+    sum.textContent = on.length ? on.join(" · ") : "All events";
+    sum.classList.toggle("on", on.length > 0);
   });
 }
 
