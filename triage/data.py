@@ -23,6 +23,9 @@ FEATURES = [
     "F10",
     "AP",
 ]
+# Display-only context (NOT allowed as model inputs): where and how high the conjunction happens.
+# Kept for the dashboard; feature_matrix() only ever reads FEATURES, so these never reach the model.
+DISPLAY_ONLY = ["geocentric_latitude", "t_h_per", "t_h_apo"]
 EVENT = "event_id"
 LABEL = "risk"  # log10(Pc) - target only, never a feature
 CATEGORICAL = ["c_object_type"]
@@ -49,6 +52,7 @@ def load_cdms(path: Path | str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{path} is missing expected columns: {missing}")
     keep = [EVENT, *FEATURES] + ([LABEL] if LABEL in df.columns else [])
+    keep += [c for c in DISPLAY_ONLY if c in df.columns]
     df = df[keep].copy()
     for col in CATEGORICAL:
         df[col] = pd.Categorical(df[col], categories=CATEGORIES[col])
