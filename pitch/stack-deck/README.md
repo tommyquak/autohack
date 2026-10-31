@@ -33,7 +33,8 @@ Everything is local, so it works without venue Wi-Fi. Over Google Meet, share th
 
 ## Slides (13)
 
-Cover (Horizon prediction replay flipbook: event 482 at CDM 1, 3, 6, then event 805) · 1 The problem ·
+Cover (the Horizon screen on a monitor: night globe, event 805 Critical; screen rendered once by
+`tools/cover-screen.html` to `composition/assets/cover-screen.png`, render command in its header) · 1 The problem ·
 2 Why Second Look (the USP) · 3 The stack · 4 Risk pipeline · 5 The official task (decision point, final-tier
 forecast vs keep today's tier, 5-fold CV) · 6 Decision record · 7 It proves it live (replay trace + /api/audit +
 /api/triage) · 8 Honest evaluation · 9 Where it fails (event 1278) · 10 Safety gate (v2 didn't ship) ·

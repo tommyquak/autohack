@@ -1,0 +1,491 @@
+<!doctype html>
+<!--
+  Cover screen for the deck: the SCREEN content of the monitor on scene 1, rendered once to
+  composition/assets/cover-screen.png. Not part of the deck itself.
+
+  Render (from the repo root, which must be served over http so WebGL may read the textures):
+    python3 -m http.server 8765 --bind 127.0.0.1 &
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --use-angle=swiftshader \
+      --enable-unsafe-swiftshader --virtual-time-budget=8000 --hide-scrollbars --window-size=1920,1080 \
+      --screenshot=pitch/stack-deck/composition/assets/cover-screen.png \
+      http://127.0.0.1:8765/pitch/stack-deck/tools/cover-screen.html
+
+  Data (read live): data/demo/events.json (event 805, the tier counts, two Elevated events on Sat M2's orbit),
+  composition/assets/ui/audit.json (11/11 PASS), satellite_icons/own_satellite.obj + .colors.json (the card's
+  satellite). Real: the conjunction latitude, both objects' inclination and semi-major axis, the Elevated events'
+  latitudes. NOT in the data: longitude and orbit orientation (RAAN), set for the picture, as the note on screen says.
+  Land: Natural Earth I shaded relief (public domain, 720x360 downsample, tools/cover/natural-earth-720.png), used only
+  as a land / ice mask; city lights are procedural.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>Second Look cover screen</title>
+<script src="../../../static/vendor/three-0.160.0.min.js"></script>
+<style>
+  @font-face { font-family: 'Archivo'; src: url('../composition/fonts/archivo.woff2') format('woff2'); font-weight: 100 900; }
+  @font-face { font-family: 'Spline Sans Mono'; src: url('../composition/fonts/spline-sans-mono.woff2') format('woff2'); font-weight: 300 700; }
+  :root {
+    --ink: #eef3f1; --muted: #a3b1ad; --dim: #6f7d79;
+    --amber: #ffb547; --red: #ff5a64; --below: #8a9490; --blue: #5ea9ff;
+    --glass: rgba(16, 22, 28, 0.52); --hair: rgba(214, 232, 255, 0.10); --hair2: rgba(214, 232, 255, 0.16);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #040608; color: var(--ink);
+    font-family: 'Archivo', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  #space { display: none; background:
+    radial-gradient(1100px 800px at 720px 560px, #0b1622 0%, #060a10 55%, #030507 100%); }
+  #gl { position: absolute; inset: 0; width: 1920px; height: 1080px; display: block; }
+  #ov { position: absolute; inset: 0; pointer-events: none; }
+  .glass { position: absolute; background: var(--glass); border: 1px solid var(--hair);
+    backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 30px 60px -20px rgba(0, 0, 0, 0.6); }
+
+  /* top bar: brand at the rail's column, tabs in a pill */
+  #brand { position: absolute; left: 30px; top: 30px; height: 64px; display: flex; align-items: center; gap: 14px; }
+  #brand .mk { width: 40px; height: 40px; }
+  #brand .nm { font-weight: 800; font-size: 21px; letter-spacing: 0.16em; }
+  #nav { left: 50%; top: 30px; transform: translateX(-50%); height: 64px; border-radius: 999px; padding: 7px;
+    display: flex; align-items: center; gap: 4px; }
+  #nav .tab { height: 50px; padding: 0 26px; border-radius: 999px; display: flex; align-items: center; gap: 10px;
+    font-size: 19px; font-weight: 600; color: var(--muted); letter-spacing: 0.01em; }
+  #nav .tab.on { background: rgba(238, 243, 241, 0.94); color: #071016; }
+  #nav .tab svg { width: 20px; height: 20px; }
+  #meta { right: 236px; top: 30px; height: 64px; border-radius: 999px; padding: 0 24px; display: flex; align-items: center;
+    gap: 12px; font-size: 16px; color: var(--muted); letter-spacing: 0.08em; }
+  #meta b { color: var(--ink); font-weight: 600; }
+
+  /* left rail */
+  #rail { left: 30px; top: 128px; width: 112px; height: 920px; border-radius: 30px; display: flex; flex-direction: column;
+    align-items: center; padding: 22px 0 26px; }
+  #rail .ic { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; color: var(--muted); margin-bottom: 10px; }
+  #rail .ic.on { background: rgba(238, 243, 241, 0.10); color: var(--ink); box-shadow: inset 0 0 0 1px var(--hair2); }
+  #rail .ic svg { width: 28px; height: 28px; }
+  #rail .sep { width: 44px; height: 1px; background: var(--hair2); margin: 16px 0 22px; }
+  #rail .tiers { margin-top: auto; display: flex; flex-direction: column; gap: 26px; align-items: center; text-align: center; }
+  #rail .t .n { font-size: 25px; font-weight: 600; letter-spacing: -0.01em; }
+  #rail .t .l { margin-top: 5px; font-size: 13px; line-height: 1.2; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  #rail .t .d { width: 9px; height: 9px; border-radius: 50%; margin: 0 auto 9px; }
+  #rail .tot { margin-top: 26px; font-size: 12px; letter-spacing: 0.1em; color: var(--dim); text-transform: uppercase; }
+
+  /* globe annotations */
+  .mk-crit { position: absolute; width: 0; height: 0; }
+  .mk-crit .glow { position: absolute; left: -70px; top: -70px; width: 140px; height: 140px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 90, 100, 0.55) 0%, rgba(255, 90, 100, 0.18) 30%, rgba(255, 90, 100, 0) 68%); }
+  .mk-crit .r1, .mk-crit .r2 { position: absolute; border-radius: 50%; border: 1.5px solid rgba(255, 110, 118, 0.9); }
+  .mk-crit .r1 { left: -19px; top: -19px; width: 38px; height: 38px; }
+  .mk-crit .r2 { left: -34px; top: -34px; width: 68px; height: 68px; border-color: rgba(255, 110, 118, 0.35); }
+  .mk-crit .core { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: #ffd9dc;
+    box-shadow: 0 0 0 3px #ff5a64, 0 0 18px 6px rgba(255, 90, 100, 0.9); }
+  #lead { position: absolute; inset: 0; overflow: visible; }
+  #callout { border-radius: 18px; padding: 18px 22px 18px; width: 372px; background: rgba(8, 12, 16, 0.62); }
+  #callout .h { display: flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: 0.12em; color: var(--muted); }
+  #callout .h .crit { color: var(--red); font-weight: 600; display: inline-flex; align-items: center; gap: 7px; }
+  #callout .h .crit i { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 8px var(--red); }
+  #callout .k { margin-top: 14px; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+  #callout .v { margin-top: 2px; font-size: 38px; font-weight: 600; letter-spacing: -0.01em; }
+  #callout .row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); display: flex; gap: 22px; font-size: 18px; color: var(--ink); }
+  #callout .row span { color: var(--muted); }
+  .chip { position: absolute; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 999px;
+    font-size: 14px; letter-spacing: 0.06em; white-space: nowrap; }
+  .chip.amber { color: rgba(255, 196, 110, 0.92); background: rgba(40, 26, 6, 0.55); border: 1px solid rgba(255, 181, 71, 0.38); }
+  .chip.amber i { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 8px rgba(255, 181, 71, 0.8); }
+  .chip.orb { color: rgba(238, 243, 241, 0.78); background: rgba(10, 14, 18, 0.45); border: 1px solid var(--hair); font-size: 13px; height: 26px; }
+  .dot-a { position: absolute; width: 0; height: 0; }
+  .dot-a::before { content: ''; position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--amber); box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.22), 0 0 14px rgba(255, 181, 71, 0.7); }
+  #note { position: absolute; left: 176px; bottom: 30px; max-width: 1080px; line-height: 1.5; font-size: 14px; letter-spacing: 0.06em; color: var(--dim); }
+  #note b { color: var(--muted); font-weight: 600; }
+
+  /* satellite card */
+  #card { left: 1300px; top: 128px; width: 404px; height: 920px; border-radius: 30px; padding: 30px 30px 28px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(26, 34, 42, 0.58) 0%, rgba(12, 17, 22, 0.55) 60%, rgba(10, 14, 18, 0.62) 100%); }
+  #card .top { display: flex; justify-content: space-between; align-items: baseline; }
+  #card .ttl { font-size: 40px; font-weight: 800; letter-spacing: 0.01em; }
+  #card .id { font-size: 15px; letter-spacing: 0.12em; color: var(--dim); }
+  #card .sub { margin-top: 6px; font-size: 19px; color: var(--muted); }
+  #card .sub b { color: var(--ink); font-weight: 600; }
+  #sat { position: absolute; left: 0; top: 150px; width: 404px; height: 380px; }
+  #card .floor { position: absolute; left: 62px; top: 470px; width: 280px; height: 60px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(120, 170, 255, 0.16), rgba(120, 170, 255, 0) 100%); }
+  #card .stats { position: absolute; left: 30px; right: 30px; top: 552px; display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  #card .st { padding: 18px 0 16px; border-top: 1px solid var(--hair2); }
+  #card .st + .st { padding-left: 22px; border-left: 1px solid var(--hair); }
+  #card .st .n { font-size: 44px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+  #card .st .n small { font-size: 19px; color: var(--muted); font-weight: 500; letter-spacing: 0; margin-left: 4px; }
+  #card .st .l { margin-top: 10px; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  #card .q { position: absolute; left: 30px; right: 30px; top: 704px; border-top: 1px solid var(--hair2); padding-top: 18px; }
+  #card .q .l { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+  #card .q .v { margin-top: 8px; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  #card .q .v svg { width: 22px; height: 22px; color: var(--muted); }
+  #card .q .why { margin-top: 10px; font-size: 16px; line-height: 1.4; color: var(--muted); }
+  #card .pass { position: absolute; left: 30px; right: 30px; bottom: 26px; display: flex; align-items: center; gap: 10px;
+    font-size: 14px; letter-spacing: 0.1em; color: var(--muted); }
+  #card .pass svg { width: 18px; height: 18px; color: var(--ink); }
+</style>
+</head>
+<body>
+<div id="space"></div>
+<canvas id="gl" width="1920" height="1080"></canvas>
+<div id="ov">
+  <svg id="lead"></svg>
+
+  <div id="brand">
+    <svg class="mk" viewBox="0 0 40 40" fill="none" stroke="#eef3f1" stroke-width="1.6">
+      <circle cx="20" cy="20" r="11" />
+      <ellipse cx="20" cy="20" rx="18" ry="7" transform="rotate(-28 20 20)" stroke-opacity="0.6" />
+      <circle cx="33.6" cy="12.4" r="2.4" fill="#eef3f1" stroke="none" />
+    </svg>
+    <span class="nm">SECOND LOOK</span>
+  </div>
+
+  <div id="nav" class="glass">
+    <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.3 2.6 14.7 0 17M12 3.5c-2.6 2.3-2.6 14.7 0 17"/></svg>Horizon</div>
+    <div class="tab">Review</div>
+    <div class="tab">Decision point</div>
+    <div class="tab">Evaluation</div>
+  </div>
+  <div id="meta" class="glass mono"><b id="m-ev">2,167</b> EVENTS · MISSION <b>M2</b></div>
+
+  <div id="rail" class="glass">
+    <div class="ic on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.3 2.6 14.7 0 17M12 3.5c-2.6 2.3-2.6 14.7 0 17"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8 6.5h12M8 12h12M8 17.5h12"/><circle cx="4" cy="6.5" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="17.5" r="1"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v17M5 20.5h14M4 8h16M7 8l-3 6.5a3 3 0 0 0 6 0L7 8zM17 8l-3 6.5a3 3 0 0 0 6 0L17 8z"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 20.5h16M6.5 17V11M11 17V6M15.5 17v-4M20 17V8.5"/></svg></div>
+    <div class="sep"></div>
+    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 3v5.2c0 4.3-3 7.6-7 8.8-4-1.2-7-4.5-7-8.8V6.5l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></div>
+    <div class="tiers mono">
+      <div class="t"><div class="d" style="background:#ff5a64;box-shadow:0 0 8px rgba(255,90,100,.7)"></div><div class="n" id="n-c">196</div><div class="l">Critical</div></div>
+      <div class="t"><div class="d" style="background:#ffb547"></div><div class="n" id="n-e">606</div><div class="l">Elevated</div></div>
+      <div class="t"><div class="d" style="background:#8a9490"></div><div class="n" id="n-b">1,365</div><div class="l">below<br />threshold</div></div>
+    </div>
+    <div class="tot mono">tiers</div>
+  </div>
+
+  <div id="mk805" class="mk-crit"><div class="glow"></div><div class="r2"></div><div class="r1"></div><div class="core"></div></div>
+  <div id="callout" class="glass">
+    <div class="h mono">EVT 805 <span class="crit"><i></i>CRITICAL</span></div>
+    <div class="k mono">Chance of collision</div>
+    <div class="v mono">Pc ≤ 1e-4.0</div>
+    <div class="row mono"><div><span>miss</span> 900 m</div><div><span>latest CDM</span> T−2.0 d</div></div>
+  </div>
+
+  <div id="note" class="mono"><b>Illustrative orientation.</b> Real latitudes, tilts, altitudes; longitude and orbit orientation are not in the data.</div>
+
+  <div id="card" class="glass">
+    <div class="top"><div class="ttl">Sat M2</div><div class="id mono">EVT 805</div></div>
+    <div class="sub">vs <b>debris</b> · crossing <span class="mono" id="c-lat">−73.4°</span></div>
+    <div class="floor"></div>
+    <canvas id="sat" width="808" height="760"></canvas>
+    <div class="stats">
+      <div class="st"><div class="n mono" id="c-v">13.8<small>km/s</small></div><div class="l">relative speed</div></div>
+      <div class="st"><div class="n mono">11/11</div><div class="l">audit PASS</div></div>
+    </div>
+    <div class="q">
+      <div class="l mono">Queue</div>
+      <div class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M14 7l5 5-5 5"/></svg>Maneuver Planning</div>
+      <div class="why">Rule-defined Critical: miss under 1 km, Pc bound at 1e-4. The model is not allowed to lower it.</div>
+    </div>
+    <div class="pass mono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>GET /api/audit · <span id="c-audit">PASS 11/11</span></div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('unhandledrejection', (e) => { document.body.insertAdjacentHTML('beforeend', '<pre id="err" style="position:absolute;left:300px;top:300px;color:#f66;font-size:22px;z-index:9">' + (e.reason && (e.reason.stack || e.reason)) + '</pre>'); });
+(async function () {
+  const W = 1920, H = 1080, deg = Math.PI / 180, R_E = 6371, GM = 398600.4418;
+  const root = '../../../';
+  const [data, audit, objTxt, colors] = await Promise.all([
+    fetch(root + 'data/demo/events.json').then((r) => r.text()).then((t) => JSON.parse(t.replace(/\bNaN\b/g, 'null'))), // the file carries bare NaN
+    fetch('../composition/assets/ui/audit.json').then((r) => r.json()),
+    fetch(root + 'satellite_icons/own_satellite.obj').then((r) => r.text()),
+    fetch(root + 'satellite_icons/own_satellite.colors.json').then((r) => r.json()),
+  ]);
+  const byId = new Map(data.events.map((e) => [e.event_id, e]));
+  const ev = byId.get(805), L = ev.latest;
+  const fmt = (n) => n.toLocaleString('en');
+  const tiers = data.summary.by_tier;
+  document.getElementById('n-c').textContent = fmt(tiers['Critical']);
+  document.getElementById('n-e').textContent = fmt(tiers['Elevated']);
+  document.getElementById('n-b').textContent = fmt(tiers['Below threshold']);
+  document.getElementById('m-ev').textContent = fmt(data.summary.n_events);
+  const nPass = audit.checks.filter((c) => c.passed).length;
+  document.getElementById('c-audit').textContent = audit.status + ' ' + nPass + '/' + audit.checks.length;
+
+  // ---------- geometry (world: +Y north; lengths in Earth radii) ----------
+  const V = THREE.Vector3;
+  const llPos = (lat, lon, r = 1) => new V(Math.cos(lat) * Math.cos(lon), Math.sin(lat), -Math.cos(lat) * Math.sin(lon)).multiplyScalar(r);
+  const latX = L.geocentric_latitude_deg * deg;
+  const LON_X = 118 * deg; // illustrative: longitude is not in the data
+  const tgt = L.orbit.target, chs = L.orbit.chaser; // target = our satellite, chaser = the debris
+  const aSat = tgt.sma_km / R_E, aDeb = chs.sma_km / R_E;
+  const pX = llPos(latX, LON_X, 1);
+  const east = new V(0, 1, 0).cross(pX).normalize(), north = pX.clone().cross(east).normalize();
+  const heading = (inc, branch) => {
+    const sA = Math.max(-1, Math.min(1, Math.cos(inc * deg) / Math.cos(latX))), cA = Math.sqrt(1 - sA * sA);
+    return east.clone().multiplyScalar(sA).add(north.clone().multiplyScalar(branch * cA)).normalize();
+  };
+  // Pick the ascending / descending passes whose crossing angle best matches the real relative speed.
+  const vS = Math.sqrt(GM / tgt.sma_km), vD = Math.sqrt(GM / chs.sma_km), want = L.relative_speed_ms / 1000;
+  let best = null;
+  for (const b1 of [1, -1]) for (const b2 of [1, -1]) {
+    const d1 = heading(tgt.inc_deg, b1), d2 = heading(chs.inc_deg, b2);
+    const vr = d1.clone().multiplyScalar(vS).sub(d2.clone().multiplyScalar(vD)).length();
+    if (!best || Math.abs(vr - want) < Math.abs(best.vr - want)) best = { d1, d2, vr };
+  }
+  const circle = (a, p, d, n = 720) => {
+    const pts = [];
+    for (let i = 0; i < n; i++) { const t = (i / n) * Math.PI * 2; pts.push(p.clone().multiplyScalar(Math.cos(t) * a).add(d.clone().multiplyScalar(Math.sin(t) * a))); }
+    return pts;
+  };
+  const satPts = circle(aSat, pX, best.d1), debPts = circle(aDeb, pX, best.d2);
+  const X = pX.clone().multiplyScalar(aSat);
+
+  // ---------- renderer, camera ----------
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, alpha: false, preserveDrawingBuffer: true });
+  renderer.setClearColor(0x05080c, 1);
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // shaders below write display values directly
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 200);
+  const camDir = llPos(-27 * deg, LON_X + 17 * deg, 1);
+  camera.position.copy(camDir.clone().multiplyScalar(5.35));
+  camera.up.set(0, 1, 0);
+  camera.lookAt(0, 0, 0);
+  camera.setViewOffset(W, H, 250, -18, W, H); // globe centre at about x 710, y 558
+  camera.updateMatrixWorld();
+  const camRight = new V().setFromMatrixColumn(camera.matrixWorld, 0), camUp = new V().setFromMatrixColumn(camera.matrixWorld, 1);
+  const sunDir = camRight.clone().multiplyScalar(0.82).add(camUp.clone().multiplyScalar(0.34)).add(camDir.clone().multiplyScalar(-0.5)).normalize();
+
+  // ---------- night Earth ----------
+  const tex = await new THREE.TextureLoader().loadAsync('cover/natural-earth-720.png');
+  tex.colorSpace = THREE.NoColorSpace;
+  tex.anisotropy = 8;
+  tex.wrapS = THREE.RepeatWrapping;
+  const earthMat = new THREE.ShaderMaterial({
+    uniforms: { uMap: { value: tex }, uSun: { value: sunDir }, uMoon: { value: camUp.clone().multiplyScalar(0.6).add(camRight.clone().multiplyScalar(-0.6)).add(camDir.clone().multiplyScalar(0.55)).normalize() } },
+    vertexShader: `
+      varying vec3 vN; varying vec3 vW; varying vec3 vO;
+      void main() { vO = position; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `
+      uniform sampler2D uMap; uniform vec3 uSun; uniform vec3 uMoon;
+      varying vec3 vN; varying vec3 vW; varying vec3 vO;
+      #define PI 3.14159265359
+      float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+      float h31(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+      float vn(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(mix(h31(i), h31(i + vec3(1,0,0)), f.x), mix(h31(i + vec3(0,1,0)), h31(i + vec3(1,1,0)), f.x), f.y),
+                   mix(mix(h31(i + vec3(0,0,1)), h31(i + vec3(1,0,1)), f.x), mix(h31(i + vec3(0,1,1)), h31(i + vec3(1,1,1)), f.x), f.y), f.z); }
+      float fbm(vec3 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * vn(p); p *= 2.03; a *= 0.5; } return s; }
+      float landAt(vec2 uv) { vec3 c = texture2D(uMap, uv).rgb; return smoothstep(-0.075, -0.035, max(c.r, c.g) - c.b); }
+      void main() {
+        vec3 n = normalize(vN), v = normalize(cameraPosition - vW), o = normalize(vO);
+        float lat = asin(clamp(o.y, -1.0, 1.0)), lon = atan(-o.z, o.x);
+        vec2 uv = vec2((lon + PI) / (2.0 * PI), (lat + 0.5 * PI) / PI);
+        vec3 c = texture2D(uMap, uv).rgb;
+        float land = landAt(uv);
+        float ice = land * smoothstep(0.80, 0.90, min(c.r, min(c.g, c.b)));
+        float veg = smoothstep(-0.03, 0.07, c.g - c.r);
+        vec2 px = vec2(1.0 / 720.0, 1.0 / 360.0) * 2.2;
+        float lb = 0.25 * (landAt(uv + vec2(px.x, 0.0)) + landAt(uv - vec2(px.x, 0.0)) + landAt(uv + vec2(0.0, px.y)) + landAt(uv - vec2(0.0, px.y)));
+        float coast = land * (1.0 - lb);
+        float latD = abs(lat) / PI * 180.0;
+        // city lights: clustered speckle on land, more on coasts and vegetated land, none on ice or high latitudes
+        float cluster = smoothstep(0.42, 0.78, fbm(o * 9.0)) * 0.75 + smoothstep(0.55, 0.85, fbm(o * 26.0 + 3.1)) * 0.6;
+        vec2 g = uv * vec2(2048.0, 1024.0);
+        float sp = h21(floor(g));
+        float spark = smoothstep(0.80, 0.99, sp) * (0.4 + 0.6 * h21(floor(g) + 7.3));
+        float g2 = smoothstep(0.93, 1.0, h21(floor(uv * vec2(4096.0, 2048.0)) + 1.7));
+        float popl = land * (1.0 - ice) * (1.0 - smoothstep(52.0, 66.0, latD)) * (0.18 + 0.55 * veg + 1.6 * coast);
+        float lights = popl * (cluster * (0.55 * spark + 0.45 * g2) + 0.12 * spark * cluster);
+        lights = clamp(lights * 1.7, 0.0, 1.4);
+        // night base: black ocean, faint moonlit land and ice
+        float moon = 0.35 + 0.65 * max(dot(n, uMoon), 0.0);
+        vec3 col = mix(vec3(0.006, 0.013, 0.028), vec3(0.030, 0.040, 0.050), land);
+        col = mix(col, vec3(0.085, 0.105, 0.135), ice);
+        col *= moon;
+        col += vec3(0.0, 0.010, 0.022) * (1.0 - land) * fbm(o * 6.0);
+        vec3 lc = mix(vec3(1.0, 0.58, 0.22), vec3(1.0, 0.86, 0.62), smoothstep(0.5, 1.2, lights));
+        float day = smoothstep(-0.02, 0.32, dot(n, uSun));
+        col += lc * lights * (1.0 - day);
+        // thin sunlit crescent on the far limb
+        vec3 dayc = pow(c, vec3(1.25)) * vec3(0.78, 0.88, 1.0);
+        col = mix(col, dayc * 0.95, day);
+        float twi = smoothstep(-0.12, 0.0, dot(n, uSun)) * (1.0 - day);
+        col += vec3(0.30, 0.14, 0.06) * twi * 0.10;
+        // graticule every 15 degrees
+        vec2 ll = vec2(lon, lat) / PI * 180.0 / 15.0;
+        vec2 fw = fwidth(ll);
+        vec2 gl = abs(fract(ll - 0.5) - 0.5) / max(fw, 1e-4);
+        float line = 1.0 - min(min(gl.x, gl.y), 1.0);
+        line *= 1.0 - smoothstep(80.0, 89.0, latD);
+        col += vec3(0.55, 0.72, 1.0) * line * 0.085;
+        // atmosphere: fresnel rim
+        float fr = pow(1.0 - max(dot(n, v), 0.0), 4.2);
+        col += vec3(0.20, 0.45, 1.0) * fr * (0.30 + 0.8 * max(dot(n, uSun), 0.0));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1, 192, 128), earthMat));
+
+  // atmosphere halo (back faces, additive)
+  const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.075, 128, 96), new THREE.ShaderMaterial({
+    uniforms: { uSun: { value: sunDir } },
+    vertexShader: `varying vec3 vN; varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform vec3 uSun; varying vec3 vN; varying vec3 vW;
+      void main() { vec3 v = normalize(cameraPosition - vW); float d = dot(normalize(vN), v);
+        float k = pow(clamp(d + 0.0, 0.0, 1.0), 1.0) ; float rim = smoothstep(0.0, 0.42, d) * (1.0 - smoothstep(0.42, 0.62, d));
+        float i = pow(clamp(1.0 - d * 1.55, 0.0, 1.0), 3.0) * smoothstep(0.0, 0.08, d);
+        float s = 0.55 + 1.1 * max(dot(-normalize(vN), uSun), 0.0);
+        gl_FragColor = vec4(vec3(0.22, 0.48, 1.0) * i * s * 0.7, 1.0); }`,
+    side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+  }));
+  scene.add(atmo);
+
+  // stars
+  {
+    let s = 7; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+    const pos = [], col = [];
+    for (let i = 0; i < 1400; i++) {
+      const u = rnd() * 2 - 1, t = rnd() * Math.PI * 2, r = 60, q = Math.sqrt(1 - u * u);
+      pos.push(r * q * Math.cos(t), r * u, r * q * Math.sin(t));
+      const b = Math.pow(rnd(), 3) * 0.55 + 0.05; col.push(b, b * 1.02, b * 1.08);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 1.6, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false })));
+  }
+
+  // ---------- orbit arcs: thin tubes, brightest near their marker, dimmer on the far side ----------
+  const orbitMat = (alpha, headU, tail, color) => new THREE.ShaderMaterial({
+    uniforms: { uA: { value: alpha }, uHead: { value: headU }, uTail: { value: tail }, uC: { value: new THREE.Color(color) } },
+    vertexShader: `varying float vU; varying vec3 vW; void main() { vU = uv.x; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uA; uniform float uHead; uniform float uTail; uniform vec3 uC; varying float vU; varying vec3 vW;
+      void main() { float face = dot(normalize(vW), normalize(cameraPosition));
+        float f = 0.30 + 0.70 * smoothstep(-0.35, 0.55, face);
+        float d = fract(uHead - vU); float tr = uTail > 0.0 ? 0.28 + 0.72 * exp(-d * uTail) : 1.0;
+        gl_FragColor = vec4(uC, uA * f * tr); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const tube = (pts, r, mat) => {
+    const curve = new THREE.CatmullRomCurve3(pts, true);
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, pts.length, r, 6, true), mat);
+    scene.add(m);
+    return m;
+  };
+  // our satellite (Sat M2): the trail runs back from the conjunction point (u = 0)
+  tube(satPts, 0.0042, orbitMat(0.95, 0.0, 2.2, '#f4f8ff'));
+  tube(debPts, 0.0028, orbitMat(0.55, 0.0, 3.0, '#e8eef6'));
+  // context: other missions' orbits at their real median inclination and semi-major axis; RAAN illustrative
+  const med = (xs) => { const a = xs.slice().sort((p, q) => p - q); return a[Math.floor(a.length / 2)]; };
+  const ctx = [[1, 62], [15, -38], [6, 128]];
+  for (const [mid, raan] of ctx) {
+    const t = data.events.filter((e) => e.latest.mission_id === mid && e.latest.orbit && e.latest.orbit.target).map((e) => e.latest.orbit.target);
+    const a = med(t.map((x) => x.sma_km)) / R_E, inc = med(t.map((x) => x.inc_deg)) * deg;
+    const node = new V(Math.cos(raan * deg), 0, -Math.sin(raan * deg));
+    const ahead = new V(0, 1, 0).cross(node).multiplyScalar(Math.cos(inc)).add(new V(0, Math.sin(inc), 0)).normalize();
+    tube(circle(a, node, ahead, 540), 0.0022, orbitMat(0.20, 0, 0, '#c9d6e6'));
+  }
+
+  // ---------- satellite render for the card ----------
+  {
+    const r2 = new THREE.WebGLRenderer({ canvas: document.getElementById('sat'), antialias: true, alpha: true, preserveDrawingBuffer: true });
+    r2.setPixelRatio(1); r2.setSize(808, 760, false);
+    r2.toneMapping = THREE.ACESFilmicToneMapping; r2.toneMappingExposure = 1.15;
+    const s2 = new THREE.Scene();
+    const vs = [], tri = [], fcol = [];
+    const pal = colors.palette_rgb, faceC = colors.face_colors;
+    let fi = 0;
+    for (const line of objTxt.split('\n')) {
+      const p = line.trim().split(/\s+/);
+      if (p[0] === 'v') vs.push(new V(+p[1], +p[2], +p[3]));
+      else if (p[0] === 'f') {
+        const idx = p.slice(1).map((x) => parseInt(x, 10) - 1);
+        const rgb = pal[faceC[fi++]] || [180, 190, 200];
+        for (let k = 1; k + 1 < idx.length; k++) { tri.push(idx[0], idx[k], idx[k + 1]); fcol.push(rgb, rgb, rgb); }
+      }
+    }
+    const pos = [], col = [];
+    for (let t = 0; t < tri.length; t++) {
+      const v = vs[tri[t]]; pos.push(v.x, v.y, v.z);
+      const c = new THREE.Color().setRGB(fcol[t][0] / 255, fcol[t][1] / 255, fcol[t][2] / 255, THREE.SRGBColorSpace);
+      col.push(c.r, c.g, c.b);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.computeVertexNormals();
+    g.computeBoundingBox();
+    const ctr = new V(); g.boundingBox.getCenter(ctr); g.translate(-ctr.x, -ctr.y, -ctr.z);
+    const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, metalness: 0.45, roughness: 0.38, side: THREE.DoubleSide }));
+    const grp = new THREE.Group(); grp.add(mesh);
+    grp.rotation.set(0.38, -0.72, 0.16);
+    s2.add(grp);
+    s2.add(new THREE.HemisphereLight(0xbcd4ff, 0x10141a, 0.9));
+    const key = new THREE.DirectionalLight(0xfff1dc, 3.2); key.position.set(2.5, 3, 4); s2.add(key);
+    const rim = new THREE.DirectionalLight(0x7fb0ff, 2.6); rim.position.set(-4, 1.5, -3); s2.add(rim);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.6); fill.position.set(-2, -2, 3); s2.add(fill);
+    const c2 = new THREE.PerspectiveCamera(26, 808 / 760, 0.1, 50);
+    const size = new V(); g.boundingBox.getSize(size);
+    c2.position.set(0, 0.05, Math.max(size.x, size.y, size.z) * 2.25); c2.lookAt(0, 0, 0);
+    r2.render(s2, c2);
+  }
+
+  renderer.render(scene, camera);
+
+  // ---------- overlays at projected positions ----------
+  const toPx = (p) => { const q = p.clone().project(camera); return { x: (q.x + 1) / 2 * W, y: (1 - q.y) / 2 * H }; };
+  const place = (el, x, y) => { el.style.left = x + 'px'; el.style.top = y + 'px'; };
+  const ov = document.getElementById('ov');
+  const mX = toPx(X);
+  place(document.getElementById('mk805'), mX.x, mX.y);
+  const co = document.getElementById('callout');
+  const cx = mX.x + 190, cy = mX.y - 128;
+  place(co, cx, cy);
+  const lead = document.getElementById('lead');
+  const coH = co.offsetHeight;
+  lead.innerHTML =
+    `<path d="M ${mX.x + 24} ${mX.y - 6} L ${cx - 36} ${cy + coH / 2} L ${cx} ${cy + coH / 2}" fill="none" stroke="rgba(255,140,146,0.75)" stroke-width="1.5"/>` +
+    `<circle cx="${cx}" cy="${cy + coH / 2}" r="3" fill="#ff8c92"/>`;
+
+  // Elevated events on Sat M2's orbit, at their real latitudes (the side of the orbit facing the camera)
+  const onOrbitAt = (latDeg) => {
+    const s = Math.sin(latDeg * deg); let pick = null;
+    for (let i = 0; i < satPts.length; i++) {
+      const p = satPts[i], q = satPts[(i + 1) % satPts.length];
+      const a = p.y / aSat - s, b = q.y / aSat - s;
+      if (a * b <= 0) { const m = p.clone().lerp(q, a / (a - b || 1)); const f = m.clone().normalize().dot(camDir);
+        if (!pick || f > pick.f) pick = { m, f }; }
+    }
+    return pick && pick.m;
+  };
+  const elev = [1840, 216].map((id) => byId.get(id)).filter((e) => e && e.tier_name === 'Elevated' && e.latest.mission_id === L.mission_id);
+  elev.forEach((e, k) => {
+    const m = onOrbitAt(e.latest.geocentric_latitude_deg); if (!m) return;
+    const p = toPx(m);
+    const d = document.createElement('div'); d.className = 'dot-a'; place(d, p.x, p.y); ov.appendChild(d);
+    const c = document.createElement('div'); c.className = 'chip amber mono';
+    c.innerHTML = `<i></i>EVT ${e.event_id} · Elevated · ${(e.latest.miss_distance_m / 1000).toFixed(1)} km`;
+    ov.appendChild(c); place(c, p.x - c.offsetWidth - 18, p.y - 15);
+    c.style.opacity = '0.82';
+  });
+  // orbit labels (real inclination and altitude)
+  // label at the front-facing orbit point nearest a target spot on screen
+  const lab = (pts, tx, ty, html, side) => {
+    let bp = null;
+    for (const q of pts) { if (q.clone().normalize().dot(camDir) < 0.1) continue; const p = toPx(q); const d = Math.hypot(p.x - tx, p.y - ty); if (!bp || d < bp.d) bp = { p, d }; }
+    const c = document.createElement('div'); c.className = 'chip orb mono'; c.innerHTML = html; ov.appendChild(c);
+    place(c, side < 0 ? bp.p.x - c.offsetWidth - 14 : bp.p.x + 14, bp.p.y - 13);
+  };
+  lab(satPts, 420, 300, `Sat M2 · inc ${tgt.inc_deg.toFixed(1)}° · ${Math.round(tgt.sma_km - R_E)} km`, 1);
+  lab(debPts, 1150, 520, `debris · inc ${chs.inc_deg.toFixed(1)}°`, -1);
+  document.body.dataset.ready = '1';
+})();
+</script>
+</body>
+</html>
