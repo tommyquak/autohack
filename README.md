@@ -1,7 +1,12 @@
-# Conjunction triage: fewer false alarms, every Critical kept
+# Second Look: conjunction triage that can never hide a Critical
 
-**Autonomous SG 2026 · Airbus Challenge #1 (satellite collision avoidance).** Published rules put
-every conjunction warning into a tier, and a model removes only the over-warnings.
+**Autonomous SG 2026 · Airbus Challenge #1 (satellite collision avoidance).** Every team here will predict
+collision risk. Second Look is built so it can never hide a Critical: published NASA/ESA rules tier every warning, and a
+model may only remove over-warnings.
+
+- **One in four flagged events is noise:** 1,090 → 802 events to review on the test set (all 288 removed are truly below threshold), Critical recall 100% by construction (the rules set Critical; the model can't touch it).
+- **It shows where the rulebook wastes fuel:** 135 of 196 Critical events are Critical on miss distance alone, with a Pc upper bound below 1e-4. The analyst sees which manoeuvres the probability backs.
+- **We rejected our own better model:** v2 cut false alarms a further 23%, but our safety gate caught 3 more under-tiered CDMs, so it didn't ship.
 
 **CDMs arrive → rules tier every message → model removes only the over-warnings → analyst reviews a ranked queue with reasons → analyst decides**
 

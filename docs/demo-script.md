@@ -1,4 +1,4 @@
-# Demo script (3 minutes, live)
+# Demo script: Second Look (3 minutes, live)
 
 Autonomous SG 2026 · Airbus Challenge #1. Modelled on lvl 500's HackHarvard 2026 `docs/demo-script.md`.
 Every number below is shown on screen or sits in a repo file; the source is in brackets. Don't read out any number that isn't on this page.
@@ -17,6 +17,7 @@ Say **"below threshold"**, never "safe". Say **"Pc upper bound"**, never "collis
 
 ## 0:00-0:30 · Problem and user (Tommy)
 
+> Every team here will predict collision risk. Second Look is built so it can never hide a Critical.
 > Meet a conjunction analyst on a flight dynamics team. Every CDM is a warning that something will pass close to their
 > satellite. Today's rule flags a CDM when its Pc upper bound or its miss distance crosses a threshold. On our 24,484 test
 > CDMs, that rule flags 54.2%, and 4,526 of those are truly below threshold. That's the false-alarm load. We cut it without

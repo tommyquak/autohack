@@ -125,10 +125,10 @@
     }
     traces.push(
       {
-        type: "scatter3d", mode: "markers+text", name: "target", x: [0], y: [0], z: [0], text: ["target"],
+        type: "scatter3d", mode: "markers+text", name: "our satellite", x: [0], y: [0], z: [0], text: ["our satellite"],
         textposition: "bottom center", textfont: { color: C.muted }, showlegend: false,
         marker: { size: 6, color: C.text, symbol: "diamond", line: { color: C.surface, width: 2 } },
-        hovertemplate: "target (our satellite)<extra></extra>",
+        hovertemplate: "our satellite<extra></extra>",
       },
       {
         type: "scatter3d", mode: "markers+text", name: L.object_type.toLowerCase(), x: [r], y: [t], z: [n],
@@ -165,9 +165,12 @@
     const addIcons = () =>
       ICONS.then((ic) => {
         if (!ic || !plotEl.isConnected) return;
-        const size = span * 0.24;
+        // Icons are enlarged, but never so much that they touch each other (a 39 m pass must not look like a hit) or
+        // swallow the shells. If that leaves them too small to see, keep the plain markers.
+        const size = Math.min(span * 0.12, 0.4 * km(L.miss_distance_m));
+        if (size < span * 0.04) return;
         const other = ic[ICON_FOR[L.object_type] || "unknown"];
-        Plotly.restyle(plotEl, { "marker.symbol": "circle-open", "marker.size": 34, "marker.line.width": 3, "marker.color": tier.color, "marker.line.color": tier.color }, [traces.length - 1]);
+        Plotly.restyle(plotEl, { "marker.symbol": "circle-open", "marker.size": 22, "marker.line.width": 3, "marker.color": tier.color, "marker.line.color": tier.color }, [traces.length - 1]);
         Plotly.restyle(plotEl, { "marker.opacity": 0 }, [traces.length - 2]);
         return Plotly.addTraces(plotEl, [
           iconMesh(ic.own_satellite, [0, 0, 0], size, OWN_COLOR, 1, "our satellite (icon enlarged)"),
