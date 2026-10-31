@@ -37,6 +37,8 @@ async function main() {
   initEncounter();
   initEval();
   initAsk();
+  // The globe is the landing view unless a deep link (/#encounter, /#compare=…) already picked a tab.
+  if (!location.hash) document.querySelector('#tabs [data-tab="globe"]')?.click();
   // Open on the most urgent event so the right rail isn't empty.
   if (list.events.length) set({ selectedId: list.events[0].event_id });
 }
