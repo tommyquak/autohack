@@ -23,16 +23,16 @@ NOTES = ROOT / "notes" / "script.md"
 SLIDES = [
     ("cover", "cover", "s-cover"),
     ("problem", "problem", "s-problem"),
-    ("stack", "stack", "s-stack"),
-    ("data", "data", "s-data"),
-    ("pipeline", "pipeline", "s-pipe"),
-    ("files", "files", "s-files"),
-    ("live", "live", "s-live"),
-    ("click", "click", "s-click"),
-    ("claude", "claude", "s-claude"),
-    ("proof", "proof", "s-proof"),
-    ("progress", "progress", "s-progress"),
     ("usp", "usp", "s-usp"),
+    ("stack", "stack", "s-stack"),
+    ("pipeline", "pipeline", "s-pipe"),
+    ("task", "task", "s-task"),
+    ("record", "record", "s-record"),
+    ("live", "live", "s-live"),
+    ("eval", "eval", "s-eval"),
+    ("fail", "fail", "s-fail"),
+    ("gate", "gate", "s-gate"),
+    ("next", "next", "s-next"),
     ("close", "close", "s-close"),
 ]
 SCENE = 10
@@ -98,7 +98,7 @@ WRAPPER = """<!doctype html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Second Look · Conjunction Triage Stack</title>
+    <title>Second Look · Conjunction Triage</title>
     <script>
       if (new URLSearchParams(location.search).get("mode") === "audience") {
         document.title = "Second Look · Audience";
@@ -117,7 +117,7 @@ WRAPPER = """<!doctype html>
     <!-- Direct-open deck. Serve this folder over http (double-click present.command, or
          `node tools/serve.mjs`), open http://localhost:4173/, press P (or the Present button) for the
          audience tab; this tab becomes the presenter view. -->
-    <hyperframes-slideshow tabindex="0" notes-storage-key="triage-stack-v1">
+    <hyperframes-slideshow tabindex="0" notes-storage-key="triage-stack-v2">
       <hyperframes-player
         interactive
         runtime-src="vendor/hyperframe.runtime.iife.js"
@@ -130,9 +130,10 @@ WRAPPER = """<!doctype html>
     </hyperframes-slideshow>
     <script>
       // Live presenting, for every player on the page (main view, presenter preview, audience tab).
-      // The slideshow seeks straight to each slide's finished rest frame, so on each slide change the
-      // composition is told to replay that slide's build in real time (__stackEnter: scan wipe, then
-      // one idea at a time). Renders and checks never run this page.
+      // The slideshow seeks straight to each slide's finished rest frame, so each composition is armed
+      // (__stackArm) to watch its own slide changes and, in the same frame, fade the new slide up and replay
+      // its build in real time (__stackEnter). The poll below arms new players and is a fallback.
+      // Renders and checks never run this page.
       (function () {
         function players() {
           var out = [];
@@ -153,6 +154,7 @@ WRAPPER = """<!doctype html>
               w = d && d.defaultView;
             } catch (e) { d = null; }
             if (!d || !w) return;
+            if (w.__stackArm && !w.__stackArmed) w.__stackArm();
             var current = null;
             d.querySelectorAll(".scene").forEach(function (sc) {
               var cs = w.getComputedStyle(sc);

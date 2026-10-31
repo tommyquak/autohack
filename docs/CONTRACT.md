@@ -62,6 +62,12 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 - `certificate` (from `triage.certify.certify`, latest CDM): why the tier holds. See §6. Top-level `model_evidence`
   = `{"source", "threshold", "cv": {oof_recall, recall_target, threshold, candidates, n_folds, ...}}` copied from the
   trained artifact at build time, or `null` when built with the rules alone.
+- `forecast` (from `triage.forecast`, docs/FORECAST.md): the final-tier forecast from messages >= 2 days out.
+  `{"predicted_final_tier": 0|1|2, "predicted_final_tier_name", "p_final": [p_below, p_elevated, p_critical]
+  (class-weighted scores, not calibrated), "floor_tier", "decision": "floor kept" | "escalated to Elevated" |
+  "escalated to Critical", "thresholds": {"t_elev", "t_crit"}, "reasons": [<= 3 strings]}`. Always
+  `predicted_final_tier >= floor_tier`, and a Critical `tier` always has a Critical forecast. Currently added to
+  `data/demo/events.json` by `uv run python -m triage.forecast` (not yet by `build_events`).
 - Wording: never "Safe" – tier 0 is **"Below threshold"**.
 
 ## 3. `reports/metrics.json` (producer: `triage.evaluate`, consumer: dashboard "Evaluation" tab)
@@ -87,7 +93,7 @@ All read `reports/*.json` (falling back to the frozen full-test-set copy in `dat
 | `GET /api/summary` | `events.json` → `summary` |
 | `GET /api/events[?tier=0\|1\|2][&needs_review=true\|false]` | `{"total": n, "events": [...]}`: each event as in §2 **without `history`** (so with `action`), plus `n_updates` (number of CDMs). Same urgency order. |
 | `GET /api/events/{event_id}` | one event exactly as in §2, with `history`; `404` if unknown |
-| `GET /api/metrics` | `metrics.json` as in §3 |
+| `GET /api/metrics` | `metrics.json` as in §3, plus `"forecast"`: `forecast_metrics.json` (final-tier forecast, docs/FORECAST.md) when it exists |
 | `GET /api/explain/{event_id}` | see `triage/explain.py` (owner: Integration & trust) |
 | `GET /api/audit` | §6: re-verifies the safety invariants over every served event; `{"status": "PASS"\|"FAIL", "checks", "counts", "cv_evidence", "generated_at_source": "reports"\|"demo"}` |
 | `POST /api/triage` | §6: tiers 1-500 CDM rows sent as JSON, each with its certificate and margin to the next tier; `422` on bad input |

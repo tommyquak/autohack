@@ -25,3 +25,5 @@
 .ca-value { font: 600 20px/1.15 var(--mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; color: var(--ink, #e6ebe8); }
 .ca-sub { font-size: 11px; color: var(--muted, #7d8a85); }
 .ca-unknown { color: var(--muted, #7d8a85); border-bottom: 1px dotted currentColor; }
+.ca-decision { margin: -4px 0 10px; font-size: 13px; color: var(--ink, #e6ebe8); }
+.ca-decision .ca-label { margin-right: 8px; }

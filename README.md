@@ -28,7 +28,7 @@ threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** t
 - **Handles bad input**: 26/26 junk and edge-case files are rejected clearly or flagged, never quietly tiered too low ([docs/robustness.md](docs/robustness.md)).
 - **Proves it live:** `GET /api/audit` re-checks the safety invariants over every decision; `POST /api/triage` tiers any CDM you send, with its certificate.
   Each certificate says which rules fired, whether the model was allowed to act (and why not), its score against the stored threshold, and four invariants.
-  On the frozen test set: PASS on 7/7 checks over 2,167 events and 24,484 CDM decisions; all 288 demotions have score < threshold.
+  On the frozen test set: PASS on 11/11 checks over 2,167 events and 24,484 CDM decisions; all 288 demotions have score < threshold.
   A tampered `events.json` (a Critical shown lower, a no-covariance event demoted) turns it FAIL and names the check ([docs/CONTRACT.md §6](docs/CONTRACT.md)).
 - **Serves** an API and dashboard views (`/api/*`, `static/`), plus one prediction per test CDM in `predictions/test_predictions.csv`.
 
