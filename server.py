@@ -6,64 +6,45 @@ Dashboard API (reads the files written by `triage.build_events` and `triage.eval
     GET /api/events/{event_id}  one event with full history
     GET /api/metrics            metrics.json
     GET /api/explain/{event_id} plain-English summary (Claude, template fallback; triage/explain.py)
+    GET /health                 {"llm": "claude"|"fallback", "reports": "reports"|"demo"|"missing",
+                                 "model", "last_answer": who answered the last chat message}
 
-Pages: GET / (dashboard, static/dashboard.html) · GET /chat (agent chat). POST /chat streams agent events as NDJSON.
+Pages: GET / (dashboard, static/dashboard.html) · GET /chat (copilot chat). POST /chat streams copilot events as NDJSON:
+{"type": "session"}, then {"type": "source", "source": "claude"|"fallback"}, then text / thinking / tool_call /
+tool_result / error events and {"type": "done"}. A focus_event tool_call names the event the dashboard should select.
+Fallback (fallback.py, deterministic) answers when there are no usable credentials, or when the Claude call fails
+before any text has streamed; in that case a second "source" event switches to "fallback".
 """
 
 import json
 import uuid
-from functools import lru_cache
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import fallback
 from agent import MODEL, run_agent
-from triage import explain
+from triage import explain, reports
+from triage.reports import BUILD_HINT, ReportMissing, events_by_id, load_report  # noqa: F401  (re-exported)
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
-REPORTS = ROOT / "reports"
-DEMO = ROOT / "data" / "demo"  # frozen copy of the full-test-set reports, used when reports/ has none
-BUILD_HINT = {
-    "events.json": "uv run python -m triage.build_events",
-    "metrics.json": "uv run python -m triage.evaluate",
-}
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 SESSIONS: dict[str, list] = {}  # in-memory conversation history per browser tab
+LAST_SOURCE: str | None = None  # who answered the most recent chat message: "claude" | "fallback"
 
 
-# ---------- reports ----------
+# ---------- reports (loading lives in triage/reports.py so tools.py can share it) ----------
 
 
-def _stamp(name: str) -> tuple[Path, float]:
-    for path in (REPORTS / name, DEMO / name):
-        if path.exists():
-            return path, path.stat().st_mtime
-    raise HTTPException(503, f"reports/{name} not found - run `{BUILD_HINT[name]}`")
-
-
-# Keyed on (path, mtime): re-read only when the file changes, so a rebuild shows up without a restart.
-@lru_cache(maxsize=4)
-def _parse(path: Path, mtime: float) -> dict:
-    return json.loads(path.read_text())
-
-
-@lru_cache(maxsize=2)
-def _index(path: Path, mtime: float) -> dict[int, dict]:
-    return {e["event_id"]: e for e in _parse(path, mtime)["events"]}
-
-
-def load_report(name: str) -> dict:
-    return _parse(*_stamp(name))
-
-
-def _events_by_id() -> dict[int, dict]:
-    return _index(*_stamp("events.json"))
+@app.exception_handler(ReportMissing)
+async def _report_missing(_: Request, exc: ReportMissing):
+    return JSONResponse({"detail": str(exc)}, status_code=503)
 
 
 def _without_history(event: dict) -> dict:
@@ -90,7 +71,7 @@ def api_events(tier: int | None = None, needs_review: bool | None = None):
 
 @app.get("/api/events/{event_id}")
 def api_event(event_id: int):
-    event = _events_by_id().get(event_id)
+    event = events_by_id().get(event_id)
     if event is None:
         raise HTTPException(404, f"event {event_id} not in reports/events.json")
     return event
@@ -104,7 +85,7 @@ def api_metrics():
 @app.get("/api/explain/{event_id}")
 async def api_explain(event_id: int, llm: bool = True):
     """Plain-English summary of one event: Claude when available, deterministic template otherwise."""
-    event = _events_by_id().get(event_id)
+    event = events_by_id().get(event_id)
     if event is None:
         raise HTTPException(404, f"event {event_id} not in reports/events.json")
     return await explain.explain(event, use_llm=llm)
@@ -148,6 +129,68 @@ def config():
     return {"model": MODEL}
 
 
+@app.get("/health")
+def health():
+    """Which engine will answer chat, which copy of the reports is served, and who answered last."""
+    return {
+        "llm": "claude" if explain._has_credentials() else "fallback",
+        "reports": reports.source(),
+        "model": MODEL,
+        "last_answer": LAST_SOURCE,
+    }
+
+
+def _source(name: str, reason: str | None = None) -> dict:
+    global LAST_SOURCE
+    LAST_SOURCE = name
+    return {"type": "source", "source": name} | ({"reason": reason} if reason else {})
+
+
+async def _fallback(message: str, messages: list):
+    text = []
+    for event in fallback.events(message):
+        if event["type"] == "text":
+            text.append(event["text"])
+        yield event
+    messages.append({"role": "assistant", "content": "".join(text)})  # keep the history alternating
+
+
+async def _copilot(message: str, messages: list):
+    """Claude when available; the deterministic fallback when it isn't or fails before any text."""
+    if not explain._has_credentials():
+        yield _source("fallback", "no API credentials configured")
+        async for event in _fallback(message, messages):
+            yield event
+        return
+
+    started = saw_text = False
+    reason = "Claude call failed"
+    agent = run_agent(messages)
+    try:
+        async for event in agent:
+            if event["type"] == "error" and not saw_text:
+                reason = event.get("text") or reason
+                break
+            if not started:
+                started = True
+                yield _source("claude")
+            saw_text = saw_text or event["type"] == "text"
+            yield event
+        else:
+            return
+    except Exception as e:  # e.g. the SDK finds no credentials at all
+        reason = f"{type(e).__name__}: {e}"[:200]
+        if saw_text:
+            yield {"type": "error", "text": "The Claude call failed mid-answer."}
+            yield {"type": "done"}
+            return
+    finally:
+        await agent.aclose()
+    yield _source("fallback", reason)
+    async for event in _fallback(message, messages):
+        yield event
+
+
 @app.post("/chat")
 async def chat(req: ChatRequest):
     sid = req.session_id or str(uuid.uuid4())
@@ -156,7 +199,7 @@ async def chat(req: ChatRequest):
 
     async def stream():
         yield json.dumps({"type": "session", "session_id": sid}) + "\n"
-        async for event in run_agent(messages):
+        async for event in _copilot(req.message, messages):
             yield json.dumps(event, default=str) + "\n"
 
     return StreamingResponse(stream(), media_type="application/x-ndjson")

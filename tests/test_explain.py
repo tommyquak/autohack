@@ -8,7 +8,7 @@ os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-test")  # client construction
 import pytest
 from fastapi.testclient import TestClient
 
-from triage import explain
+from triage import explain, reports
 from triage.build_events import build
 
 
@@ -67,6 +67,16 @@ def test_template_mentions_review_and_trend():
     assert "900 m -> 600 m (closing)" in text
 
 
+async def test_template_explains_a_demotion():
+    e = _event(tier_name="Below threshold") | {"tier": 0, "baseline_tier": 1, "confidence": 0.93}
+    f = explain.facts(e)
+    assert f["baseline_tier"] == "Elevated" and f["demoted"]
+    text = explain.template_explanation(f)
+    assert "The conservative baseline rule gives Elevated; the model demoted it to below threshold" in text
+    assert "(confidence 0.93)" in text
+    assert "demoted" not in explain.template_explanation(explain.facts(_event()))
+
+
 async def test_falls_back_to_template_when_claude_unavailable(monkeypatch):
     async def no_text(_facts):
         return None
@@ -86,8 +96,8 @@ def test_api_explain_route(tmp_path, monkeypatch, events):
     import server
 
     (tmp_path / "events.json").write_text(json.dumps({"summary": {}, "events": events}))
-    monkeypatch.setattr(server, "REPORTS", tmp_path)
-    monkeypatch.setattr(server, "DEMO", tmp_path / "no-demo")
+    monkeypatch.setattr(reports, "REPORTS", tmp_path)
+    monkeypatch.setattr(reports, "DEMO", tmp_path / "no-demo")
     client = TestClient(server.app)
 
     r = client.get(f"/api/explain/{events[0]['event_id']}?llm=false")

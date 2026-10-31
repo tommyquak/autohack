@@ -11,14 +11,19 @@ from fastapi.testclient import TestClient
 import tools
 from agent import _tool_defs
 from server import app
+from triage import reports
 from triage.build_events import build
 
 
 def test_tool_schemas_generated_from_signatures():
-    schema = tools.TOOLS["http_get"].schema
-    assert schema["input_schema"]["properties"] == {"url": {"type": "string"}}
-    assert schema["input_schema"]["required"] == ["url"]
+    schema = tools.TOOLS["get_event"].schema
+    assert schema["input_schema"]["properties"] == {"event_id": {"type": "integer"}}
+    assert schema["input_schema"]["required"] == ["event_id"]
     assert schema["description"]
+    listing = tools.TOOLS["list_events"].schema["input_schema"]
+    assert listing["required"] == [] and listing["properties"]["max_days_to_tca"] == {"type": "number"}
+    compare = tools.TOOLS["compare_events"].schema["input_schema"]
+    assert compare["properties"]["event_ids"] == {"type": "array", "items": {"type": "integer"}}
 
 
 def test_tool_defs_enable_eager_streaming():
@@ -27,16 +32,25 @@ def test_tool_defs_enable_eager_streaming():
 
 
 def test_validate_input():
-    assert tools.validate_input("http_get", {"url": "https://example.com"}) is None
-    assert "missing" in tools.validate_input("http_get", {})
-    assert "should be string" in tools.validate_input("http_get", {"url": 3})
-    assert "unexpected" in tools.validate_input("http_get", {"url": "x", "extra": 1})
+    assert tools.validate_input("get_event", {"event_id": 3}) is None
+    assert "missing" in tools.validate_input("get_event", {})
+    assert "should be integer" in tools.validate_input("get_event", {"event_id": "3"})
+    assert "should be integer" in tools.validate_input("get_event", {"event_id": True})
+    assert "unexpected" in tools.validate_input("get_event", {"event_id": 3, "extra": 1})
     assert "Unknown tool" in tools.validate_input("nope", {})
+    assert tools.validate_input("list_events", {"tier": None, "max_days_to_tca": 3}) is None  # optional accepts null
+    assert "array of integer" in tools.validate_input("compare_events", {"event_ids": [1, "2"]})
 
 
 async def test_side_effect_tools_blocked_without_approval(monkeypatch):
+    @tools.tool(side_effect=True)
+    def _notify(message: str) -> str:
+        """Example side-effecting tool."""
+        return "sent"
+
     monkeypatch.setattr(tools, "AUTO_APPROVE", False)
-    ok, out = await tools.run_tool("send_notification", {"message": "hi"})
+    ok, out = await tools.run_tool("_notify", {"message": "hi"})
+    tools.TOOLS.pop("_notify")
     assert not ok and "Blocked" in out
 
 
@@ -64,8 +78,8 @@ def api(tmp_path, monkeypatch, cdms):
     import server
 
     (tmp_path / "events.json").write_text(json.dumps(build(cdms)))
-    monkeypatch.setattr(server, "REPORTS", tmp_path)
-    monkeypatch.setattr(server, "DEMO", tmp_path / "no-demo")
+    monkeypatch.setattr(reports, "REPORTS", tmp_path)
+    monkeypatch.setattr(reports, "DEMO", tmp_path / "no-demo")
     return TestClient(server.app), tmp_path
 
 
@@ -111,8 +125,8 @@ def test_api_falls_back_to_demo_reports(tmp_path, monkeypatch):
     demo = tmp_path / "demo"
     demo.mkdir()
     (demo / "metrics.json").write_text(json.dumps({"split": "demo"}))
-    monkeypatch.setattr(server, "REPORTS", tmp_path / "empty")
-    monkeypatch.setattr(server, "DEMO", demo)
+    monkeypatch.setattr(reports, "REPORTS", tmp_path / "empty")
+    monkeypatch.setattr(reports, "DEMO", demo)
     assert TestClient(server.app).get("/api/metrics").json()["split"] == "demo"
 
 

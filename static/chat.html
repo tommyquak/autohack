@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Autonomous Agent</title>
+<title>Conjunction Copilot</title>
 <style>
   :root { --bg:#0f1115; --panel:#171a21; --text:#e6e8ee; --muted:#8a90a0; --accent:#d97757; --ok:#4fb47a; --err:#e05d5d; --tool:#5aa9e6; }
   * { box-sizing: border-box; }
@@ -26,17 +26,18 @@
 </style>
 </head>
 <body>
-<header><div><b>Autonomous</b> agent</div><small id="model"></small></header>
+<header><div><b>Conjunction</b> copilot</div><small id="model"></small></header>
 <div id="log"></div>
 <form id="f">
-  <textarea id="input" placeholder="Give the agent a task… (Enter to send, Shift+Enter for newline)" autofocus></textarea>
+  <textarea id="input" placeholder="Ask about the triage report, e.g. &quot;critical events within 3 days&quot; or &quot;event 482&quot; (Enter to send)" autofocus></textarea>
   <button id="send">Run</button>
   <button type="button" class="secondary" id="reset">New</button>
 </form>
 <script>
 const log = document.getElementById('log'), input = document.getElementById('input'), send = document.getElementById('send');
 let sessionId = null;
-fetch('/config').then(r => r.json()).then(c => document.getElementById('model').textContent = c.model);
+fetch('/health').then(r => r.json()).then(h => document.getElementById('model').textContent =
+  (h.llm === 'claude' ? h.model : 'local fallback (no LLM)') + ' · reports: ' + h.reports);
 
 function add(cls, text = '', tag = 'div') {
   const el = document.createElement(tag); el.className = cls; el.textContent = text;
@@ -60,6 +61,9 @@ async function run(message) {
       if (!line) continue;
       const e = JSON.parse(line);
       if (e.type === 'session') sessionId = e.session_id;
+      else if (e.type === 'source') {
+        if (e.source === 'fallback') { add('tool', '⚙ local fallback answer' + (e.reason ? ` (${e.reason})` : '')); textEl = thinkEl = null; }
+      }
       else if (e.type === 'thinking') {
         if (!thinkEl) { thinkEl = add('thinking', '', 'details'); thinkEl.innerHTML = '<summary>thinking…</summary><div></div>'; }
         thinkEl.lastChild.textContent += e.text;
