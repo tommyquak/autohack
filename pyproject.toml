@@ -20,7 +20,7 @@ dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.8"]
 line-length = 120
 target-version = "py312"
 # Research script kept verbatim as the source of algorithm.md v1.0's numbers; superseded by risk_ablation.py
-extend-exclude = ["docs/algorithm/baseline.py"]
+extend-exclude = ["docs/algorithm/baseline.py", "satellite_icons/make_icons.py"]  # generated icon script
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

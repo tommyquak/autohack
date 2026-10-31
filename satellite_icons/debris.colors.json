@@ -1,0 +1,67 @@
+{
+  "face_index_base": 0,
+  "color_space": "sRGB",
+  "palette_rgb": {
+    "gold": [
+      237,
+      177,
+      62
+    ],
+    "blue": [
+      49,
+      116,
+      220
+    ],
+    "silver": [
+      174,
+      191,
+      207
+    ],
+    "teal": [
+      48,
+      193,
+      171
+    ],
+    "orange": [
+      231,
+      118,
+      65
+    ],
+    "purple": [
+      167,
+      117,
+      232
+    ],
+    "graphite": [
+      67,
+      81,
+      103
+    ]
+  },
+  "face_colors": [
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange",
+    "orange"
+  ]
+}
