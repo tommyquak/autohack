@@ -72,6 +72,8 @@ Critical recall stays 100%. These are measured counts; analyst time saved is not
 Our first model regressed log Pc and flagged 100% of CDMs. Our evaluation caught this
 before it shipped, so we redesigned it as targeted demotion.
 
+**We also tried a stronger model and rejected it.** Three v2 variants were tuned on training data only, then the best two were checked once on the test set by a separate verifier. The best cut false Elevated to 1,694 (another −23%) with Critical recall still 100%, but it tiered 3 CDMs too low against our limit of 1, so it failed our own gate. We ship v1.
+
 ## Trust and traceability
 
 - Every tier lists the rules that fired (e.g. `Pc 10^-3.20 >= 1e-4 (critical threshold)`).
