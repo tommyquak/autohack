@@ -1,4 +1,6 @@
 // Tiny store: views subscribe to the keys they depend on, so scrubbing the clock doesn't rebuild the filter UI.
+import { latBand } from "./fmt.js";
+
 export const state = {
   summary: null,
   events: [], // /api/events, urgency order, no history
@@ -32,7 +34,7 @@ export function passesFilters(e) {
   if (f.type && e.latest.object_type !== f.type) return false;
   if (f.lat !== null) {
     const v = e.latest.geocentric_latitude_deg;
-    if (v == null || Math.min(35, Math.max(0, Math.floor((v + 90) / 5))) !== f.lat) return false;
+    if (v == null || latBand(v) !== f.lat) return false;
   }
   if (f.slot !== null) {
     const r = remaining(e);
