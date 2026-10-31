@@ -3,6 +3,7 @@
 //
 //   CloseApproach.render3d(el, event)      geometry at TCA for one event (event shape: docs/CONTRACT.md §2)
 //   CloseApproach.renderCompare(el, events) up to 3 events: miss distance and Pc upper bound over the updates
+//   CloseApproach.theme(colors)            optional: adopt the host page's tier/surface colours
 //
 // Both take the event objects exactly as /api/events/{id} returns them; nothing is recomputed here
 // except unit conversion. The tier always comes from the pipeline.
@@ -74,8 +75,8 @@
     const capped = Math.max(sc, st) > SIGMA_SENTINEL_M;
     const sigmaKm = km(Math.hypot(sc, st));
     const tier = TIER[event.tier];
-    // Zoom to the event: a 200 m miss must not be a dot inside a 5 km shell. Shells are drawn only if they fit.
-    const span = Math.max(Math.abs(r), Math.abs(t), Math.abs(n), 0.4) * 1.5;
+    // Zoom to the event, but always far enough out to show the 1 km critical shell; the 5 km shell only if it fits.
+    const span = Math.max(Math.max(Math.abs(r), Math.abs(t), Math.abs(n)) * 1.5, CRITICAL_KM * 1.15);
     const traces = [
       ...(span >= CRITICAL_KM ? [sphere(CRITICAL_KM, C.critical, 0.18, "1 km (critical)")] : []),
       ...(span >= ELEVATED_KM ? [sphere(ELEVATED_KM, C.warning, 0.06, "5 km (elevated)")] : []),
@@ -202,7 +203,7 @@
         margin: { l: 64, r: 16, t: 28, b: 44 }, hovermode: "closest",
         legend: { orientation: "h", x: 0, y: 1.08, font: { color: C.text } },
         xaxis: { title: { text: "days to closest approach", font: { color: C.muted } }, autorange: "reversed", color: C.muted, gridcolor: C.grid, zeroline: false },
-        yaxis: yax("miss distance (km, log)", [0.56, 1], { type: "log" }),
+        yaxis: yax("miss distance (km, log)", [0.56, 1], { type: "log", dtick: 1 }), // decades only: 0.1, 1, 10 km
         yaxis2: yax("Pc upper bound (log10)", [0, 0.44], { anchor: "x" }),
         shapes: lines.map((l) => l.shape),
         annotations: lines.map((l) => l.ann),
@@ -211,5 +212,11 @@
     );
   }
 
-  window.CloseApproach = { render3d, renderCompare, MAX_COMPARE };
+  // Match a host page's palette, e.g. theme({ critical: "#ff4a3d", warning: "#e8a33c", below: "#8a9490" }).
+  function theme(patch) {
+    Object.assign(C, patch);
+    [TIER[0].color, TIER[1].color, TIER[2].color] = [C.below, C.warning, C.critical];
+  }
+
+  window.CloseApproach = { render3d, renderCompare, theme, MAX_COMPARE };
 })();

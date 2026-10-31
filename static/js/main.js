@@ -2,6 +2,7 @@
 import { api } from "./api.js";
 import { initClock } from "./clock.js";
 import { initDetail } from "./detail.js";
+import { initEncounter } from "./encounter.js";
 import { TIERS } from "./fmt.js";
 import { initFunnel } from "./funnel.js";
 import { initLatitude } from "./latitude.js";
@@ -30,6 +31,7 @@ async function main() {
   initStrip();
   initLatitude();
   initClock();
+  initEncounter();
   // Open on the most urgent event so the right rail isn't empty.
   if (list.events.length) set({ selectedId: list.events[0].event_id });
 }
