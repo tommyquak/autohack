@@ -26,7 +26,6 @@ async function main() {
   const days = list.events.map((e) => e.latest.time_to_tca_days);
   document.getElementById("stamp").textContent =
     `${summary.n_events.toLocaleString("en")} events · test-set predictions · TCA ${Math.min(...days).toFixed(1)}–${Math.max(...days).toFixed(1)} d out`;
-  document.getElementById("source").textContent = metrics ? `split: ${metrics.split}` : "metrics not built";
   initFilters();
   initQueue();
   initFunnel();
