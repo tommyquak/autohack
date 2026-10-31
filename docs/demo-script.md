@@ -102,6 +102,9 @@ Numbers: event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-
 - The model can only demote Elevated → below threshold on one narrow slice; it never touches Critical [`docs/ALGO.md`].
 - On train CV, under the same 99% rule, a tuned Pc-bound threshold removes 9.7% of false alarms; the model removes 64.1% [`docs/EVAL.md`].
 - 26/26 robustness cases pass, 0 crashes, on a 1,764-row sample [`docs/robustness.md`].
+- Official task (final tier from CDMs 2+ days out, 5-fold event CV, 11,942 events): Critical recall 0.911 vs 0.865
+  for "keep today's tier", Critical F2 0.875 vs 0.863, 79/270 escalations caught vs 0, at 775 false escalations;
+  lower accuracy (0.888 vs 0.938) and Critical precision (0.757 vs 0.857) [`docs/FORECAST.md`].
 
 ## Do not claim
 
@@ -111,7 +114,8 @@ Numbers: event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-
 - **That "needs review" marks the riskiest events.** On an Elevated event it marks a close call just above the demotion
   bar, which is mostly an over-warning [`docs/ALGO.md` §2].
 - **That our safety gate proved v2 worse.** The test under-tier counts (1 vs 3) are noise; see `docs/EVAL.md`.
-- **Any forecast result.** Kalent's escalation forecast (`docs/algorithm/algorithm.md`, `feature.md`) is planned; no code or numbers are on `main`.
+- **That the forecast's 90% is a guarantee, or that it beats "keep today's tier" on everything.** It wins on Critical
+  recall and F2 and catches escalations; it loses on accuracy and Critical precision [`docs/FORECAST.md`].
 - **"Safe".** Tier 0 is "below threshold". Also don't claim a calibrated Pc, live feed, or orbit propagation.
 
 ## Likely judge questions
@@ -125,4 +129,7 @@ Numbers: event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-
 - **Why use Claude at all?** To turn fields into a readable handover note. It only rewords fixed facts, never sets a tier, and each response records `claude` or `template` [`triage/explain.py`].
 - **What about Pc?** We use the provided Pc upper bound plus a classifier, not a calibrated Pc. That's an honest gap [`README.md` "What we don't solve yet"].
 - **Why do so many Criticals sit above 60° latitude?** 72% of events and 125 of 196 Criticals are there, where polar orbits cross. Display only, not a model input [`events.json` `by_latitude_band`, section 05].
-- **What's next?** A per-event forecast of the final tier from CDMs 2+ days out, to fill the 24 h view. Planned, not shipped.
+- **Did you do the organisers' official task?** Yes: final tier from CDMs 2+ days out, 5-fold event CV over the
+  11,942 usable train events. Against "keep today's tier" (miss-only): Critical recall 0.911 vs 0.865, Critical F2
+  0.875 vs 0.863, 79 of 270 escalations caught vs 0, at 775 false escalations; accuracy 0.888 vs 0.938 and
+  Critical precision 0.757 vs 0.857 are lower [`docs/FORECAST.md`, `forecast_metrics.json`].
