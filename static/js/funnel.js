@@ -208,7 +208,7 @@ function updateWorkload() {
   el.innerHTML =
     `<div class="wl main"><span class="wl-k">Flagged for review</span><span class="wl-v"><b class="num">${shown.toLocaleString("en")}</b>${delta}</span></div>` +
     `<div class="wl"><span class="wl-k">Critical kept</span><span class="wl-v"><b class="num">${crit.toLocaleString("en")}</b></span></div>` +
-    (m ? `<div class="wl"><span class="wl-k">Critical recall</span><span class="wl-v"><b class="num">${pct(m.critical_recall)}</b><span class="muted">${m.n.toLocaleString("en")} test CDMs</span></span></div>` : "");
+    (m ? `<div class="wl"><span class="wl-k">Critical recall</span><span class="wl-v"><b class="num">${pct(m.critical_recall)}</b><span class="muted">${m.n.toLocaleString("en")} test CDMs, per message</span></span></div>` : "");
   const empty = document.getElementById("funnel-empty");
   empty.hidden = up.length > 0;
   empty.textContent = "Every event has passed closest approach. Press Reset on the replay clock.";

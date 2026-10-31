@@ -26,7 +26,7 @@ async function main() {
   set({ summary, events: list.events, metrics });
   const days = list.events.map((e) => e.latest.time_to_tca_days);
   document.getElementById("stamp").textContent =
-    `${summary.n_events.toLocaleString("en")} events · test-set predictions · TCA ${Math.min(...days).toFixed(1)}–${Math.max(...days).toFixed(1)} d out`;
+    `${summary.n_events.toLocaleString("en")} events · per-message predictions on test data · TCA ${Math.min(...days).toFixed(1)}–${Math.max(...days).toFixed(1)} d out`;
   initFilters();
   initQueue();
   initFunnel();
