@@ -57,7 +57,8 @@ async function main() {
   initGlobe();
   initEncounter();
   initEval();
-  initAsk();
+  // Chatbot is off the dashboard by decision (keeps the demo uncluttered); open with ?ask=1.
+  if (new URLSearchParams(location.search).has("ask")) initAsk();
   initRails();
   // The globe is the landing view unless a deep link (/#encounter, /#compare=…) already picked a tab.
   if (!location.hash) document.querySelector('#tabs [data-tab="globe"]')?.click();
