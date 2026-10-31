@@ -37,6 +37,18 @@ def latitude_bands(events: list[dict]) -> list[dict] | None:
     return out
 
 
+def critical_drivers(events: list[dict]) -> dict:
+    """Which rule makes each Critical event Critical (latest CDM): miss < 1 km only, Pc bound >= 1e-4 only, or both."""
+    out = {"miss_only": 0, "pc_only": 0, "both": 0}
+    for e in events:
+        if e["tier"] != Tier.CRITICAL:
+            continue
+        by_pc = pc_tier(e["latest"]["max_risk_estimate_log10"]) == Tier.CRITICAL
+        by_miss = miss_tier(e["latest"]["miss_distance_m"]) == Tier.CRITICAL
+        out["both" if by_pc and by_miss else "pc_only" if by_pc else "miss_only"] += 1
+    return out
+
+
 def build(df: pd.DataFrame) -> dict:
     df = df.join(model.predict(df))
     # The conservative rule the model improves on: worse of the Pc upper bound and miss distance.
@@ -94,6 +106,7 @@ def build(df: pd.DataFrame) -> dict:
         "needs_review": sum(e["needs_review"] for e in events),
         "cautions": {c: sum(c in e["cautions"] for e in events) for c in explain.CAUTIONS},
         "by_latitude_band": latitude_bands(events),
+        "critical_drivers": critical_drivers(events),
         "warnings_24h": {
             "window_days": WARNING_WINDOW_DAYS,
             "events_in_window": len(window),

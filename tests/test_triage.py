@@ -109,3 +109,10 @@ def test_display_only_columns_never_reach_the_model(cdm_csv, tmp_path):
     assert out["events"][0]["latest"]["target_altitude_km"] == [690.0, 710.0]
     assert sum(b["events"] for b in out["summary"]["by_latitude_band"]) == out["summary"]["n_events"]
     assert build(load_cdms(cdm_csv))["summary"]["by_latitude_band"] is None  # columns absent -> None
+
+
+def test_critical_drivers_partition_the_critical_events(cdms):
+    from triage.build_events import build
+
+    out = build(cdms)["summary"]
+    assert sum(out["critical_drivers"].values()) == out["by_tier"]["Critical"]
