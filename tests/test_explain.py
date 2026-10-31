@@ -85,10 +85,8 @@ def test_guardrail_rejects_safe_wording():
 def test_api_explain_route(tmp_path, monkeypatch, events):
     import server
 
-    path = tmp_path / "events.json"
-    path.write_text(json.dumps({"summary": {}, "events": events}))
-    monkeypatch.setattr(explain, "EVENTS_PATH", path)
-    monkeypatch.setattr(explain.load_event, "__defaults__", (path,))
+    (tmp_path / "events.json").write_text(json.dumps({"summary": {}, "events": events}))
+    monkeypatch.setattr(server, "REPORTS", tmp_path)
     client = TestClient(server.app)
 
     r = client.get(f"/api/explain/{events[0]['event_id']}?llm=false")
