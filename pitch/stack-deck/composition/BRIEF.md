@@ -19,9 +19,10 @@ point chart (forecast numbers pending), the decision record on the Review page (
 proof (certificate, GET /api/audit 11/11 PASS, POST /api/triage), honest evaluation against stronger baselines
 and train CV, the failure case (event 1278), the safety gate (v2 didn't ship), what is in progress, and the close.
 
-Motion: one calm transition (each slide fades up from the background over 600 ms), gentle 150-250 ms build
-staggers with ease-out, rings that draw on, slow eased camera moves, cross-faded flipbook frames. No back,
-elastic or bounce eases.
+Motion: text never moves. Text builds are opacity-only fades (~350 ms) with gentle staggers; no count-ups.
+Only captures move (slow eased push-ins, cross-faded flipbook frames), plus rings drawing on and bars filling
+once. Each slide fades up from the background over 500 ms. Nothing keeps moving after a build except a slow
+push-in on a capture. No back, elastic or bounce eases.
 
 ## Assets
 

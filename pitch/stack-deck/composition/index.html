@@ -1475,15 +1475,16 @@
           return d;
         }
 
-        // ---- motion vocabulary: calm and consistent. Short drifts with ease-out, gentle staggers, rings that draw
-        // on, slow eased camera moves, cross-fades. No back, elastic or bounce eases. Deterministic and seek-safe.
+        // ---- motion vocabulary: text never moves. Text builds are opacity-only fades (~350 ms) with gentle staggers;
+        // only captures move (slow eased push-ins and cross-fades), plus rings drawing on and bars filling once.
+        // No back, elastic or bounce eases. Deterministic and seek-safe.
         var EASE = "power2.out";
         function M(tl, k) {
           return {
-            rise: function (els, t, st) { return tl.fromTo(els, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6 * k, ease: EASE, stagger: (st == null ? 0.18 : st) * k }, t); },
-            fade: function (els, t, d, st) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: (d || 0.6) * k, ease: "sine.inOut", stagger: (st || 0) * k }, t); },
-            right: function (els, t, st) { return tl.fromTo(els, { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.6 * k, ease: EASE, stagger: (st == null ? 0.18 : st) * k }, t); },
-            soft: function (els, t) { return tl.fromTo(els, { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.6 * k, ease: EASE }, t); },
+            rise: function (els, t, st) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: 0.35 * k, ease: "sine.inOut", stagger: (st == null ? 0.18 : st) * k }, t); },
+            fade: function (els, t, d, st) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: (d || 0.35) * k, ease: "sine.inOut", stagger: (st || 0) * k }, t); },
+            right: function (els, t, st) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: 0.35 * k, ease: "sine.inOut", stagger: (st == null ? 0.18 : st) * k }, t); },
+            soft: function (els, t) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: 0.35 * k, ease: "sine.inOut" }, t); },
             draw: function (els, t, d, st) { return tl.fromTo(els, { opacity: 1, attr: { "stroke-dashoffset": 1 } }, { opacity: 1, attr: { "stroke-dashoffset": 0 }, duration: (d || 0.7) * k, ease: "power2.inOut", stagger: (st || 0) * k }, t); },
             out: function (els, t) { return tl.to(els, { opacity: 0, duration: 0.5 * k, ease: "sine.inOut" }, t); },
             cam: function (sh, c, t, d) { return tl.to(sh.cam, { x: c.x, y: c.y, scale: c.scale, duration: (d || 1.6) * k, ease: "sine.inOut" }, t); },
@@ -1494,11 +1495,10 @@
               var o = { v: a };
               return tl.fromTo(o, { v: a }, { v: b, duration: (d || 1) * k, ease: EASE, onUpdate: function () { el.textContent = fmt(o.v); } }, t);
             },
-            stamp: function (el, rot, t) { return tl.fromTo(el, { opacity: 0, scale: 1.08, rotation: rot }, { opacity: 1, scale: 1, rotation: rot, duration: 0.6 * k, ease: EASE }, t); },
+            stamp: function (el, rot, t) { return tl.fromTo(el, { opacity: 0, rotation: rot }, { opacity: 1, rotation: rot, duration: 0.35 * k, ease: "sine.inOut" }, t); },
             grow: function (els, t, d) { return tl.fromTo(els, { scaleX: 0 }, { scaleX: 1, transformOrigin: "0 50%", duration: (d || 0.9) * k, ease: EASE }, t); },
           };
         }
-        var en = function (v) { return Math.round(v).toLocaleString("en"); };
         function head(m, id, t) { m.fade($$("#" + id + " .eyebrow, #" + id + " h1.head"), t, 0.6, 0.15); }
 
         // Each build(tl, t0, k) adds one scene's reveals at t0. LEN is the live length in seconds; the deck
@@ -1540,8 +1540,7 @@
           var m = M(tl, k), big = $("#pb-big");
           head(m, "s-problem", t);
           m.rise($("#pb-user"), t + 0.4 * k);
-          m.fade(big, t + 1.0 * k, 0.4);
-          m.count(big, 0, 54.2, t + 1.0 * k, 1.4, function (v) { return v.toFixed(1) + "%"; });
+          m.fade(big, t + 1.0 * k);
           m.rise($("#pb-of"), t + 1.6 * k);
           m.fade(pb.el, t + 2.0 * k);
           tl.set(pb.cam, { x: pbW.x, y: pbW.y, scale: pbW.scale, immediateRender: true }, t);
@@ -1564,7 +1563,6 @@
           m.hide(us.imgs[1], t);
           m.rise($$("#beat-1 > *"), t + 1.2 * k);
           m.xfade(us.imgs[1], t + 2.2 * k, 0.9);
-          m.count($("#usp-count"), 1090, 802, t + 2.2 * k, 1.0, function (v) { return "1,090 → " + en(v); });
           m.draw(uRing, t + 3.0 * k);
           m.rise($$("#beat-2 > *:not(.rec)"), t + 3.5 * k);
           m.right($$("#usp-rec > *"), t + 4.1 * k, 0.15);
@@ -1763,7 +1761,7 @@
         window.__timelines["deck"] = tl;
 
         // ---- live presenting: only the wrapper page arms this (renders and checks never do) ----
-        // On each slide change: one calm transition (the new slide fades up from the background over 600 ms),
+        // On each slide change: one calm transition (the new slide fades up from the background over 500 ms),
         // then the slide's build replays in real time. Re-entering a slide, forwards or backwards, kills the old
         // build at its end state and starts clean. prefers-reduced-motion: instant, finished states.
         var live = null, current = null;
@@ -1777,8 +1775,7 @@
           var sc = document.querySelector('[data-composition-id="' + id + '"]');
           var b = sc && B[sc.id];
           live = gsap.timeline();
-          live.fromTo(veil, { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "sine.inOut" }, 0);
-          if (sc) live.fromTo(sc, { scale: 1.012 }, { scale: 1, duration: 0.7, ease: "sine.inOut" }, 0);
+          live.fromTo(veil, { opacity: 1 }, { opacity: 0, duration: 0.5, ease: "sine.inOut" }, 0);
           if (b) b(live, 0.15, 1);
         };
         // Arm: watch the scenes' visibility so the transition starts in the same frame as the slide change.
