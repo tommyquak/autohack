@@ -41,7 +41,7 @@ let dirty = true;
 const X = (d) => M.l + (1 - clamp(d, 0, X_MAX) / X_MAX) * (w - M.l - M.r);
 const Y = (km) => M.t + (1 - (clamp(Math.log10(km), Y_MIN, Y_MAX) - Y_MIN) / (Y_MAX - Y_MIN)) * (h - M.t - M.b);
 
-// The forecaster PR adds event.forecast = {predicted_final_tier, p_final}; p_final may be one number or [p0, p1, p2].
+// event.forecast = {predicted_final_tier, p_final, ...}; p_final are class-weighted model scores, NOT calibrated probabilities.
 function forecast(e) {
   const f = e.forecast;
   if (f && Number.isInteger(f.predicted_final_tier)) {
@@ -486,7 +486,7 @@ function onMove(ev) {
   } else {
     const ft = TIERS[f.tier];
     body = f.real
-      ? `Forecast final: <b style="color:${ft.color}">${ft.name}</b>${f.p != null ? ` · P ${f.p.toFixed(2)}` : ""}${escalates(e) ? " · escalation" : ""}`
+      ? `Forecast final: <b style="color:${ft.color}">${ft.name}</b>${f.p != null ? ` · score ${f.p.toFixed(2)}` : ""}${escalates(e) ? " · escalation" : ""}`
       : `<span style="color:${C.muted}">Forecast pending: placed by current tier</span>`;
   }
   tip.innerHTML = `<b style="color:${t.color}">${t.icon} ${t.name}</b> now · EVT ${esc(e.event_id)}<br>${body}`;
@@ -569,7 +569,7 @@ function renderCard(e, pts) {
   const t = TIERS[e.tier], f = forecast(e), ft = TIERS[f.tier], L = e.latest;
   const fc = f.real
     ? `<span class="tier" style="color:${ft.color}">${ft.icon} ${ft.name}</span>` +
-      `<span class="sub">${f.p != null ? `P ${f.p.toFixed(2)} for this tier` : "no probability given"}${escalates(e) ? ` · <span class="esc">escalation from ${t.name}</span>` : ""}</span>`
+      `<span class="sub">${f.p != null ? `model score ${f.p.toFixed(2)} (not a calibrated probability)` : "no model score"}${escalates(e) ? ` · <span class="esc">escalation from ${t.name}</span>` : ""}</span>`
     : `<span class="sub">Forecast arrives with the final-tier forecaster; showing the current tier.</span>`;
   card.innerHTML =
     `<div class="dp-card-head"><h2>EVT ${esc(e.event_id)}</h2><button type="button" class="dp-x" aria-label="Close">×</button></div>` +
