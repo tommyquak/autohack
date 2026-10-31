@@ -75,7 +75,7 @@ bound 10^-5.61, true 10^-5.92 [`README.md` "Where it fails"; `events.json` event
 - [ ] Header says `split: test`; stamp says `2,167 events`. If not, stop and fix before going on stage.
 - [ ] Tab 1: dashboard on **Triage funnel**, **Model** pressed, clock at `NOW · snapshot`, EVT 482 selected. Tab 2: `http://127.0.0.1:8000/#compare=1278`.
 - [ ] Browser zoom 110-125% so the workload bar reads from the back; full screen; notifications off.
-- [ ] Open **Encounter (3D)** once before the demo: it loads Plotly from cdnjs, so check the venue Wi-Fi.
+- [ ] Open **Encounter (3D)** once before the demo. Plotly is vendored (`static/vendor/`), so 3D works without Wi-Fi; only the web fonts need it.
 - [ ] No key, or the key fails: the detail panel already shows the template ("Template summary of the fields above"). Skip
       the Claude click and say "this is the template fallback; the tier never depends on Claude."
 - [ ] API errors (red banner, "Could not load events"): restart uvicorn, reload. If 3D fails, it says "View unavailable"; skip

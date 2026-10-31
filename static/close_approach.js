@@ -1,5 +1,5 @@
 // Close-approach views for the dashboard (owner: Integration & trust).
-// Needs Plotly on the page: <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.0/plotly.min.js"></script>
+// Needs Plotly on the page: <script src="/static/vendor/plotly-3.1.0.min.js"></script> (vendored copy of cdnjs 3.1.0)
 //
 //   CloseApproach.render3d(el, event)      geometry at TCA for one event (event shape: docs/CONTRACT.md §2)
 //   CloseApproach.renderCompare(el, events) up to 3 events: miss distance and Pc upper bound over the updates

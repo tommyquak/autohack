@@ -1,10 +1,11 @@
 // Encounter (3D) and Compare tabs (owner: Integration & trust). Adds its own tabs and panels, so the
-// dashboard only needs `initEncounter()`. Plotly and close_approach.js load the first time a tab opens.
+// dashboard only needs `initEncounter()`. Plotly (vendored) and close_approach.js load the first time a tab opens.
 import { api } from "./api.js";
 import { TIERS, esc } from "./fmt.js";
 import { state, subscribe } from "./state.js";
 
-const PLOTLY = "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.0/plotly.min.js";
+// Vendored so the demo doesn't depend on venue Wi-Fi (sha512 matches cdnjs); the CDN is only a fallback.
+const PLOTLY = ["/static/vendor/plotly-3.1.0.min.js", "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.0/plotly.min.js"];
 const pinned = []; // event ids in the Compare tab, in the order they were added
 let lib = null; // Promise<CloseApproach>
 let token = 0; // drops renders that a newer selection has overtaken
@@ -18,7 +19,7 @@ function loadScript(src) {
 }
 
 function loadLib() {
-  lib ||= (window.Plotly ? Promise.resolve() : loadScript(PLOTLY))
+  lib ||= (window.Plotly ? Promise.resolve() : loadScript(PLOTLY[0]).catch(() => loadScript(PLOTLY[1])))
     .then(() => loadScript("/static/close_approach.js"))
     .then(() => {
       const css = getComputedStyle(document.documentElement);
