@@ -3,6 +3,7 @@ import { api } from "./api.js";
 import { initClock } from "./clock.js";
 import { initDetail } from "./detail.js";
 import { initEncounter } from "./encounter.js";
+import { initEval } from "./evalview.js";
 import { TIERS } from "./fmt.js";
 import { initFunnel } from "./funnel.js";
 import { initGlobe } from "./globe.js";
@@ -34,6 +35,7 @@ async function main() {
   initClock();
   initGlobe();
   initEncounter();
+  initEval();
   // Open on the most urgent event so the right rail isn't empty.
   if (list.events.length) set({ selectedId: list.events[0].event_id });
 }

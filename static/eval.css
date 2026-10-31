@@ -1,0 +1,48 @@
+/* Evaluation tab (static/js/evalview.js). Tokens come from dashboard.css. */
+#panel-eval { min-height: 0; }
+.ev { flex: 1; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 26px; padding: 6px 4px 28px; max-width: 980px; }
+.ev h3 { margin: 0 0 10px; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ev h4 { margin: 0 0 6px; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ev p { margin: 0; }
+.ev-lead { font: 500 20px/1.4 var(--sans); max-width: 62ch; text-wrap: balance; color: var(--ink); }
+.ev-note { font: 14px/1.5 var(--sans); color: var(--muted); max-width: 70ch; margin-top: -12px; }
+.ev-foot { margin-top: 8px; font: 12px/1.45 var(--sans); color: var(--muted); }
+.ev code { font: 12px var(--mono); }
+
+.ev-table { width: 100%; border-collapse: collapse; font: 13px var(--sans); }
+.ev-table thead th { text-align: right; font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 10px 8px; border-bottom: 1px solid var(--hair2); vertical-align: bottom; }
+.ev-table thead th:first-child { text-align: left; padding-left: 0; }
+.ev-table tbody th { text-align: left; font-weight: 500; padding: 11px 10px 11px 0; border-bottom: 1px solid var(--hair); }
+.ev-table tbody th span { display: block; font: 11px var(--mono); color: var(--muted); font-weight: 400; margin-top: 1px; }
+.ev-table td { text-align: right; padding: 11px 10px; border-bottom: 1px solid var(--hair); font-size: 13px; }
+.ev-table tr.is-model { background: #0e1613; }
+.ev-table tr.is-model th, .ev-table tr.is-model td { font-weight: 600; color: var(--ink); }
+
+.lt { margin-bottom: 14px; }
+.lt-head { font: 13px var(--sans); margin-bottom: 6px; }
+.lt-head .muted { margin-left: 8px; font-size: 12px; }
+.lt-row { display: grid; grid-template-columns: 130px 1fr 52px 96px; align-items: center; gap: 10px; padding: 3px 0; font-size: 12px; }
+.lt-name { color: var(--muted); font-family: var(--mono); }
+.lt-bar { height: 8px; background: var(--hair); border-radius: 2px; overflow: hidden; }
+.lt-bar i { display: block; height: 100%; }
+.lt-bar .base { background: var(--muted); opacity: .6; }
+.lt-bar .mdl { background: var(--own); }
+.lt-val { text-align: right; color: var(--ink); }
+.lt-rec { color: var(--muted); text-align: right; }
+
+.ev-matrix { border-collapse: collapse; font: 13px var(--sans); }
+.ev-matrix th { font: 500 11px var(--mono); letter-spacing: .04em; text-align: right; padding: 6px 12px; white-space: nowrap; }
+.ev-matrix tbody th { text-align: left; padding-left: 0; }
+.ev-matrix td { text-align: right; padding: 8px 14px; min-width: 96px; border: 1px solid var(--hair); font-size: 14px; }
+.ev-matrix td.diag { background: #101a16; color: var(--ink); }
+.ev-matrix td.under { outline: 1px solid var(--elev); outline-offset: -1px; color: var(--elev); font-weight: 600; }
+.ev-matrix td.over { color: var(--muted); }
+.ev-failure { margin-top: 18px; max-width: 64ch; font-size: 14px; line-height: 1.5; }
+.ev-fail { margin: 0; padding-left: 18px; }
+.ev-fail a { color: var(--own); margin-left: 6px; }
+
+@media (max-width: 760px) {
+  .lt-row { grid-template-columns: 1fr 52px; }
+  .lt-row .lt-name { grid-column: 1 / -1; }
+  .lt-row .lt-rec { grid-column: 1 / -1; text-align: left; }
+}
