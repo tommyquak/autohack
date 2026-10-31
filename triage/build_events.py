@@ -91,6 +91,7 @@ def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
                         "time_to_tca_days": float(r.time_to_tca),
                         "miss_distance_m": float(r.miss_distance),
                         "max_risk_estimate_log10": float(r.max_risk_estimate),
+                        "relative_position_rtn_m": [float(getattr(r, f"relative_position_{a}")) for a in "rtn"],
                         "sigma_r_m": {"chaser": float(r.c_sigma_r), "target": float(r.t_sigma_r)},
                         "risk_log10": float(r.risk) if "risk" in g else None,
                         "pred_tier": int(r.pred_tier),

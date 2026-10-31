@@ -137,6 +137,12 @@ def test_events_carry_baseline_tier(cdms):
     assert sum(out["summary"]["by_baseline_tier"].values()) == out["summary"]["n_events"]
 
 
+def test_history_carries_rtn_per_update(cdms):
+    for e in build(cdms)["events"]:
+        assert all(len(h["relative_position_rtn_m"]) == 3 for h in e["history"])
+        assert e["history"][-1]["relative_position_rtn_m"] == e["latest"]["relative_position_rtn_m"]
+
+
 def test_dashboard_page_and_modules_exist():
     import re
     from pathlib import Path
