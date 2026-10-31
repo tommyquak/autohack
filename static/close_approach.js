@@ -81,6 +81,20 @@
     return `<p class="ca-decision"><span class="ca-label">Model decision</span> ${text}${check}</p>`;
   }
 
+  // Final-tier forecast from updates 2+ days out (events.json `forecast`, docs/FORECAST.md); it can only raise a tier.
+  function forecastLine(event) {
+    const f = event.forecast;
+    if (!f) return "";
+    const final = TIER[f.predicted_final_tier];
+    const badge = `<span style="color:${final.color}">${final.icon}</span> <b>${esc(final.name)}</b>`;
+    const text = f.predicted_final_tier > event.tier
+      ? `${badge}, raised from ${esc(TIER[event.tier].name.toLowerCase())}`
+      : `stays ${badge}`;
+    const title = esc((f.reasons || []).join(" · "));
+    return `<p class="ca-decision" title="${title}"><span class="ca-label">Forecast at closest approach</span> ${text}
+      <span class="ca-muted">· from updates two or more days out; a forecast, not a certainty</span></p>`;
+  }
+
   function trend(e) {
     const h = e.history;
     if (!h || h.length < 2) return '<span class="ca-muted">one update</span>';
@@ -175,6 +189,7 @@
         <b>${fmtDist(L.miss_distance_m)}</b> from our satellite in <b>${L.time_to_tca_days.toFixed(1)} days</b>,
         ${distanceLine(L.miss_distance_m)}.</p>
       ${modelDecision(event)}
+      ${forecastLine(event)}
       <div class="ca-readings">
         ${reading("Miss distance", fmtDist(L.miss_distance_m))}
         ${reading("Time to closest approach", `${L.time_to_tca_days.toFixed(1)} d`)}

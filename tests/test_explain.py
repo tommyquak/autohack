@@ -153,3 +153,20 @@ def test_pc_matches_dashboard_format(log10, text):
 def test_every_demo_template_passes_check():
     ev = json.loads((Path(__file__).resolve().parent.parent / "data" / "demo" / "events.json").read_text())["events"]
     assert all(explain.check(explain.template_explanation(explain.facts(e)), explain.facts(e)) is None for e in ev)
+
+
+def test_forecast_is_described_and_marked_as_raised():
+    e = _event()
+    e["tier"], e["tier_name"] = 1, "Elevated"
+    e["forecast"] = {
+        "predicted_final_tier": 2,
+        "predicted_final_tier_name": "Critical",
+        "reasons": ["earlier miss 224 m"],
+    }
+    f = explain.facts(e)
+    assert f["forecast"]["raised"] and f["forecast"]["final_tier"] == "Critical"
+    text = explain.template_explanation(f)
+    assert "Forecast for closest approach" in text and "raised from Elevated (earlier miss 224 m)" in text
+    assert explain.check(text, f) is None
+    e["forecast"].update(predicted_final_tier=1, predicted_final_tier_name="Elevated")
+    assert "stays Elevated" in explain.template_explanation(explain.facts(e))
