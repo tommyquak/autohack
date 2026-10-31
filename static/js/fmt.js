@@ -5,7 +5,7 @@ export const TIERS = [
   { name: "Critical", icon: "■", color: "#ff4a3d" },
 ];
 export const CAUTIONS = {
-  needs_review: "Needs review",
+  needs_review: "Needs review: close call (likely over-warning) or unusable input",
   pc_diluted: "Pc may be diluted by uncertainty",
   no_covariance: "No usable position uncertainty",
 };
