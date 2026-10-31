@@ -1,4 +1,4 @@
-/* Globe tab (static/js/globe.js). Quiet by default; detail opens in a card on click. Tokens come from dashboard.css. */
+/* Globe tab (static/js/globe.js). The stage's space ground shows through; overlays stay small. Tokens: dashboard.css. */
 #panel-globe .canvas-wrap { min-height: 360px; }
 #globe-wrap canvas { cursor: grab; touch-action: none; }
 #globe-wrap canvas:active { cursor: grabbing; }
@@ -9,7 +9,17 @@
 .globe-pause { position: absolute; top: 0; right: 0; background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 5px 10px; cursor: pointer; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .globe-pause:hover { border-color: var(--muted); color: var(--ink); }
 
-.globe-card { position: absolute; left: 0; bottom: 0; width: min(300px, 100%); padding: 14px 16px 14px; background: rgba(8, 10, 11, .94); border: 1px solid var(--hair2); border-radius: 4px; }
+/* key, top right under the pause button */
+.globe-key { position: absolute; top: 40px; right: 0; width: 176px; font: 11px/1.4 var(--mono); color: var(--muted); }
+.gk-title { text-transform: uppercase; letter-spacing: .08em; font-size: 10px; margin-bottom: 4px; }
+.gk-sep { margin-top: 12px; }
+.gk-ramp { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #4fc3f7, #ffb347, #ff4a3d); }
+.gk-scale { display: flex; justify-content: space-between; margin-top: 2px; }
+.gk-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; color: var(--ink); text-transform: none; }
+.gk-row i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.gk-row .gk-ring { width: 14px; height: 0; border-radius: 0; border-top: 1.5px solid rgba(150, 205, 255, .85); }
+
+.globe-card { position: absolute; left: 0; bottom: 0; width: min(300px, 100%); padding: 14px 16px 14px; background: rgba(6, 12, 22, .94); border: 1px solid var(--hair2); border-radius: 4px; }
 .globe-card[hidden] { display: none; }
 .globe-card h3 { margin: 0 24px 2px 0; font: 600 18px/1.25 var(--sans); }
 .gc-sub { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
@@ -20,3 +30,6 @@
 .gc-filter:hover { border-color: var(--own); color: var(--own); }
 .gc-close { position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
 .gc-close:hover { color: var(--ink); }
+
+/* a faint deep-space ground behind the sky, scoped to this tab so the other views keep the plain dark ground */
+#globe-wrap { background: radial-gradient(70% 70% at 50% 46%, #0b1626 0%, transparent 78%); }
