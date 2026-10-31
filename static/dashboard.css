@@ -32,7 +32,7 @@ button, select, input { font: inherit; color: inherit; }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 20px; border-bottom: 1px solid var(--hair); }
 .brand { display: flex; align-items: center; gap: 10px; font: 600 12px var(--mono); letter-spacing: .14em; }
 .brand .muted { font-weight: 400; letter-spacing: .06em; text-transform: none; }
-.mark { width: 10px; height: 10px; border-radius: 50%; background: var(--own); box-shadow: 0 0 12px var(--own); }
+.mark { width: 10px; height: 10px; border-radius: 50%; background: var(--own); }
 .clock { display: flex; align-items: center; gap: 10px; }
 .clock button { background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 4px 10px; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; font: 11px var(--mono); }
 .clock button:hover { border-color: var(--muted); }
