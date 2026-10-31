@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from triage import explain, model
+from triage import actions, explain, model
 from triage.data import EVENT, RAW_DIR, find_csv, load_cdms
 from triage.tiers import MISS_CRITICAL_M, TIER_NAMES, Tier, miss_tier, pc_tier, reasons
 
@@ -49,8 +49,9 @@ def critical_drivers(events: list[dict]) -> dict:
     return out
 
 
-def build(df: pd.DataFrame) -> dict:
-    df = df.join(model.predict(df))
+def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
+    """events.json content for df. `artifact` overrides the saved nowcast model (used by out-of-fold evaluation)."""
+    df = df.join(model.predict(df, artifact))
     # The conservative rule the model improves on: worse of the Pc upper bound and miss distance.
     df["baseline_tier"] = np.maximum(pc_tier(df["max_risk_estimate"]), miss_tier(df["miss_distance"]))
     events = []
@@ -96,6 +97,7 @@ def build(df: pd.DataFrame) -> dict:
         )
     for e in events:
         e["cautions"] = explain.cautions(e)
+        e["action"] = actions.action(e)  # reads no label: true_tier / risk_log10 are never used
     # Most urgent first: tier, then soonest TCA.
     events.sort(key=lambda e: (-e["tier"], e["latest"]["time_to_tca_days"]))
     window = [e for e in events if e["latest"]["time_to_tca_days"] <= WARNING_WINDOW_DAYS]
@@ -107,6 +109,8 @@ def build(df: pd.DataFrame) -> dict:
         "cautions": {c: sum(c in e["cautions"] for e in events) for c in explain.CAUTIONS},
         "by_latitude_band": latitude_bands(events),
         "critical_drivers": critical_drivers(events),
+        "by_action": {q: sum(e["action"]["queue"] == q for e in events) for q in actions.QUEUES},
+        "escalation_watch": sum(e["action"]["escalation_watch"] for e in events),
         "warnings_24h": {
             "window_days": WARNING_WINDOW_DAYS,
             "events_in_window": len(window),

@@ -19,12 +19,15 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
     "by_tier": {"Below threshold": 1900, "Elevated": 220, "Critical": 47},
     "needs_review": 31,
     "cautions": {"needs_review": 31, "no_covariance": 63, "pc_diluted": 25},
+    "by_action": {"MANEUVER PLANNING": 47, "ANALYST REVIEW": 300, "MONITOR": 1820}, "escalation_watch": 60,
     "warnings_24h": {"window_days": 1.0, "events_in_window": 80,
                      "within_dangerous_distance": 3, "critical_in_window": 5}
   },
   "events": [{
     "event_id": 123, "tier": 2, "tier_name": "Critical", "baseline_tier": 2, "confidence": 0.8, "needs_review": false,
     "reasons": ["Pc 10^-3.20 >= 1e-4 (critical threshold)"], "cautions": ["needs_review"],
+    "action": {"queue": "MANEUVER PLANNING", "escalation_watch": false,
+               "reasons": ["Critical: miss distance 640 m is under 1 km", "Queued so an analyst can start planning; ..."]},
     "latest": {"time_to_tca_days": 0.6, "miss_distance_m": 640.0, "relative_speed_ms": 12000.0,
                "relative_position_rtn_m": [12.0, -480.0, 420.0],
                "sigma_r_m": {"chaser": 48.0, "target": 5.1},
@@ -43,6 +46,14 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 - `cautions` (from `triage.explain.cautions`, latest CDM): `needs_review` (as above) · `no_covariance` (a sigma is the
   dataset's 63,781 km placeholder, so Pc can't be trusted alone) · `pc_diluted` (combined radial sigma > miss/√2 while
   Pc < 1e-4: a low Pc may reflect poor tracking, not separation). Show them as badges; never color alone.
+- `action` (from `triage.actions.action`, reads only the fields above, never `true_tier` / `risk_log10`): which queue
+  the event goes to next. `queue` is exactly one of `MANEUVER PLANNING` (current tier Critical: an analyst should start
+  planning; the operator decides) · `ANALYST REVIEW` (Elevated, `needs_review`, `no_covariance`, `pc_diluted`, or a
+  below-threshold event with `escalation_watch`) · `MONITOR` (below threshold, no caution, no trend flag: keep watching,
+  not "no risk"). `escalation_watch` = near the next threshold up and closing / not settled / just above it, with
+  >= 1 day to TCA. `reasons` are plain English. `summary.by_action` counts queues (sums to `n_events`) and
+  `summary.escalation_watch` counts flags. Rules and train-protocol results: `docs/actions.md`. An optional `forecast`
+  object (Kalent's planned contract, `docs/algorithm/algorithm.md` §4.1) can only raise the queue.
 - Wording: never "Safe" – tier 0 is **"Below threshold"**.
 
 ## 3. `reports/metrics.json` (producer: `triage.evaluate`, consumer: dashboard "Evaluation" tab)
@@ -66,7 +77,7 @@ All read `reports/*.json` (falling back to the frozen full-test-set copy in `dat
 | route | returns |
 |---|---|
 | `GET /api/summary` | `events.json` → `summary` |
-| `GET /api/events[?tier=0\|1\|2][&needs_review=true\|false]` | `{"total": n, "events": [...]}`: each event as in §2 **without `history`**, plus `n_updates` (number of CDMs). Same urgency order. |
+| `GET /api/events[?tier=0\|1\|2][&needs_review=true\|false]` | `{"total": n, "events": [...]}`: each event as in §2 **without `history`** (so with `action`), plus `n_updates` (number of CDMs). Same urgency order. |
 | `GET /api/events/{event_id}` | one event exactly as in §2, with `history`; `404` if unknown |
 | `GET /api/metrics` | `metrics.json` as in §3 |
 | `GET /api/explain/{event_id}` | see `triage/explain.py` (owner: Integration & trust) |
