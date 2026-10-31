@@ -14,9 +14,10 @@ import asyncio
 import inspect
 import json
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Callable, get_type_hints
+from datetime import UTC, datetime
+from typing import get_type_hints
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -53,6 +54,7 @@ def tool(fn=None, *, side_effect: bool = False):
             },
         )
         return f
+
     return register(fn) if fn else register
 
 
@@ -93,10 +95,11 @@ async def run_tool(name: str, args: dict) -> tuple[bool, str]:
 
 # --- Example tools -------------------------------------------------------------
 
+
 @tool
 def get_current_time() -> str:
     """Get the current date and time in UTC and Singapore time."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     sgt = now.astimezone(ZoneInfo("Asia/Singapore"))
     return f"UTC {now:%Y-%m-%d %H:%M}; Singapore {sgt:%Y-%m-%d %H:%M}"
 

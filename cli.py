@@ -26,4 +26,6 @@ async def main(task: str):
 
 
 if __name__ == "__main__":
-    asyncio.run(main(" ".join(sys.argv[1:]) or "What time is it in Singapore? Then find one aviation news headline from today."))
+    asyncio.run(
+        main(" ".join(sys.argv[1:]) or "What time is it in Singapore? Then find one aviation news headline from today.")
+    )

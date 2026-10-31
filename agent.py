@@ -104,19 +104,26 @@ async def run_agent(messages: list) -> AsyncIterator[dict]:
             yield_event = {"type": "tool_call", "name": block.name, "input": block.input}
             problem = validate_input(block.name, block.input)
             if problem:
-                return yield_event, {"type": "tool_result", "tool_use_id": block.id,
-                                     "content": problem, "is_error": True}
+                return yield_event, {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": problem,
+                    "is_error": True,
+                }
             ok, output = await run_tool(block.name, block.input)
-            return yield_event, {"type": "tool_result", "tool_use_id": block.id,
-                                 "content": output, "is_error": not ok}
+            return yield_event, {"type": "tool_result", "tool_use_id": block.id, "content": output, "is_error": not ok}
 
         # Run this turn's tool calls in parallel, return all results in one user message.
         pairs = await asyncio.gather(*(_call(b) for b in tool_uses))
         results = []
         for call_event, result in pairs:
             yield call_event
-            yield {"type": "tool_result", "name": call_event["name"],
-                   "output": result["content"][:2000], "is_error": result["is_error"]}
+            yield {
+                "type": "tool_result",
+                "name": call_event["name"],
+                "output": result["content"][:2000],
+                "is_error": result["is_error"],
+            }
             results.append(result)
         messages.append({"role": "user", "content": results})
     else:
@@ -127,6 +134,8 @@ async def run_agent(messages: list) -> AsyncIterator[dict]:
 
 def to_jsonable(messages: list) -> str:
     """Debug helper: dump the conversation (SDK blocks included) as JSON."""
+
     def conv(x):
         return x.model_dump() if hasattr(x, "model_dump") else x
+
     return json.dumps(messages, default=conv, indent=2)
