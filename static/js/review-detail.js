@@ -1,4 +1,5 @@
-// The selected event, in reading order: what it is, why the tier holds (decision record), how it approached, the wording.
+// The selected event, in reading order: the decision and its queue, three figures, why the tier holds (decision record),
+// how it approached, and the wording folded away (it repeats the figures).
 // Every value comes from /api/events/{id} and /api/explain/{id}?llm=false; nothing here recomputes a tier.
 import { TIERS, CAUTIONS, esc, fmtDist, fmtDays } from "./fmt.js";
 import { approachChart } from "./review-chart.js";
@@ -9,10 +10,37 @@ const tierName = (t) => (TIERS[t] || TIERS[0]).name;
 const fmtScore = (v) => (v >= 0.001 ? v.toFixed(4) : v.toExponential(1));
 const prettyRule = (r) => r.replace(/pc_bound/g, "Pc upper bound").replace(/\[1e-6, 1e-4\)/, "1e-6 to 1e-4");
 
-function pcBand(log10) {
-  if (log10 >= -4) return "at or above 1e-4 (Critical line)";
-  if (log10 >= -6) return "between 1e-6 and 1e-4 (Elevated band)";
-  return "under 1e-6";
+const CAUTION_LABEL = { ...CAUTIONS, needs_review: "Low confidence" }; // "Needs review" would repeat the queue name
+
+// One short reason per event, from its action queue, escalation flag and cautions (all from /api). The list shows
+// `short`; the detail headline shows `long` after the queue. Wording never says "safe" and never advises acting.
+export function reasonOf(ev) {
+  const a = ev.action || {}, cz = ev.cautions || [];
+  if (a.queue === "MANEUVER PLANNING") {
+    const pc = (a.reasons || []).some((r) => /^Critical: Pc/.test(r));
+    return pc ? { short: "Pc-backed", long: "Pc-backed", cls: "c2" } : { short: "distance only", long: "distance only", cls: "c2" };
+  }
+  if (a.queue === "MONITOR") {
+    return ev.tier < ev.baseline_tier
+      ? { short: "demoted", long: `demoted from ${tierName(ev.baseline_tier)}`, cls: "c0" }
+      : { short: "below", long: "below threshold", cls: "c0" };
+  }
+  if (a.escalation_watch) return { short: "watch", long: "escalation watch", cls: "c1" };
+  if (cz.includes("no_covariance")) return { short: "check input", long: "check input", cls: "cx" };
+  if (cz.includes("pc_diluted")) return { short: "Pc diluted", long: "Pc may be diluted", cls: "cx" };
+  if (ev.tier === 1) return { short: "Elevated", long: "Elevated", cls: "c1" };
+  if (cz.includes("needs_review")) return { short: "low confidence", long: "low confidence", cls: "cx" };
+  return { short: tierName(ev.tier), long: tierName(ev.tier), cls: "c0" };
+}
+
+function headline(ev) {
+  const why = esc(reasonOf(ev).long);
+  const q = ev.action?.queue;
+  if (q === "MANEUVER PLANNING") {
+    return `<p class="verdict q2">${esc(ev.tier_name || tierName(ev.tier))} <span class="tn">(Maneuver Required)</span><span class="why"> · ${why}</span></p>`;
+  }
+  if (q === "MONITOR") return `<p class="verdict q0">Monitor<span class="why"> · ${why}</span></p>`;
+  return `<p class="verdict q1">Analyst review<span class="why"> · ${why}</span></p>`;
 }
 
 function pcScale(log10) {
@@ -32,22 +60,19 @@ function summary(ev) {
   const L = ev.latest || {};
   const pc = L.max_risk_estimate_log10;
   const pcKnown = Number.isFinite(pc);
-  const cautions = (ev.cautions || []).map((c) => CAUTIONS[c] || c);
+  const cautions = (ev.cautions || []).map((c) => CAUTION_LABEL[c] || c);
   return `
-    <header class="ev-head">
-      <h1>Event <span class="num">${esc(ev.event_id)}</span></h1>
-      <p class="muted">${esc(String(L.object_type || "unknown object").toLowerCase())} · ${esc(ev.n_updates ?? (ev.history || []).length)} CDM updates</p>
-    </header>
-    <p class="tier t${ev.tier}">${esc(ev.tier_name || tierName(ev.tier))}${ev.tier === 2 ? ` <span>(Maneuver Required)</span>` : ""}</p>
+    <p class="meta">Event <b class="num">${esc(ev.event_id)}</b> · ${esc(String(L.object_type || "unknown object").toLowerCase())} · <span class="num">${esc(ev.n_updates ?? (ev.history || []).length)}</span> updates${cautions.length ? `<span class="caution"> · ${cautions.map(esc).join(" · ")}</span>` : ""}</p>
+    <h1 class="sr">Event ${esc(ev.event_id)}</h1>
+    ${headline(ev)}
     <dl class="readings">
       <div><dt>Miss distance</dt><dd class="num">${L.miss_distance_m != null ? esc(fmtDist(L.miss_distance_m)) : "unknown"}</dd></div>
       <div class="pc"><dt>Pc upper bound</dt>
         <dd class="num">${pcKnown ? `1e${pc.toFixed(1)}` : "unknown"}</dd>
         ${pcScale(pc)}
-        <p class="sub">${pcKnown ? pcBand(pc) : "missing: never demoted"}</p></div>
+        ${pcKnown ? "" : `<p class="sub">missing: never demoted</p>`}</div>
       <div><dt>Time to TCA</dt><dd class="num">${L.time_to_tca_days != null ? esc(fmtDays(L.time_to_tca_days)) : "unknown"}</dd></div>
-    </dl>
-    ${cautions.length ? `<p class="caution">${cautions.map(esc).join(" · ")}</p>` : ""}`;
+    </dl>`;
 }
 
 function record(ev) {
@@ -87,16 +112,31 @@ function record(ev) {
     <li class="end t${c.tier}"><span class="k">Decision</span><span class="v">${decision}${holds}</span></li></ol>`;
 }
 
+// Dot colours in the approach chart are the tier at each update; the legend names only the tiers that appear.
+function legend(ev) {
+  const seen = [...new Set((ev.history || []).map((h) => h.pred_tier).filter((t) => TIERS[t]))].sort((a, b) => b - a);
+  if (!seen.length) return "";
+  return `<span class="legend" title="Dot colour: tier at that update">${seen.map((t) => `<span><i style="background:${TIERS[t].color}"></i>${esc(TIERS[t].name)}</span>`).join("")}</span>`;
+}
+
+// The data has no orbits: relative position in R/T/N is the only geometry, and only for the latest update.
+function rtn(ev) {
+  const p = ev.latest?.relative_position_rtn_m;
+  if (!Array.isArray(p) || p.length !== 3 || !p.every(Number.isFinite)) return "";
+  const f = (v) => `${v < 0 ? "\u2212" : ""}${esc(fmtDist(Math.abs(v)))}`;
+  return `<p class="rtn" title="Relative position at the latest update. Per-update R/T/N is not in the event history.">Latest relative position <span class="num">R ${f(p[0])} · T ${f(p[1])} · N ${f(p[2])}</span></p>`;
+}
+
 export function renderDetail(el, ev, explain) {
+  const src = explain ? (explain.source && explain.source !== "template" ? esc(explain.source) : "template") : "";
   const expl = explain
-    ? `<p class="expl">${esc(explain.text)}</p>`
-    : `<p class="muted">Explanation unavailable.</p>`;
-  const src = explain && explain.source !== "template" ? esc(explain.source) : "template, no LLM";
+    ? `<details class="expl-d"><summary>Explanation <span class="muted">(${src})</span></summary><p class="expl">${esc(explain.text)}</p></details>`
+    : `<p class="muted small">Explanation unavailable.</p>`;
   el.innerHTML = `
     <section class="s-sum">${summary(ev)}</section>
     <section><h2>Decision record</h2>${record(ev)}</section>
-    <section><h2>Approach history <span class="muted">miss distance at each CDM update, by days to TCA</span></h2><div class="chart-wrap" id="chart"></div></section>
-    <section><h2>Explanation <span class="muted">${src}</span></h2>${expl}</section>`;
+    <section><h2>Approach <span class="muted">miss distance per update, by days to TCA</span>${legend(ev)}</h2><div class="chart-wrap" id="chart"></div>${rtn(ev)}</section>
+    <section class="s-expl">${expl}</section>`;
   drawChart(el, ev);
 }
 

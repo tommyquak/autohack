@@ -1,16 +1,17 @@
-// Review page: one status line, three queues on the left, the selected event on the right. Supports #event=<id>.
+// Review page: three figures up top, the queues on the left (Monitor folded), the selected event on the right. Supports #event=<id>.
 // The analyst decides; this page only shows the queue, the evidence and the decision record behind each tier.
 import { api } from "./api.js";
-import { TIERS, esc, fmtDist, fmtDays } from "./fmt.js";
-import { renderDetail, drawChart } from "./review-detail.js";
+import { esc, fmtDist, fmtDays } from "./fmt.js";
+import { renderDetail, drawChart, reasonOf } from "./review-detail.js";
 
 const QUEUES = ["MANEUVER PLANNING", "ANALYST REVIEW", "MONITOR"];
+const FOLDED = "MONITOR"; // collapsed to one line until asked for: nothing in it needs a decision now
 const KEY = "second-look.reviewed.v1";
-const TIER_SHORT = ["Below", "Elevated", "Critical"];
 
 const $ = (id) => document.getElementById(id);
 const listEl = $("list"), detailEl = $("detail");
 let selected = null, current = null, token = 0;
+let groups = {}, queueOf = new Map(), foldOpen = false;
 
 // reviewed ticks live only in this browser; storage can be blocked, so every access is guarded
 function loadReviewed() {
@@ -43,54 +44,80 @@ async function audit() {
 function status(summary, events, aud) {
   const flagged = (by) => (by?.Elevated || 0) + (by?.Critical || 0);
   const before = flagged(summary.by_baseline_tier), after = flagged(summary.by_tier);
+  const delta = after - before;
   const cut = before ? Math.round((1 - after / before) * 100) : 0;
   const w = summary.warnings_24h || {};
   const minTca = Math.min(...events.map((e) => e.latest?.time_to_tca_days ?? Infinity));
   const within = w.within_dangerous_distance ?? 0;
-  const why = !w.events_in_window && Number.isFinite(minTca)
-    ? `<span class="muted">(no CDM is under ${minTca.toFixed(1)} d to TCA)</span>`
-    : `<span class="muted">(of ${n(w.events_in_window || 0)} in window)</span>`;
+  const winNote = !w.events_in_window && Number.isFinite(minTca)
+    ? `No CDM is under ${minTca.toFixed(1)} d to TCA`
+    : `${n(w.events_in_window || 0)} events in the 24 h window`;
   let inv = "";
   if (aud) {
     const pass = aud.status === "PASS";
-    const ok = (aud.checks || []).filter((c) => c.passed).length;
-    inv = `<span class="seg">Safety invariants <b class="${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</b> <span class="muted num">${ok}/${(aud.checks || []).length}</span></span>`;
+    const checks = aud.checks || [];
+    const ok = checks.filter((c) => c.passed).length;
+    const failed = checks.filter((c) => !c.passed).map((c) => c.name).join(", ");
+    inv = `<span class="seg" title="Safety invariants checked over every event${failed ? `; failed: ${esc(failed)}` : ""}">Invariants <b class="${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</b> <span class="muted num">${ok}/${checks.length}</span></span>`;
   }
   $("status").innerHTML = `
-    <span class="seg">To review <b class="num">${n(before)} → ${n(after)}</b> <span class="muted">rule → Second Look, ${cut}% fewer</span></span>
-    <span class="seg">Next 24 h <b class="num${within ? " warn" : ""}">${n(within)}</b> within 1 km ${why}</span>
+    <span class="seg" title="Elevated or Critical: ${n(before)} by the rule, ${n(after)} after Second Look (${cut}% fewer)">To review <b class="num">${n(after)}</b> <span class="muted num">(${delta <= 0 ? "\u2212" : "+"}${n(Math.abs(delta))})</span></span>
+    <span class="seg" title="${esc(winNote)}">Next 24 h: <b class="num${within ? " warn" : ""}">${n(within)}</b> within 1 km</span>
     ${inv}`;
 }
 
 function row(e) {
   const done = reviewed.has(e.event_id);
-  const t = TIERS[e.tier] || TIERS[0];
+  const why = reasonOf(e);
   const L = e.latest || {};
   return `<li class="row${done ? " done" : ""}" data-id="${e.event_id}">
     <input type="checkbox" class="tick" data-id="${e.event_id}" ${done ? "checked" : ""} aria-label="Event ${e.event_id} reviewed" title="Reviewed">
-    <button type="button" class="pick" data-id="${e.event_id}" aria-label="Event ${e.event_id}, ${esc(t.name)}">
+    <button type="button" class="pick" data-id="${e.event_id}" aria-label="Event ${e.event_id}, ${esc(why.long)}">
       <span class="id num">${e.event_id}</span>
-      <span class="tr t${e.tier}">${TIER_SHORT[e.tier] || t.name}</span>
+      <span class="chip ${why.cls}">${esc(why.short)}</span>
       <span class="r num">${L.miss_distance_m != null ? esc(fmtDist(L.miss_distance_m)) : "n/a"}</span>
       <span class="r num muted">${L.time_to_tca_days != null ? esc(fmtDays(L.time_to_tca_days)) : "n/a"}</span>
     </button></li>`;
 }
 
-function renderList(events) {
-  const groups = Object.fromEntries(QUEUES.map((q) => [q, []]));
-  for (const e of events) (groups[e.action?.queue] || groups["ANALYST REVIEW"]).push(e);
-  listEl.innerHTML = `<div class="cols-h" aria-hidden="true"><span></span><span>Event</span><span>Tier</span><span class="r">Miss</span><span class="r">TCA in</span></div>` +
-    QUEUES.map((q) => `<section class="q" aria-label="${q}">
-      <h2>${q.toLowerCase()} <span class="count num">${n(groups[q].length)}</span></h2>
-      ${groups[q].length ? `<ul>${groups[q].map(row).join("")}</ul>` : `<p class="muted small">Nothing in this queue.</p>`}</section>`).join("");
+const rows = (q) => (groups[q].length ? `<ul>${groups[q].map(row).join("")}</ul>` : `<p class="muted small">Nothing in this queue.</p>`);
+
+function section(q) {
+  const label = q.charAt(0) + q.slice(1).toLowerCase();
+  if (q !== FOLDED) {
+    return `<section class="q" aria-label="${label}"><h2>${label} <span class="count num">${n(groups[q].length)}</span></h2>${rows(q)}</section>`;
+  }
+  return `<section class="q fold${foldOpen ? " open" : ""}" aria-label="${label}">
+    <h2><button type="button" class="fold-btn" aria-expanded="${foldOpen}" aria-controls="fold-rows">${label} <span class="count"><span class="num">${n(groups[q].length)}</span> <span class="act">${foldOpen ? "hide" : "show"}</span></span></button></h2>
+    <div id="fold-rows">${foldOpen ? rows(q) : ""}</div></section>`;
 }
 
-function mark(id) {
+function renderList(events) {
+  groups = Object.fromEntries(QUEUES.map((q) => [q, []]));
+  for (const e of events) {
+    const q = groups[e.action?.queue] ? e.action.queue : "ANALYST REVIEW";
+    groups[q].push(e);
+    queueOf.set(e.event_id, q);
+  }
+  listEl.innerHTML = `<div class="cols-h" aria-hidden="true"><span></span><span>Event</span><span>Reason</span><span class="r">Miss</span><span class="r">TCA in</span></div>` +
+    QUEUES.map(section).join("");
+}
+
+function setFold(open) {
+  foldOpen = open;
+  const sec = listEl.querySelector(".q.fold");
+  if (!sec) return;
+  sec.outerHTML = section(FOLDED);
+  if (selected != null) mark(selected, false);
+}
+
+function mark(id, scroll = true) {
+  if (!foldOpen && queueOf.get(id) === FOLDED) setFold(true);
   listEl.querySelectorAll('.row[aria-current="true"]').forEach((r) => r.removeAttribute("aria-current"));
   const r = listEl.querySelector(`.row[data-id="${id}"]`);
   if (r) {
     r.setAttribute("aria-current", "true");
-    r.scrollIntoView({ block: "nearest" });
+    if (scroll) r.scrollIntoView({ block: "nearest" });
   }
 }
 
@@ -119,6 +146,7 @@ const hashId = () => {
 };
 
 listEl.addEventListener("click", (e) => {
+  if (e.target.closest(".fold-btn")) return setFold(!foldOpen);
   const b = e.target.closest(".pick");
   if (b) select(Number(b.dataset.id));
 });

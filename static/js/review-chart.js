@@ -4,7 +4,7 @@ import { TIERS, esc, fmtDist } from "./fmt.js";
 
 const axLabel = (m) => (m < 1000 ? `${m} m` : `${m / 1000} km`);
 const M = { l: 56, r: 64, t: 14, b: 26 };
-const H = 210;
+const H = 176;
 
 export function approachChart(history, width) {
   const pts = (history || []).filter((h) => h.miss_distance_m > 0 && Number.isFinite(h.time_to_tca_days));
