@@ -888,7 +888,7 @@
     },
     {
       "sceneId": "task",
-      "notes": "On 31 October the organisers sharpened the task: from the updates at least two days out, predict each event's final tier. The bar is keeping today's tier. Our bounded forecast lifts Critical recall from 0.865 to 0.950 on five-fold CV and catches 115 of 270 escalations, against none. The cost is honest: more false escalations, lower accuracy.\n\n[about 27 s, from 2:18]\ndocs/FORECAST.md, data/demo/forecast_metrics.json (shipped operating point: 95% final-Critical recall target, t_crit 0.054, t_elev 0.345). 5-fold event CV, 11,942 cohort events, mean over folds: Critical recall 0.950 ± 0.025 vs 0.865 ± 0.042 for miss-only persistence (\"keep today's tier\"); Critical precision 0.565 vs 0.857; Critical F2 0.835 vs 0.863; escalations caught 115/270 vs 0/270; false escalations 1,139 vs 0; accuracy 0.862 vs 0.938 (lower; macro F1 0.767 vs 0.887). On accuracy, macro F1 and F2 we do NOT beat persistence. Organisers' 80/20 split (2,389 validation events): recall 0.970 vs 0.886, 24/50 escalations caught, 218 false escalations, accuracy 0.871 vs 0.943. Bounded: predicted = max(floor, model escalation); a rule-defined Critical at the latest ≥ 2 d update is never lowered. 616 of the 1,139 false escalations come from the floor (keeping Pc-only Elevated at Elevated). The 95% is a recall target measured out of fold, not a guarantee. p_final is a class-weighted score, not a calibrated probability. Then the dashboard's default \"Final tier\" view (#67; \"Now\" restores per-message tiers): the escalated event card shows why the forecast lifts it (e.g. EVT 1634, Elevated floor → Critical, score 0.06 ≥ threshold 0.05); header 802 → 842 to review (rule floor → forecast, 301 escalated). Last frame: the dashboard's Evaluation tab, which now leads with the official panel (#68): the same 5-fold CV table (Second Look / keep today's tier / Pc-bound persistence, 80/20 on a toggle) and the 3x3 confusion matrix, read live from /api/metrics. Capture: /static/decision.html with real forecasts on the 2,167 test events (no outcomes, never scored): 477 Critical, 365 Elevated, 1,325 below threshold, 301 escalated."
+      "notes": "On 31 October the organisers sharpened the task: from the updates at least two days out, predict each event's final tier. The bar is keeping today's tier. Our bounded forecast lifts Critical recall from 0.865 to 0.911 on five-fold CV and catches 79 of 270 escalations, against none. The cost is honest: more false escalations, lower accuracy.\n\n[about 27 s, from 2:18]\ndocs/FORECAST.md, data/demo/forecast_metrics.json (shipped operating point: 90% final-Critical recall target, t_crit 0.585, t_elev 0.345; PR #74). 5-fold event CV, 11,942 cohort events, mean over folds: Critical recall 0.911 ± 0.050 vs 0.865 ± 0.042 for miss-only persistence (\"keep today's tier\"); Critical precision 0.757 vs 0.857; Critical F2 0.875 vs 0.863; escalations caught 79/270 vs 0/270; false escalations 775 vs 0; accuracy 0.888 vs 0.938 (lower; macro F1 0.834 vs 0.887). On accuracy, macro F1 and Critical precision we do NOT beat persistence. Honest line: a single distance rule (Critical if latest miss < ~1.1 km, m* tuned train-only to 90% recall, 1.04-1.14 km) does about as well on Critical: recall 0.897, F2 0.864, 47/270 caught (687 false escalations); the model's added value is mainly the extra escalations caught (79 vs 47). Organisers' 80/20 split (2,389 validation events): recall 0.910 vs 0.886, 13/50 escalations caught, 142 false escalations, accuracy 0.897 vs 0.943. Bounded: predicted = max(floor, model escalation); a rule-defined Critical at the latest ≥ 2 d update is never lowered. 616 of the 775 false escalations come from the floor (keeping Pc-only Elevated at Elevated). The 90% is a recall target measured out of fold, not a guarantee; it was chosen after seeing CV (the pre-registered target was 0.95). p_final is a class-weighted score, not a calibrated probability. Then the dashboard's default \"Final tier\" view (#67; \"Now\" restores per-message tiers): the escalated event card shows why the forecast lifts it (EVT 1565, Elevated floor → Critical, score 0.80 ≥ threshold 0.58); header 802 → 824 to review (rule floor → forecast, 81 escalated). Last frame: the dashboard's Evaluation tab, which now leads with the official panel (#68): the same 5-fold CV table (Second Look / keep today's tier / Pc-bound persistence, 80/20 on a toggle) and the 3x3 confusion matrix, read live from /api/metrics. Capture: /static/decision.html with real forecasts on the 2,167 test events (no outcomes, never scored): 255 Critical, 569 Elevated, 1,343 below threshold, 81 escalated. Expected queue: the forecast marks 255 of 2,167 test events Critical, against 196 by rule."
     },
     {
       "sceneId": "record",
@@ -912,11 +912,11 @@
     },
     {
       "sceneId": "next",
-      "notes": "Here's the forecast in full. On five-fold CV, 792 of 834 final-Critical events are forecast Critical, and most errors over-warn rather than under-warn. What's open: a 90 percent target would cut false escalations from 1,139 to 775 but catch 79 escalations, not 115. That's the team's call. And we don't yet have calibrated scores, a live feed, or data inside two days.\n\n[about 29 s, from 5:09]\nConfusion matrix: 5-fold CV, summed over folds, rows = true final tier, columns = forecast (below / Elevated / Critical): below 7,999 / 882 / 65; Elevated 115 / 1,500 / 547; Critical 10 / 32 / 792. Under-tiered: 157 events (115 + 10 + 32). Recall-target sweep (docs/FORECAST.md, re-tuned train-only per target): 0.90 → recall 0.911, precision 0.757, F2 0.875, 79/270 caught, 775 false escalations, accuracy 0.888. The 0.95 target was fixed before the run; choosing 0.90 after seeing CV is a post-hoc choice, so we leave it to the team (a follow-up PR \"Forecaster at 0.90 recall target\" had not merged when this deck was built). No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
+      "notes": "Here's the forecast in full. On five-fold CV, 760 of 834 final-Critical events are forecast Critical, and most errors over-warn rather than under-warn. We ship the 90 percent target: 95 percent would catch 115 escalations, not 79, but with 1,139 false escalations instead of 775. And honestly, a single distance rule does about as well on Critical. Still open: calibrated scores, a live feed, and data inside two days.\n\n[about 32 s, from 5:09]\nConfusion matrix: 5-fold CV, summed over folds (as on the Evaluation tab), rows = true final tier, columns = forecast (below / Elevated / Critical): below 8,019 / 900 / 27; Elevated 119 / 1,824 / 219; Critical 10 / 64 / 760. Under-tiered: 193 events (119 + 10 + 64); over-tiered: 1,146. Persistence (miss-only) for comparison: Critical 14 / 99 / 721. Recall-target sweep (docs/FORECAST.md, re-tuned train-only per target): 0.85 → recall 0.873, precision 0.808, F2 0.859, 47/270 caught, 703 false escalations, accuracy 0.891; 0.90 (shipped) → recall 0.911, precision 0.757, F2 0.875, 79/270, 775, accuracy 0.888; 0.95 (sensitivity) → recall 0.950, precision 0.565, F2 0.835, 115/270, 1,139, accuracy 0.862. 0.95 was the pre-registered target; the team chose 0.90 after seeing CV (PR #74: best Critical F2 of the three, 364 fewer false escalations), so the CV numbers at 0.90 are slightly optimistic. Distance rule (nowcast floor + Critical if latest miss < m*, m* tuned train-only to 90% recall, 1.04-1.14 km): recall 0.897, precision 0.755, F2 0.864, 47/270 caught, 687 false escalations. No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
     },
     {
       "sceneId": "close",
-      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 5:38]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md and docs/FORECAST.md. Background: Horizon view pulled back to the globe (#view=globe; orbits real size, shape and tilt, orientation not in the data)."
+      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 5:41]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md and docs/FORECAST.md. Background: Horizon view pulled back to the globe (#view=globe; orbits real size, shape and tilt, orientation not in the data)."
     }
   ]
 }
@@ -1118,7 +1118,7 @@
         id="s-task"
         class="scene clip"
         data-composition-id="task"
-        data-cap="Bounded: a rule-defined Critical is never lowered. The 95% is a recall target, not a guarantee."
+        data-cap="Bounded: a rule-defined Critical is never lowered. The 90% is a recall target, not a guarantee."
         data-start="50"
         data-duration="10"
         data-label="5 The official task"
@@ -1137,15 +1137,15 @@
             <table class="mini" id="task-tbl">
               <thead><tr><th></th><th>Ours</th><th>Keep tier</th></tr></thead>
               <tbody>
-                <tr><td>Critical recall</td><td class="g">0.950</td><td>0.865</td></tr>
-                <tr><td>Critical precision</td><td>0.565</td><td>0.857</td></tr>
-                <tr><td>Critical F2</td><td>0.835</td><td>0.863</td></tr>
-                <tr><td>Escalations caught</td><td class="g">115/270</td><td>0/270</td></tr>
-                <tr><td>False escalations</td><td class="a">1,139</td><td>0</td></tr>
-                <tr><td>Accuracy</td><td class="a">0.862 lower</td><td>0.938</td></tr>
+                <tr><td>Critical recall</td><td class="g">0.911</td><td>0.865</td></tr>
+                <tr><td>Critical precision</td><td>0.757</td><td>0.857</td></tr>
+                <tr><td>Critical F2</td><td class="g">0.875</td><td>0.863</td></tr>
+                <tr><td>Escalations caught</td><td class="g">79/270</td><td>0/270</td></tr>
+                <tr><td>False escalations</td><td class="a">775</td><td>0</td></tr>
+                <tr><td>Accuracy</td><td class="a">0.888 lower</td><td>0.938</td></tr>
               </tbody>
             </table>
-            <div class="note" style="font-size: 22px">80/20 split: recall 0.970, 24/50 caught.</div>
+            <div class="note" style="font-size: 22px">80/20 split: recall 0.910, 13/50 caught.</div>
           </div>
         </div>
         <div class="shot cap-r" id="task-shot">
@@ -1344,16 +1344,17 @@
           <table class="cm" id="nx-cm">
             <thead><tr><th class="rh">True final ↓</th><th>Below</th><th>Elevated</th><th>Critical</th></tr></thead>
             <tbody>
-              <tr><th class="rh">Below thr.</th><td class="diag">7,999</td><td>882</td><td>65</td></tr>
-              <tr><th class="rh">Elevated</th><td>115</td><td class="diag">1,500</td><td>547</td></tr>
-              <tr><th class="rh">Critical</th><td>10</td><td>32</td><td class="diag">792</td></tr>
+              <tr><th class="rh">Below thr.</th><td class="diag">8,019</td><td>900</td><td>27</td></tr>
+              <tr><th class="rh">Elevated</th><td>119</td><td class="diag">1,824</td><td>219</td></tr>
+              <tr><th class="rh">Critical</th><td>10</td><td>64</td><td class="diag">760</td></tr>
             </tbody>
           </table>
-          <div class="note">Columns: forecast final tier. <b style="color: #eef3f1">792 of 834</b> final-Critical events forecast Critical (0.950).</div>
+          <div class="note">Columns: forecast final tier. <b style="color: #eef3f1">760 of 834</b> final-Critical events forecast Critical (0.911).</div>
+          <div class="note"><b style="color: #eef3f1">Shipped at the 0.90 target.</b> Sensitivity: 0.95 would catch 115/270 escalations, with 1,139 false escalations (775 at 0.90).</div>
         </div>
         <div class="abs card" id="nx-b" style="left: 984px; top: 340px; width: 840px; height: 480px; padding: 30px 34px; display: flex; flex-direction: column; gap: 22px">
           <div><span class="wip">OPEN</span></div>
-          <div class="pt"><b>Target 0.90, not 0.95?</b> 775 false escalations, not 1,139; 79 escalations caught, not 115. The team's call.</div>
+          <div class="pt"><b>A simple rule nearly matches it.</b> A single distance rule (Critical if latest miss &lt; ~1.1 km) does about as well on Critical: recall 0.897, F2 0.864, 47/270 caught.</div>
           <div class="pt">Forecast scores rank events; they are not calibrated probabilities</div>
           <div class="pt">Stricter v2: CV only, not shipped</div>
         </div>
