@@ -3,7 +3,7 @@ export const state = {
   summary: null,
   events: [], // /api/events, urgency order, no history
   metrics: null,
-  filters: { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null },
+  filters: { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null, lat: null },
   selectedId: null,
   mode: "model", // funnel shows tiers from "baseline" (the rule) or "model"
   elapsed: 0, // replay clock, days since the snapshot
@@ -30,6 +30,10 @@ export function passesFilters(e) {
   if (!f.tiers.has(e.tier)) return false;
   if (f.review && !e.needs_review) return false;
   if (f.type && e.latest.object_type !== f.type) return false;
+  if (f.lat !== null) {
+    const v = e.latest.geocentric_latitude_deg;
+    if (v == null || Math.min(35, Math.max(0, Math.floor((v + 90) / 5))) !== f.lat) return false;
+  }
   if (f.slot !== null) {
     const r = remaining(e);
     if (r < f.slot * 0.5 || r >= (f.slot + 1) * 0.5) return false;

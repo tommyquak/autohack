@@ -35,7 +35,7 @@ export function initFilters() {
     touchFilters();
   });
   document.getElementById("f-clear").addEventListener("click", () => {
-    Object.assign(state.filters, { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null });
+    Object.assign(state.filters, { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null, lat: null });
     document.getElementById("f-review").checked = false;
     sel.value = "";
     chips.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "true"));
@@ -43,7 +43,7 @@ export function initFilters() {
   });
   subscribe(["filters"], () => {
     const f = state.filters;
-    document.getElementById("f-clear").hidden = f.tiers.size === 3 && !f.review && !f.type && f.slot === null;
+    document.getElementById("f-clear").hidden = f.tiers.size === 3 && !f.review && !f.type && f.slot === null && f.lat === null;
   });
 }
 
