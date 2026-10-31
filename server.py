@@ -5,6 +5,7 @@ Dashboard API (reads the files written by `triage.build_events` and `triage.eval
     GET /api/events             every event without its CDM history (?tier=0|1|2, ?needs_review=true)
     GET /api/events/{event_id}  one event with full history
     GET /api/metrics            metrics.json
+    GET /api/explain/{event_id} plain-English summary (Claude, template fallback; triage/explain.py)
 
 Pages: GET / (dashboard, static/dashboard.html) · GET /chat (agent chat). POST /chat streams agent events as NDJSON.
 """
@@ -20,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from agent import MODEL, run_agent
+from triage import explain
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
@@ -152,3 +154,12 @@ async def chat(req: ChatRequest):
 def reset(req: ChatRequest):
     SESSIONS.pop(req.session_id or "", None)
     return {"ok": True}
+
+
+@app.get("/api/explain/{event_id}")
+async def explain_event(event_id: int, llm: bool = True):
+    """Plain-English summary of one event: Claude when available, deterministic template otherwise."""
+    event = explain.load_event(event_id)
+    if event is None:
+        raise HTTPException(404, f"event {event_id} not in reports/events.json (run python -m triage.build_events)")
+    return await explain.explain(event, use_llm=llm)
