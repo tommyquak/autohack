@@ -779,15 +779,39 @@
       #veil { position: fixed; inset: 0; z-index: 60; background: #07090b; opacity: 0; pointer-events: none; }
 
       /* cover */
-      #s-cover .shot .view { border: 0; border-radius: 0; box-shadow: none; }
-      #s-cover .shade {
-        background:
-          linear-gradient(0deg, rgba(7, 9, 11, 0.95) 0%, rgba(7, 9, 11, 0.85) 9%, rgba(7, 9, 11, 0) 20%),
-          linear-gradient(90deg, rgba(7, 9, 11, 0.97) 0%, rgba(7, 9, 11, 0.93) 38%, rgba(7, 9, 11, 0.55) 52%, rgba(7, 9, 11, 0) 62%);
-      }
-      #s-cover .stack { top: 220px; width: 960px; }
+      /* v3 cover: a product shot of the Horizon screen on a graphite monitor, on charcoal with a soft vignette */
+      #s-cover { background: radial-gradient(1500px 1100px at 72% 46%, #1b1f23 0%, #111417 46%, #08090b 100%); }
+      #s-cover .shade { background: radial-gradient(1200px 900px at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.45) 100%); }
+      #s-cover .stack { top: 220px; width: 880px; }
       #s-cover .t2 { font-size: 44px; margin-top: 14px; }
-      #s-cover .hook { margin-top: 44px; font-size: 34px; line-height: 1.3; max-width: 900px; }
+      #s-cover .hook { margin-top: 44px; font-size: 34px; line-height: 1.3; max-width: 860px; }
+      #cover-mon { position: absolute; left: 960px; top: 196px; width: 1040px; perspective: 2600px; perspective-origin: 100% 50%; }
+      #cover-mon .mon { position: relative; transform: rotateY(-8deg); transform-origin: 100% 50%; transform-style: preserve-3d; }
+      #cover-mon .bezel {
+        position: relative; padding: 13px; border-radius: 24px;
+        background: linear-gradient(155deg, #d9dde1 0%, #9aa1a7 12%, #50565c 38%, #2b2f34 70%, #1a1d20 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+          0 50px 90px -20px rgba(0, 0, 0, 0.75), 0 24px 40px -18px rgba(0, 0, 0, 0.6);
+      }
+      #cover-mon .scr { position: relative; overflow: hidden; border-radius: 12px; background: #000; aspect-ratio: 16 / 9; box-shadow: 0 0 0 2px #050607; }
+      #cover-mon .scr img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform-origin: 37% 72%; }
+      #cover-mon .scr::after {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(118deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 30%, rgba(255, 255, 255, 0) 46%);
+      }
+      #cover-mon .neck {
+        position: relative; margin: 0 auto; width: 136px; height: 92px; margin-top: -2px;
+        background: linear-gradient(90deg, #3a3f44 0%, #8d949a 30%, #b9bfc4 50%, #6f767c 72%, #2e3236 100%);
+        clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+      }
+      #cover-mon .base {
+        position: relative; margin: 0 auto; width: 440px; height: 20px; border-radius: 6px 6px 14px 14px;
+        background: linear-gradient(180deg, #c4c9ce 0%, #7b8288 40%, #2c3034 100%);
+        box-shadow: 0 30px 40px -8px rgba(0, 0, 0, 0.8);
+      }
+      #cover-mon .floor { position: absolute; left: 50%; bottom: -34px; width: 760px; height: 70px; transform: translateX(-50%);
+        background: radial-gradient(closest-side, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)); }
+      #cover-cap { position: absolute; left: 1080px; top: 952px; width: 760px; font-size: 22px; line-height: 1.3; color: #a3b1ad; text-align: center; }
       #s-cover .team { margin-top: 48px; font-size: 22px; }
       .honest {
         position: absolute;
@@ -941,15 +965,13 @@
         data-label="Cover"
         data-track-index="1"
       >
-        <div class="shot" id="cover-shot" style="left: 0px; top: 0px; width: 1920px; height: 1080px">
-          <div class="view"><div class="cam" data-layout-allow-overflow>
-            <img src="assets/ui/hz-482-c1.webp" alt="Prediction replay, event 482 at CDM 1: Elevated" />
-            <img src="assets/ui/hz-482-c3.webp" alt="Prediction replay, event 482 at CDM 3" />
-            <img src="assets/ui/hz-482-c6.webp" alt="Prediction replay, event 482 at CDM 6: inside 1 km, Critical" />
-            <img src="assets/ui/hz-805.webp" alt="Prediction replay, event 805: decision, backend trace and the illustrative manoeuvre" />
-          </div></div>
-          <svg class="ov"></svg>
-          <div class="tags"></div>
+        <div id="cover-mon">
+          <div class="mon">
+            <div class="bezel"><div class="scr"><img src="assets/cover-screen.png" alt="Second Look Horizon screen: night globe, event 805 Critical at minus 73.4 degrees, Sat M2 card" /></div></div>
+            <div class="neck"></div>
+            <div class="base"></div>
+            <div class="floor"></div>
+          </div>
         </div>
         <div class="shade"></div>
         <div class="pad">
@@ -961,10 +983,7 @@
           <div class="hook">Cuts the review queue by a quarter, shows a decision record for every downgrade, and is <b>architecturally forbidden from downgrading a rule-defined Critical.</b></div>
           <div class="team">Tommy · Franky · Reagan · Kalent</div>
         </div>
-        <div class="honest" id="cover-honest" style="left: 1184px; top: 780px; width: 640px">
-          <div class="hc">PREDICTION REPLAY</div>
-          <div class="hs">Each dot is one CDM's predicted miss point at closest approach. Orbits: real size, shape and tilt; orientation not in the data. Manoeuvre illustrative.</div>
-        </div>
+        <div id="cover-cap">Globe: real latitudes and orbit tilt; orientation illustrative.</div>
       </div>
 
       <!-- ============ 1 · PROBLEM ============ -->
@@ -1547,25 +1566,18 @@
 
         // Cover: the Horizon prediction replay as a flipbook (event 482 at CDM 1, 3, 6, then event 805's end state;
         // four real captures, cross-faded) under one slow push-in.
-        var cover = Shot("cover-shot");
-        var coverC0 = camAt(cover, R.whole, 1), coverC1 = camAt(cover, { x: 1300, y: 300, w: 500, h: 400 }, 1.08);
-        var coverRingTrace = ring(cover, coverC1, R.hzTrace, "#3fe0a0", 6);
-        var coverTag = tag(cover, coverC1, R.hzTrace, "backend trace, from the decision's certificate", "b", null, 380);
-        LEN["s-cover"] = 8.4;
+        // Cover: the Horizon screen (tools/cover-screen.html, rendered once) on a monitor; one slow push-in on the
+        // screen image only.
+        LEN["s-cover"] = 6.4;
         B["s-cover"] = function (tl, t, k) {
           var m = M(tl, k);
-          m.hide(cover.imgs.slice(1), t);
-          m.camFrom(cover, coverC0, coverC1, t, 6.4);
-          m.xfade(cover.imgs[1], t + 1.4 * k, 1.0);
-          m.xfade(cover.imgs[2], t + 2.9 * k, 1.0);
-          m.xfade(cover.imgs[3], t + 4.4 * k, 1.0);
+          m.fade($("#cover-mon"), t, 0.6);
+          tl.fromTo($("#cover-mon .scr img"), { scale: 1 }, { scale: 1.045, duration: 6.4 * k, ease: "sine.inOut" }, t);
           m.fade($("#s-cover .eyebrow"), t + 0.1 * k);
           m.rise($$("#s-cover .t1, #s-cover .t2"), t + 0.3 * k, 0.25);
           m.rise($("#s-cover .hook"), t + 1.3 * k);
           m.fade($("#s-cover .team"), t + 2.2 * k);
-          m.rise($("#cover-honest"), t + 2.8 * k);
-          m.draw(coverRingTrace, t + 6.7 * k);
-          m.rise(coverTag, t + 7.3 * k);
+          m.fade($("#cover-cap"), t + 2.8 * k);
         };
 
         // Problem
