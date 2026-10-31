@@ -2,6 +2,31 @@
 
 Autonomous SG 2026 starter: streaming Claude agent with tools, web search, and a web UI.
 
+## Challenge track: Satellite collision avoidance (Challenge #1)
+Low earth orbit is crowded with satellites and debris, and operators get thousands of close-approach
+warnings a day. Checking each by hand is slow and error-prone. We are building a **collision-risk
+evaluator** that reads orbital conjunction telemetry, calculates the collision probability (Pc) for
+satellite-debris pairs, and flags events that need a maneuver.
+
+Risk tiers follow the NASA Spacecraft Conjunction Assessment and Collision Avoidance Best Practices
+Handbook (NASA/SP-20205011318) and ESA Space Debris Office standards:
+
+| Tier | Condition |
+|---|---|
+| Safe | Pc < 1e-6 **and** miss distance > 5.0 km |
+| Elevated | 1e-6 <= Pc < 1e-4, **or** miss distance 1.0-5.0 km |
+| Critical (maneuver required) | Pc >= 1e-4 (`risk` >= -4.0 in the dataset) **or** miss distance < 1.0 km |
+
+Deliverables:
+- The evaluator: fit on `train_data`, evaluate on unseen `test_data`.
+- A dashboard of trajectories, risk scores and miss distances.
+- A 24-hour view of how many objects enter the dangerous distance.
+
+Data: `Challenge #1/archive(1).zip`. The `risk` column is log10(Pc). For a simpler model, stick to:
+`event_id`, `time_to_tca`, `miss_distance`, `relative_speed`, `relative_position_r`,
+`relative_position_t`, `relative_position_n`, `c_object_type`, `c_sigma_r`, `t_sigma_r`,
+`max_risk_estimate`, `F10`, `AP`.
+
 ## Run
 1. `cp .env.example .env` and paste your API key from platform.claude.com
 2. `uv run uvicorn server:app --reload` → open http://127.0.0.1:8000
