@@ -1,0 +1,12 @@
+{
+  "name": "triage-stack-deck",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs 4173",
+    "present": "npx --yes hyperframes@0.8.78 present ./composition",
+    "studio": "npx --yes hyperframes@0.8.78 preview ./composition --background",
+    "check": "cd composition && npx --yes hyperframes@0.8.78 lint && npx --yes hyperframes@0.8.78 check",
+    "build": "python3 tools/build.py"
+  }
+}

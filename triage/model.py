@@ -11,7 +11,7 @@
 Uses the trained artifact (reports/model.joblib, from `python -m triage.train`) when present,
 otherwise the conservative upper-bound baseline. Either way the deterministic rules hold:
 Critical from the upper bound or miss < 1 km can never be removed by the model.
-Rows with missing or unknown inputs (input_flags) are never demoted and always flagged for review;
+Rows with missing, unknown or invalid inputs (input_flags) are never demoted and always flagged for review;
 a missing Pc upper bound or miss distance is never below Elevated.
 """
 
@@ -34,10 +34,28 @@ def load_artifact(path: Path = ARTIFACT):
     return joblib.load(path) if path.exists() else None
 
 
+# Inputs a row is never demoted without (missing -> flagged, never below the rule tier). F10 / AP (space weather) are
+# not here: they are often blank in the real data and the model handles a missing value there natively.
+TRUSTED_INPUTS = ["time_to_tca", "relative_speed", "relative_position_r", "relative_position_t", "relative_position_n"]
+
+
 def input_flags(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
-    """(missing_rule_input, untrusted): NaN Pc upper bound / miss distance; plus NaN sigma or unknown object type."""
+    """(missing_rule_input, untrusted).
+
+    missing_rule_input: NaN Pc upper bound / miss distance (the rule cannot clear it: at least Elevated).
+    untrusted: that, or NaN / non-positive sigma, unknown object type, NaN or negative time to TCA, or NaN relative
+    speed / position. Untrusted rows are never demoted below the rule tier and always flagged for review.
+    """
     missing = df[["max_risk_estimate", "miss_distance"]].isna().any(axis=1).to_numpy()
-    untrusted = missing | df[["c_sigma_r", "t_sigma_r"]].isna().any(axis=1).to_numpy() | df["c_object_type"].isna()
+    sigma = df[["c_sigma_r", "t_sigma_r"]]
+    untrusted = (
+        missing
+        | sigma.isna().any(axis=1).to_numpy()
+        | (sigma <= 0).any(axis=1).to_numpy()
+        | df[TRUSTED_INPUTS].isna().any(axis=1).to_numpy()
+        | (df["time_to_tca"] < 0).to_numpy()
+        | df["c_object_type"].isna().to_numpy()
+    )
     return missing, np.asarray(untrusted)
 
 

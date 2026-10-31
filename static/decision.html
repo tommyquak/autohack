@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision point</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/dashboard.css">
+<link rel="stylesheet" href="/static/decision.css">
+</head>
+<body class="dp">
+<header class="dp-top">
+  <div>
+    <h1>Decision point</h1>
+    <p>Predict each event's final tier from the CDM updates received at least 2 days before closest approach.</p>
+  </div>
+  <a class="dp-nav" href="/">Dashboard</a>
+</header>
+
+<section class="dp-bar">
+  <p class="dp-counts" id="counts" aria-live="polite">Loading events&hellip;</p>
+  <div class="seg" role="group" aria-label="Tracks shown">
+    <button type="button" data-show="sample" aria-pressed="true" id="show-sample">Sample</button>
+    <button type="button" data-show="all" aria-pressed="false" id="show-all">All events</button>
+  </div>
+</section>
+
+<main class="dp-main" id="main">
+  <div class="dp-chart" id="wrap">
+    <canvas id="chart" role="img" aria-label="Miss distance against time to closest approach. Left of the 2-day decision point: each event's real CDM updates. Right: one mark per event in its forecast final tier zone."></canvas>
+    <div class="dp-heads" id="heads" aria-hidden="true">
+      <div class="dp-head left" id="hd-left"><b>Real CDM updates</b><span id="hd-left-note">One line per event, coloured by current tier</span></div>
+      <div class="dp-chip" id="hd-chip">Decision point &middot; 2 days</div>
+      <div class="dp-head right" id="hd-right"><b>Forecast final tier</b><span id="hd-right-note"></span></div>
+    </div>
+    <div class="tip" id="tip" hidden></div>
+    <p class="dp-status" id="status" role="status"></p>
+    <div class="empty" id="empty" hidden></div>
+  </div>
+  <aside class="dp-card" id="card" hidden aria-label="Selected event" tabindex="-1"></aside>
+</main>
+
+<footer class="dp-foot">
+  <div class="legend" aria-label="Legend">
+    <span><i class="sw" style="--c: var(--crit)"></i>Critical</span>
+    <span><i class="sw" style="--c: var(--elev)"></i>Elevated</span>
+    <span><i class="sw" style="--c: var(--below)"></i>Below threshold</span>
+    <span><i class="ring"></i>Escalation: forecast tier above current</span>
+  </div>
+  <p class="dp-honest">Left: real CDM updates (&ge; 2 days out). Right: forecast of the final tier.</p>
+</footer>
+
+<script type="module" src="/static/js/decision.js"></script>
+</body>
+</html>

@@ -66,7 +66,7 @@ regenerated. The frozen `data/demo/events.json` is not.
 
 - **The model can return a tier below the rule baseline.** The case above with `max_risk_estimate` exactly -6 (miss
   50 km) is demoted to below threshold, by design: removing over-warnings from the Pc upper bound is what the model is
-  for. The guarantee is statistical, not per CDM: about 99% recall on held-out events (`train.py`). An operator who
+  for. The 99% is a recall target measured on out-of-fold scores (not a formal guarantee), and it is not per CDM (`train.py`). An operator who
   needs "never below the rule" should read `baseline_tier`, which is always in the output.
 - **Physically impossible values are tiered, not rejected.** A negative miss distance comes out Critical (miss < 1 km
   rule). `max_risk_estimate` > 0 (Pc > 1) also comes out Critical. Negative `time_to_tca` and negative sigmas are

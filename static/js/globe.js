@@ -1,26 +1,28 @@
 // Globe tab: where encounters happen, by REAL conjunction-point latitude, in front of an illustrative sky.
 //
-// What is data:   the latitude bands. Brightness = encounters in the band; colour runs cool -> hot with the band's
-//                 Critical share. Click a band for the counts. (The CDM files have latitude but NO longitude, so nothing
-//                 is pinned to a map point.)
+// What is data:   each event's LATITUDE (CDM geocentric_latitude) and the ALTITUDE of its target's orbit (the mean of
+//                 target_altitude_km, perigee to apogee). Every event is a dot coloured by its tier and drawn at that
+//                 height above the globe, to scale with the globe.
+//                 The CDM files have no longitude, so a dot's east-west position is arbitrary: a fixed spread from the
+//                 event id (golden angle), so dots are stable between loads. The key and hint say so.
+//                 Click a dot to select the event, or a band for its counts.
 // What is not:    the stars, the orbiting debris and the continents' lighting. The debris positions are made up for the
 //                 picture; only its colour mix follows the real chaser types in the events. The key says so.
 // Also real:      the blue ring sits at the median target altitude (events' `target_altitude_km`) on a near-polar orbit,
 //                 which is what the targets fly (inclination 87-99 deg in the CDMs); its longitude is arbitrary.
 //
 // d3 and topojson load the first time the tab opens; offline, the globe still draws without land outlines.
-import { LAT_BAND, TIERS, esc, hexToRgb, latBand } from "./fmt.js";
-import { state, subscribe, touchFilters } from "./state.js";
+import { LAT_BAND, TIERS, esc, latBand } from "./fmt.js";
+import { passesFilters, remaining, set, state, subscribe, touchFilters } from "./state.js";
 
 const D3 = "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js";
 const TOPO = "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js";
 const LAND = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json";
 const N = 180 / LAT_BAND;
 const OWN = "#5ea9ff";
-const COOL = hexToRgb("#4fc3f7"), WARM = hexToRgb("#ffb347"), HOT = hexToRgb("#ff4a3d");
 // Chaser types and their dot colours; the particle mix is sampled from the real counts.
 const KINDS = [
-  { type: "DEBRIS", label: "Debris", color: "#ff9d3d", size: 1.6 },
+  { type: "DEBRIS", label: "Debris", color: "#b9a38f", size: 1.6 },
   { type: "PAYLOAD", label: "Payload", color: "#f2f6f4", size: 2 },
   { type: "ROCKET BODY", label: "Rocket body", color: "#a596ff", size: 2.2 },
   { type: "UNKNOWN", label: "Unidentified", color: "#8a9490", size: 1.6 },
@@ -31,12 +33,15 @@ let canvas, ctx, wrap, card, head, hint, pauseBtn, d3, land = null;
 let w = 0, h = 0, dpr = 1;
 let rot = 20, tilt = 24; // spin and tilt toward the viewer, degrees
 let auto = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let bands = [];
+let bands = [], dots = [];
+let hoverDot = null;
 let hover = -1, picked = -1;
 let drag = null;
 let raf = 0, last = 0, clock = 0, ready = false;
 let stars = [], parts = null, orbitR = 1.08;
 
+// One drawn chevron (points left); the right-hand handle is the same shape flipped by CSS.
+const CHEV = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg>`;
 const panel = () => document.getElementById("panel-globe");
 const isOpen = () => panel() && !panel().hidden;
 const lat = (e) => e.latest.geocentric_latitude_deg;
@@ -59,7 +64,7 @@ export function initGlobe() {
   document.head.append(css);
 
   document.getElementById("tabs").firstElementChild.insertAdjacentHTML("afterend", `<button role="tab" aria-selected="false" data-tab="globe">Globe</button>`);
-  document.getElementById("panel-funnel").insertAdjacentHTML(
+  document.getElementById("panel-eval").insertAdjacentHTML(
     "afterend",
     `<div class="panel" id="panel-globe" role="tabpanel" hidden>
       <div class="canvas-wrap" id="globe-wrap">
@@ -67,8 +72,11 @@ export function initGlobe() {
         <p class="globe-head" id="globe-head"></p>
         <button type="button" class="globe-pause" id="globe-pause"></button>
         <div class="globe-key" id="globe-key"></div>
-        <p class="globe-hint" id="globe-hint">Click a band for detail. Latitude only: the data has no longitude.</p>
+        <p class="globe-hint" id="globe-hint">Each dot is one event, floating at its target's orbit height above its real latitude. The data has no longitude, so a dot's east-west position is arbitrary. Click a dot or a band for detail.</p>
+        <div class="globe-tip" id="globe-tip" hidden></div>
         <section class="globe-card" id="globe-card" hidden aria-live="polite"></section>
+        <button type="button" class="rail-toggle left" id="rail-l" aria-expanded="true" aria-label="Collapse the events panel" title="Collapse the events panel">${CHEV}</button>
+        <button type="button" class="rail-toggle right" id="rail-r" aria-expanded="true" aria-label="Collapse the selected-event panel" title="Collapse the selected-event panel">${CHEV}</button>
       </div>
     </div>`,
   );
@@ -81,10 +89,25 @@ export function initGlobe() {
   pauseBtn = document.getElementById("globe-pause");
 
   // Tab switching itself is the generic data-tab handler in encounter.js; here we only start and stop drawing.
+  // The side panels only collapse while the globe is showing (layout[data-view="globe"] in dashboard.css), so the other
+  // tabs always keep them; the collapsed state is remembered for the next visit to the globe.
+  const layout = document.querySelector(".layout");
+  layout.dataset.view = document.querySelector('#tabs [aria-selected="true"]')?.dataset.tab || "";
   document.getElementById("tabs").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-tab]");
+    if (btn) layout.dataset.view = btn.dataset.tab;
     if (ev.target.closest('[data-tab="globe"]')) queueMicrotask(open);
     else stop();
   });
+  for (const [id, cls, name] of [["rail-l", "hide-left", "events"], ["rail-r", "hide-right", "selected-event"]]) {
+    const b = document.getElementById(id);
+    b.addEventListener("click", () => {
+      const hidden = layout.classList.toggle(cls);
+      b.setAttribute("aria-expanded", String(!hidden));
+      b.setAttribute("aria-label", `${hidden ? "Expand" : "Collapse"} the ${name} panel`);
+      b.title = b.getAttribute("aria-label");
+    });
+  }
   pauseBtn.addEventListener("click", () => ((auto = !auto), paintPause(), kick()));
   new ResizeObserver(resize).observe(wrap);
 
@@ -94,12 +117,13 @@ export function initGlobe() {
   });
   canvas.addEventListener("pointermove", onMove);
   canvas.addEventListener("pointerup", onUp);
-  canvas.addEventListener("pointerleave", () => ((hover = -1), (drag = null), (canvas.style.cursor = ""), redraw()));
+  canvas.addEventListener("pointerleave", () => ((hover = -1), (hoverDot = null), (drag = null), (canvas.style.cursor = ""), paintTip(null), redraw()));
   canvas.addEventListener("keydown", onKey);
   card.addEventListener("click", onCard);
 
   const rebuild = () => {
     bands = computeBands();
+    dots = buildDots();
     buildSky();
     paintHead();
     paintKey();
@@ -109,6 +133,16 @@ export function initGlobe() {
   subscribe(["selectedId", "filters"], () => (paintCard(), redraw()));
   rebuild();
   paintPause();
+}
+
+// One dot per event: real latitude, arbitrary but fixed longitude (golden-angle spread by event id).
+function buildDots() {
+  const fallback = 1 + 700 / 6371;
+  return state.events.filter((e) => lat(e) != null).map((e) => {
+    const a = e.latest.target_altitude_km;
+    const r = a && a[0] != null ? 1 + (a[0] + a[1]) / 2 / 6371 : fallback; // orbit altitude as a multiple of the Earth's radius
+    return { e, lat: lat(e), lon: ((e.event_id * 137.50776405) % 360) - 180, r };
+  });
 }
 
 function computeBands() {
@@ -165,12 +199,10 @@ function paintHead() {
 }
 
 function paintKey() {
-  const shares = bands.filter((b) => b.total).map((b) => b.critical / b.total);
-  const hi = shares.length ? Math.round(Math.max(...shares) * 100) : 0;
   document.getElementById("globe-key").innerHTML = `
-    <div class="gk-title">Band colour: Critical share</div>
-    <div class="gk-ramp" aria-hidden="true"></div>
-    <div class="gk-scale"><span>0%</span><span>${hi}%</span></div>
+    <div class="gk-title">Events, at real latitude and orbit height</div>
+    ${[2, 1, 0].map((t) => `<div class="gk-row"><i style="background:${TIERS[t].color}"></i>${esc(TIERS[t].name)}</div>`).join("")}
+    <div class="gk-note">Longitude is not in the data, so east-west position is arbitrary.</div>
     <div class="gk-title gk-sep">Illustrative traffic, not data</div>
     ${KINDS.map((k) => `<div class="gk-row"><i style="background:${k.color}"></i>${esc(k.label)}</div>`).join("")}
     <div class="gk-row"><i class="gk-ring"></i>Typical target orbit</div>`;
@@ -308,11 +340,6 @@ const projection = () => {
 };
 const parallel = (deg) => ({ type: "LineString", coordinates: d3.range(-180, 181, 3).map((l) => [l, deg]) });
 
-function bandRgb(t) {
-  const [a, b, u] = t < 0.5 ? [COOL, WARM, t * 2] : [WARM, HOT, (t - 0.5) * 2];
-  return a.map((v, i) => Math.round(v + (b[i] - v) * u));
-}
-
 // 3D helpers shared by debris and the target ring: orbit-frame point -> view (x right, y up, z toward viewer).
 function view(x, y, z) {
   const yaw = rad(rot), c = Math.cos(yaw), s = Math.sin(yaw);
@@ -353,7 +380,7 @@ function drawDebris(back, cx, cy, R) {
     if (behind !== back) continue;
     if (behind && vx * vx + vy * vy < 1) continue; // hidden by the planet
     if (p.kind !== kind) { kind = p.kind; ctx.fillStyle = KINDS[kind].color; }
-    ctx.globalAlpha = back ? 0.5 : 0.9;
+    ctx.globalAlpha = back ? 0.32 : 0.5;
     const s = KINDS[kind].size;
     ctx.fillRect(cx + vx * R - s / 2, cy - vy * R - s / 2, s, s);
   }
@@ -417,19 +444,15 @@ function draw() {
     ctx.fillStyle = "rgba(46,124,98,.62)"; ctx.fill();
   }
 
-  // encounter bands: area = true latitude band; alpha = how many encounters; colour = Critical share
-  const max = Math.max(1, ...bands.map((b) => b.total));
-  const maxShare = Math.max(0.0001, ...bands.filter((b) => b.total).map((b) => b.critical / b.total));
-  bands.forEach((b, i) => {
-    if (!b.total && hover !== i && picked !== i) return;
-    const lo = i * LAT_BAND - 90, hi = lo + LAT_BAND;
-    const [r, g, bl] = bandRgb(b.total ? b.critical / b.total / maxShare : 0);
-    const a = 0.14 + 0.6 * Math.sqrt(b.total / max) + (hover === i ? 0.1 : 0) + (picked === i ? 0.16 : 0);
+  // only the band under the pointer, or the one that is open, is shaded
+  for (const i of new Set([hover, picked])) {
+    if (i < 0) continue;
+    const lo = i * LAT_BAND - 90;
     ctx.beginPath();
-    path(d3.geoGraticule().extentMajor([[-180, lo], [180, hi]]).outline());
-    ctx.fillStyle = `rgba(${r},${g},${bl},${Math.min(a, 0.92).toFixed(3)})`;
+    path(d3.geoGraticule().extentMajor([[-180, lo], [180, lo + LAT_BAND]]).outline());
+    ctx.fillStyle = `rgba(230,240,255,${i === picked ? 0.2 : 0.1})`;
     ctx.fill();
-  });
+  }
 
   if (land) {
     ctx.beginPath(); path(land);
@@ -441,18 +464,88 @@ function draw() {
   shade.addColorStop(0, "rgba(0,0,0,0)"); shade.addColorStop(1, "rgba(2,6,14,.62)");
   ctx.fillStyle = shade; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
 
-  // the selected event's own latitude: a single thin line
-  const sel = state.events.find((e) => e.event_id === state.selectedId);
-  if (sel && lat(sel) != null) {
-    ctx.beginPath(); path(parallel(lat(sel)));
-    ctx.lineWidth = 1.3; ctx.strokeStyle = OWN; ctx.globalAlpha = 0.95; ctx.stroke(); ctx.globalAlpha = 1;
-  }
   ctx.restore();
 
   ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = "rgba(140,200,255,.35)"; ctx.lineWidth = 1; ctx.stroke();
 
   drawRing(false, cx, cy, R);
   drawDebris(false, cx, cy, R);
+  drawDots(proj, cx, cy);
+}
+
+// Events as dots, tier-coloured; Critical drawn last so it stays on top. Filters dim the dots they exclude.
+// A dot sits at its target's orbit height above the surface point at its latitude. An orthographic view is linear in the
+// radius, so lifting a point to r x the Earth's radius just scales its offset from the globe's centre by r.
+const DOT = [2, 2.9, 3.8]; // radius by tier
+function lifted(proj, cx, cy, d) {
+  const p = proj([d.lon, d.lat]);
+  return p ? { surface: p, up: [cx + (p[0] - cx) * d.r, cy + (p[1] - cy) * d.r] } : null; // null = far side of the globe
+}
+
+function drawDots(proj, cx, cy) {
+  for (let tier = 0; tier <= 2; tier++) {
+    ctx.fillStyle = TIERS[tier].color;
+    ctx.strokeStyle = "rgba(4,10,18,.85)";
+    ctx.lineWidth = 0.8;
+    for (const d of dots) {
+      if (d.e.tier !== tier || remaining(d.e) <= 0) continue;
+      const q = lifted(proj, cx, cy, d);
+      if (!q) continue;
+      ctx.globalAlpha = passesFilters(d.e) ? 0.95 : 0.1;
+      ctx.beginPath();
+      ctx.arc(q.up[0], q.up[1], DOT[tier], 0, 6.2832);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  // the selected or hovered dot gets a ring and a thin line down to the surface point it floats above
+  for (const [d, color] of [[dots.find((x) => x.e.event_id === state.selectedId), OWN], [hoverDot, "#e6ebe8"]]) {
+    if (!d || remaining(d.e) <= 0) continue;
+    const q = lifted(proj, cx, cy, d);
+    if (!q) continue;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(q.surface[0], q.surface[1]);
+    ctx.lineTo(q.up[0], q.up[1]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(q.surface[0], q.surface[1], 1.8, 0, 6.2832);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(q.up[0], q.up[1], 8, 0, 6.2832);
+    ctx.stroke();
+  }
+}
+
+// Nearest visible dot within 9 px of the pointer, or null.
+function dotAt(ev) {
+  const r = canvas.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+  const proj = projection(), [cx, cy] = proj.translate();
+  let best = null, bd = 81;
+  for (const d of dots) {
+    if (remaining(d.e) <= 0 || !passesFilters(d.e)) continue;
+    const q = lifted(proj, cx, cy, d);
+    if (!q) continue;
+    const dist = (q.up[0] - x) ** 2 + (q.up[1] - y) ** 2;
+    if (dist < bd) { bd = dist; best = d; }
+  }
+  return best;
+}
+
+function paintTip(d, ev) {
+  const tip = document.getElementById("globe-tip");
+  if (!d) { tip.hidden = true; return; }
+  const r = canvas.getBoundingClientRect(), t = TIERS[d.e.tier];
+  tip.innerHTML = `<b style="color:${t.color}">${t.icon} ${esc(t.name)}</b> · EVT ${esc(d.e.event_id)}<br>${Math.abs(d.lat).toFixed(1)}° ${d.lat < 0 ? "S" : "N"}`;
+  tip.hidden = false;
+  tip.style.left = `${Math.min(ev.clientX - r.left + 14, r.width - tip.offsetWidth - 4)}px`;
+  tip.style.top = `${Math.max(4, ev.clientY - r.top - 12 - tip.offsetHeight)}px`;
 }
 
 // Band index under the pointer, or -1 off the sphere.
@@ -473,9 +566,12 @@ function onMove(ev) {
     redraw();
     return;
   }
-  const i = bandAt(ev);
+  const d = dotAt(ev);
+  if (d !== hoverDot) { hoverDot = d; paintTip(d, ev); }
+  else if (d) paintTip(d, ev);
+  const i = d ? -1 : bandAt(ev);
   const next = i >= 0 && bands[i]?.total ? i : -1;
-  canvas.style.cursor = next >= 0 ? "pointer" : "";
+  canvas.style.cursor = d || next >= 0 ? "pointer" : "";
   if (next !== hover) { hover = next; redraw(); }
 }
 
@@ -483,6 +579,8 @@ function onUp(ev) {
   const wasClick = drag && drag.moved < 4;
   drag = null;
   if (!wasClick) return;
+  const d = dotAt(ev);
+  if (d) return set({ selectedId: d.e.event_id }); // the detail panel follows; the dot gets a ring
   const i = bandAt(ev);
   pick(i >= 0 && bands[i]?.total && i !== picked ? i : -1);
 }

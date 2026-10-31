@@ -62,7 +62,8 @@ def validate_cdms(df: pd.DataFrame, source: str) -> pd.DataFrame:
     """The checks behind read_cdm_csv, for a frame already in memory (e.g. JSON rows sent to POST /api/triage).
 
     `source` names the input in error messages. Same output as read_cdm_csv: only event_id, the allowed features,
-    the label and display-only columns are kept; numeric columns coerced; unseen object types become missing.
+    the label and display-only columns are kept; numeric columns coerced; infinite feature values and unseen object
+    types become missing.
     """
     missing = [c for c in [EVENT, *FEATURES] if c not in df.columns]
     if missing:
@@ -78,6 +79,8 @@ def validate_cdms(df: pd.DataFrame, source: str) -> pd.DataFrame:
         if bad.any():
             i = bad.idxmax()
             raise ValueError(f"{source}: column {col!r} has non-numeric values, e.g. {df[col][i]!r} in data row {i}")
+        if col in FEATURES:  # 'inf' / -inf is not a measurement: treat it as missing (escalated and flagged)
+            num = num.where(np.isfinite(num))
         df[col] = num
     for col in CATEGORICAL:
         known = df[col].where(df[col].isin(CATEGORIES[col]))  # unseen labels -> missing (flagged by the model)

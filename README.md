@@ -1,12 +1,13 @@
-# Second Look: conjunction triage that can never hide a Critical
+# Second Look: conjunction triage that preserves every rule-defined Critical
 
 **Autonomous SG 2026 · Airbus Challenge #1 (satellite collision avoidance).** Every team here will predict
-collision risk. Second Look is built so it can never hide a Critical: published NASA/ESA rules tier every warning, and a
+collision risk. Second Look cuts the review queue by a quarter, shows a decision record for every downgrade, and is
+architecturally forbidden from downgrading a rule-defined Critical: published NASA/ESA rules tier every warning, and a
 model may only remove over-warnings.
 
-- **One in four flagged events is noise:** 1,090 → 802 events to review on the test set (all 288 removed are truly below threshold), Critical recall 100% by construction (the rules set Critical; the model can't touch it).
+- **One in four flagged events is noise:** 1,090 → 802 events to review on the test set. Event level: all 288 removed events were truly below threshold at their latest update. Message level: 1 genuinely Elevated CDM was demoted (event 1278). Every rule-defined Critical is preserved (the rules set Critical; the model can't touch it), so Critical recall is 100% on test.
 - **It shows where the rulebook wastes fuel:** 135 of 196 Critical events are Critical on miss distance alone, with a Pc upper bound below 1e-4. The analyst sees which manoeuvres the probability backs.
-- **We rejected our own better model:** v2 cut false alarms a further 23%, but our safety gate caught 3 more under-tiered CDMs, so it didn't ship.
+- **We set our safety gate before testing and stuck to it, even when it cost us a 23% better number.** On cross-validation a stricter v2 setting halves under-tiering at the same workload: our next step ([below](#our-eval-caught-our-bug)).
 
 **CDMs arrive → rules tier every message → model removes only the over-warnings → analyst reviews a ranked queue with reasons → analyst decides**
 
@@ -15,7 +16,7 @@ model may only remove over-warnings.
 **User:** a conjunction assessment analyst on a satellite operator's flight dynamics team.
 **Status quo:** every CDM whose Pc upper bound (`max_risk_estimate`) or miss distance crosses a
 threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** that rule flags
-**54.2%** of CDMs, and 4,526 of those are truly below threshold.
+**54.2%** of CDMs, and 4,534 of those are truly below threshold.
 
 ## What it does
 
@@ -44,6 +45,11 @@ threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** t
 The demotion threshold is the 1% quantile of out-of-fold scores on truly-Elevated candidates.
 `risk` (true log10 Pc) is the label only, never an input. Details: [docs/ALGO.md](docs/ALGO.md).
 
+## How this differs
+
+AI alert-prioritisation tools rank alerts. Second Look bounds what the model may do (demote only Pc-only Elevated,
+never a rule-defined Critical, never with untrusted inputs) and records why for every downgrade.
+
 ## Results (held-out test set: 24,484 CDMs, 2,167 events)
 
 From [`data/demo/metrics.json`](data/demo/metrics.json). True classes: 15,756 below threshold, 6,501 Elevated, 2,227 Critical.
@@ -53,10 +59,24 @@ From [`data/demo/metrics.json`](data/demo/metrics.json). True classes: 15,756 be
 | Majority class | 0% | 0 | 0.0% | 8,728 | 0.261 |
 | Miss-distance rule | 95.9% | 0 | 31.4% | 1,116 | **0.952** |
 | `max_risk_estimate` rule (status quo) | 100% | 4,534 | 54.2% | 0 | 0.841 |
+| Pc bound OR miss < 1 km (untuned) | 100% | 4,534 | 47.3% | 1,693 | 0.779 |
+| Miss rule + Pc bound for Critical only (untuned) | 100% | **8** | **31.5%** | 1,012 | 0.944 |
 | **Ours** | **100%** | **2,214** | **44.7%** | **1** | 0.910 |
 
-**Where we lose:** the miss-distance rule has the highest macro F1 (0.952) but misses 4.1% of
-Critical CDMs (91 of 2,227), so we don't use it.
+The two untuned rows are fixed rules from the brief, so scoring them on test is a baseline, not tuning. "False alarms"
+counts truly-below-threshold CDMs flagged at any tier; the "false Elevated" figure below (4,526 / 2,206) leaves out 8
+CDMs whose Pc bound is ≥ 1e-4 (shown Critical, never demoted) but whose true tier is below threshold.
+
+**Where we lose:**
+- The miss-distance rule has the highest macro F1 (0.952) but misses 4.1% of Critical CDMs (91 of 2,227), so we don't
+  use it. Its F1 is flattering by construction: miss distance is half of the label, so it can never raise a false alarm.
+- **The strongest simple baseline, miss rule + Pc bound for Critical only, beats us on false alarms (8 vs 2,214) and
+  workload (31.5% vs 44.7%)** with the same 100% Critical recall, but shows 1,012 truly-Elevated CDMs as below
+  threshold (we show 1). Our value is the Pc-Elevated band.
+
+**Does the model beat a tuned rule?** Tuned rules are compared on train cross-validation only, never on test. With the
+same 99% rule, a tuned Pc-bound threshold removes 9.7% of false alarms (with 47 under-tiered CDMs); our model removes
+64.1% (with 39). Details: [docs/EVAL.md](docs/EVAL.md).
 
 **Before → after (vs status quo):** false Elevated 4,526 → 2,206 (**-51%**, 2,320 fewer false
 alarms); flagged 54.2% → 44.7%; events in the queue 1,090 → 802 (from `data/demo/events.json`);
@@ -74,21 +94,34 @@ Critical recall stays 100%. These are measured counts; analyst time saved is not
   as Critical because their Pc bound is ≥ 1e-4. We never demote Critical.
 - **63 events with placeholder sigma** (63,781,360 m). These are never demoted and always flagged `no_covariance`; the 61 below Critical are also needs review.
 - **No test CDM within 2 days of TCA** (minimum 2.0002 d), so the 24 h panel is empty and the final window is untested.
-- **The 99% target is not a per-event guarantee.** It holds only for events drawn like the training events.
+- **The 99% is a recall target, measured on out-of-fold scores (not a formal guarantee),** and not per event. It holds only for events drawn like the training events.
+- **Critical recall relies on the Pc bound holding.** True risk exceeds `max_risk_estimate` in 101 test CDMs, by at most 0.04 decade (0.14 on train); none crosses a tier line.
 
 ## Our eval caught our bug
 
 Our first model regressed log Pc and flagged 100% of CDMs. Our evaluation caught this
 before it shipped, so we redesigned it as targeted demotion.
 
-We also tried a stronger v2 (more history and physics features, an ensemble scorer). On the test set it cut
-false Elevated from 2,214 to 1,694 (-23%), but showed **3** truly-Elevated CDMs as below threshold, against our
-limit of 1. An independent verifier found no leakage; we kept v1 because our own safety gate said no.
+**We set our safety gate before testing and stuck to it, even when it cost us a 23% better number.** We tried a
+stronger v2 (more history and physics features, an ensemble scorer). On the test set it cut false alarms by a further
+23%, but showed **3** truly-Elevated CDMs as below threshold, against our limit of 1, fixed before v2 was tested. An
+independent verifier found no leakage; v1 ships.
+
+That gate was weaker than it sounds. It was set on test, where under-tier counts are noisy: v1's cross-validated rate
+predicts about 5.9 under-tiered CDMs on a test set this size, so seeing ≤ 1 had about a 2% chance. The stricter, honest
+gate is the operator-invisible under-tier on cross-validation (not flagged, and no later update of the event shown at
+its true tier): v1 has 23 such CDMs in 10 events, and v2 as tested has 20 (33 under-tiered). On cross-validation a
+stricter v2 setting (0.995) halves under-tiering at the same workload (+1.1% false alarms): 17 under-tiered, 9
+invisible. That is our next step; it is not shipped and has never been run on test ([docs/EVAL.md](docs/EVAL.md)).
 
 ## Trust and traceability
 
 - Every tier lists the rules that fired (e.g. `Pc 10^-3.20 >= 1e-4 (critical threshold)`).
 - Uncertainty only escalates: needs review and cautions never lower a tier.
+- On an Elevated event, needs review marks a **close call** just above the model's demotion bar. These are mostly
+  over-warnings (2.0% truly Elevated on cross-validation, against 32.1% for the other Elevated candidates the model
+  keeps), not the riskiest rows, so an analyst can usually clear them. On placeholder-sigma or missing-input rows, needs
+  review means the input can't be trusted (61 of the 84 needs-review test events also carry `no_covariance`).
 - Claude only rewords structured facts and uses only their numbers. It is instructed never to recommend a manoeuvre, and each response records `claude` or `template` as its source.
 - Tier 0 is "below threshold", never "safe". The analyst decides the manoeuvre.
 
