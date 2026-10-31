@@ -64,6 +64,23 @@
         : "outside both distance lines";
   const reading = (label, value, sub = "") =>
     `<div class="ca-reading"><span class="ca-label">${label}</span><span class="ca-value">${value}</span>${sub ? `<span class="ca-sub">${sub}</span>` : ""}</div>`;
+  // What the model was allowed to do, from the per-decision certificate (events.json `certificate`), in plain words.
+  function modelDecision(event) {
+    const c = event.certificate;
+    if (!c) return "";
+    const why = c.why_not_candidate || "";
+    const text =
+      c.decision === "demoted" ? `The rule said ${esc(c.rule_tier_name)}; the model lowered it to ${esc(c.tier_name.toLowerCase())}.`
+        : c.decision === "kept" ? `The model checked it and kept it ${esc(c.tier_name)}.`
+          : /^Critical/.test(why) ? "The model is not allowed to change this: the rules make it Critical, and a Critical is never downgraded."
+            : /^Elevated by miss distance/.test(why) ? "The model is not allowed to change this: it is Elevated by miss distance, and only a Pc-only Elevated can be lowered."
+              : /^below threshold/.test(why) ? "Below threshold by rule; the model had nothing to lower."
+                : /^sigma placeholder/.test(why) ? "The model is not allowed to change this: there is no usable position uncertainty."
+                  : `Model: ${esc(c.decision)}${why ? ` (${esc(why)})` : ""}.`;
+    const check = c.holds === false ? ' <span class="ca-caution">⚠ safety check failed</span>' : "";
+    return `<p class="ca-decision"><span class="ca-label">Model decision</span> ${text}${check}</p>`;
+  }
+
   function trend(e) {
     const h = e.history;
     if (!h || h.length < 2) return '<span class="ca-muted">one update</span>';
@@ -157,6 +174,7 @@
       <p class="ca-sentence">${article} ${obj === "unknown" ? "unidentified object" : obj} passes
         <b>${fmtDist(L.miss_distance_m)}</b> from our satellite in <b>${L.time_to_tca_days.toFixed(1)} days</b>,
         ${distanceLine(L.miss_distance_m)}.</p>
+      ${modelDecision(event)}
       <div class="ca-readings">
         ${reading("Miss distance", fmtDist(L.miss_distance_m))}
         ${reading("Time to closest approach", `${L.time_to_tca_days.toFixed(1)} d`)}
