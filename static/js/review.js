@@ -46,6 +46,11 @@ function status(summary, events, aud) {
   const before = flagged(summary.by_baseline_tier), after = flagged(summary.by_tier);
   const delta = after - before;
   const cut = before ? Math.round((1 - after / before) * 100) : 0;
+  const act = summary.by_action || {};
+  const plan = act["MANEUVER PLANNING"] || 0, review = act["ANALYST REVIEW"] || 0;
+  const tip = `Flagged = Elevated or Critical: ${n(before)} by the rule, ${n(after)} after Second Look (${cut}% fewer). `
+    + `In queues = ${n(plan)} maneuver planning + ${n(review)} analyst review; analyst review also holds `
+    + `below-threshold events on escalation watch or with unusable input, so it is larger than Flagged.`;
   const w = summary.warnings_24h || {};
   const minTca = Math.min(...events.map((e) => e.latest?.time_to_tca_days ?? Infinity));
   const within = w.within_dangerous_distance ?? 0;
@@ -61,7 +66,8 @@ function status(summary, events, aud) {
     inv = `<span class="seg" title="Safety invariants checked over every event${failed ? `; failed: ${esc(failed)}` : ""}">Invariants <b class="${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</b> <span class="muted num">${ok}/${checks.length}</span></span>`;
   }
   $("status").innerHTML = `
-    <span class="seg" title="Elevated or Critical: ${n(before)} by the rule, ${n(after)} after Second Look (${cut}% fewer)">To review <b class="num">${n(after)}</b> <span class="muted num">(${delta <= 0 ? "\u2212" : "+"}${n(Math.abs(delta))})</span></span>
+    <span class="seg" title="${esc(tip)}">Flagged <b class="num">${n(after)}</b> <span class="muted num">(${delta <= 0 ? "\u2212" : "+"}${n(Math.abs(delta))} vs rule)</span></span>
+    <span class="seg" title="${esc(tip)}">In queues <b class="num">${n(plan + review)}</b></span>
     <span class="seg" title="${esc(winNote)}">Next 24 h: <b class="num${within ? " warn" : ""}">${n(within)}</b> within 1 km</span>
     ${inv}`;
 }
