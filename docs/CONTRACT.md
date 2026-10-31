@@ -37,6 +37,7 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 ```
 - Events sorted most urgent first (tier desc, then soonest TCA).
 - Display-only context (never model inputs; not in the challenge's allowed-feature list): `latest.geocentric_latitude_deg` (latitude of the conjunction point), `latest.target_altitude_km` = [perigee, apogee] of our satellite, and `summary.by_latitude_band` (events and Criticals per 30° band). All `null` when the input file lacks those columns. There is no longitude in the data, so a globe can show a latitude band, not a point.
+- `summary.critical_drivers` = `{miss_only, pc_only, both}`: which rule makes each Critical event Critical at its latest CDM (miss < 1 km, Pc upper bound >= 1e-4, or both). Sums to `by_tier.Critical`.
 - `baseline_tier` = the conservative rule (worse of the `max_risk_estimate` tier and the miss tier) the model improves on; `summary.by_baseline_tier` counts it. The model only ever demotes, so `tier <= baseline_tier`.
 - `true_tier` / `risk_log10` are `null` when the file has no labels (live use). Show them only in the evaluation view.
 - `cautions` (from `triage.explain.cautions`, latest CDM): `needs_review` (as above) · `no_covariance` (a sigma is the
