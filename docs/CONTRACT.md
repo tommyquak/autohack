@@ -68,5 +68,16 @@ All read `reports/*.json` (falling back to the frozen full-test-set copy in `dat
 | `GET /api/events/{event_id}` | one event exactly as in §2, with `history`; `404` if unknown |
 | `GET /api/metrics` | `metrics.json` as in §3 |
 | `GET /api/explain/{event_id}` | see `triage/explain.py` (owner: Integration & trust) |
+| `GET /health` | `{"llm": "claude"\|"fallback", "reports": "reports"\|"demo"\|"missing", "model": "<id>", "last_answer": "claude"\|"fallback"\|null}` |
+
+Report loading lives in `triage/reports.py` (shared by `server.py` and the copilot tools in `tools.py`).
+
+## 5. Operator copilot (`POST /chat`, NDJSON)
+Events: `{"type":"session"}`, then `{"type":"source","source":"claude"|"fallback"[,"reason"]}`, then `text` / `thinking` /
+`tool_call` / `tool_result` / `error`, then `{"type":"done"}`. A `tool_call` named `focus_event` with
+`input.event_id` is the event the dashboard should select. Claude answers through the read-only triage tools in
+`tools.py` (get_summary, list_events, get_event, get_metrics, explain_event, compare_events, focus_event). The
+deterministic router in `fallback.py` (same tools, same event types) answers when there are no usable credentials or
+the Claude call fails before any text; a second `source` event then says `fallback`.
 
 Pages: `/` serves `static/dashboard.html` (placeholder until it exists); other dashboard files are served under `/static/` (e.g. `/static/dashboard.js`). The agent chat moved to `/chat`.

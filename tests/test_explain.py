@@ -8,7 +8,7 @@ os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-test")  # client construction
 import pytest
 from fastapi.testclient import TestClient
 
-from triage import explain
+from triage import explain, reports
 from triage.build_events import build
 
 
@@ -86,8 +86,8 @@ def test_api_explain_route(tmp_path, monkeypatch, events):
     import server
 
     (tmp_path / "events.json").write_text(json.dumps({"summary": {}, "events": events}))
-    monkeypatch.setattr(server, "REPORTS", tmp_path)
-    monkeypatch.setattr(server, "DEMO", tmp_path / "no-demo")
+    monkeypatch.setattr(reports, "REPORTS", tmp_path)
+    monkeypatch.setattr(reports, "DEMO", tmp_path / "no-demo")
     client = TestClient(server.app)
 
     r = client.get(f"/api/explain/{events[0]['event_id']}?llm=false")
