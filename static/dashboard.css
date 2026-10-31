@@ -124,6 +124,7 @@ select { background: var(--bg); border: 1px solid var(--hair2); border-radius: 4
 .seg button + button { border-left: 1px solid var(--hair2); }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"] { background: #131c19; color: var(--ink); }
+.seg.hz { margin-top: var(--s3); }
 
 /* workload: the rule-to-model drop is the headline; the other two readings sit quieter beside it */
 .workload { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; }

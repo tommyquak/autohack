@@ -22,6 +22,10 @@
     <div class="title">
       <h1>Which encounters need a maneuver?</h1>
       <p class="muted" id="stamp">Loading&hellip;</p>
+      <div class="seg hz" id="horizon" role="group" aria-label="Tier shown on every view">
+        <button type="button" data-horizon="final" aria-pressed="true" title="Forecast final tier at closest approach, from messages 2+ days out (triage.forecast)">Final tier</button>
+        <button type="button" data-horizon="now" aria-pressed="false" title="Tier of the latest message (team nowcast)">Now</button>
+      </div>
     </div>
     <details class="fold" id="filter-fold">
       <summary><h2 id="h-filter">Filter</h2><span class="fold-sum" id="filter-sum">All events</span></summary>

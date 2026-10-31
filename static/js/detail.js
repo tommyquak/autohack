@@ -2,14 +2,14 @@
 // Order is the triage read: tier, the two quantities that set it, why, the prose; the rest folds under "More detail".
 import { api } from "./api.js";
 import { CAUTIONS, SIGMA_SENTINEL_M, TIERS, clamp, esc, fmtDays, fmtDist, fmtPc, pct } from "./fmt.js";
-import { remaining, state, subscribe } from "./state.js";
+import { remaining, state, subscribe, tierOf } from "./state.js";
 
 const el = document.getElementById("detail");
 let token = 0;
 let moreOpen = false; // "More detail" stays open across selections once the analyst opens it
 
 export function initDetail() {
-  subscribe(["selectedId"], show);
+  subscribe(["selectedId", "horizon"], show);
   subscribe(["elapsed"], () => {
     const t = document.getElementById("d-tca");
     const e = state.events.find((x) => x.event_id === state.selectedId);
@@ -45,7 +45,7 @@ async function show() {
     const e = await api.event(id);
     if (mine !== token) return;
     el.innerHTML = render(e);
-    el.closest(".sel")?.style.setProperty("--tier", TIERS[e.tier].color); // colours the card's bottom edge
+    el.closest(".sel")?.style.setProperty("--tier", TIERS[tierOf(e)].color); // colours the card's bottom edge
     el.removeAttribute("aria-busy");
     explain(false);
   } catch (err) {
@@ -96,8 +96,14 @@ function spark(history) {
 }
 
 function render(e) {
-  const L = e.latest, t = TIERS[e.tier], r = remaining(e);
+  const L = e.latest, t = TIERS[tierOf(e)], r = remaining(e);
   const demoted = e.baseline_tier > e.tier;
+  // Final-tier view: headline is the forecast; the latest message's tier and the forecast's reasons sit under it.
+  const fc = state.horizon === "final" && e.forecast ? e.forecast : null;
+  const fcLine = fc
+    ? `<p class="hero-rule">Forecast final tier at closest approach${fc.predicted_final_tier > fc.floor_tier ? `, escalated from the rule floor <b style="color:${TIERS[fc.floor_tier].color}">${TIERS[fc.floor_tier].name}</b>` : ""}. Latest message now: <b style="color:${TIERS[e.tier].color}">${TIERS[e.tier].name}</b>.</p>` +
+      `<p class="hero-rule muted">${esc(fc.reasons?.[0] || "")}</p>`
+    : "";
   const sentinel = Math.max(L.sigma_r_m.chaser, L.sigma_r_m.target) > SIGMA_SENTINEL_M;
   const cautions = (e.cautions && e.cautions.length ? e.cautions : e.needs_review ? ["needs_review"] : []);
   return `
@@ -108,7 +114,8 @@ function render(e) {
           <div class="dcard-sub num">${esc(L.object_type.toLowerCase())} · TCA in <span id="d-tca">${r > 0 ? fmtDays(r) : "passed"}</span></div></div>
       </div>
       <div class="tier-name" style="color:${t.color}"><span aria-hidden="true">${t.icon}</span> ${t.name}</div>
-      ${demoted ? `<p class="hero-rule">Rule said <b style="color:${TIERS[e.baseline_tier].color}">${TIERS[e.baseline_tier].name}</b>; the model demoted it.</p>` : ""}
+      ${fcLine}
+      ${demoted && !fc ?`<p class="hero-rule">Rule said <b style="color:${TIERS[e.baseline_tier].color}">${TIERS[e.baseline_tier].name}</b>; the model demoted it.</p>` : ""}
     </div>
     ${gauge({ label: "Pc upper bound", valueText: fmtPc(L.max_risk_estimate_log10), lo: -9, hi: -2, value: L.max_risk_estimate_log10, ticks: [[-6, "1e-6"], [-4, "1e-4"]], bands: [[-9, -6, TIERS[0].color], [-6, -4, TIERS[1].color], [-4, -2, TIERS[2].color]] })}
     ${gauge({ label: "Miss distance", valueText: fmtDist(L.miss_distance_m), lo: Math.log10(0.03), hi: Math.log10(100), value: Math.log10(Math.max(L.miss_distance_m / 1000, 0.03)), ticks: [[0, "1 km"], [Math.log10(5), "5 km"]], bands: [[Math.log10(0.03), 0, TIERS[2].color], [0, Math.log10(5), TIERS[1].color], [Math.log10(5), Math.log10(100), TIERS[0].color]] })}

@@ -1,6 +1,6 @@
 // Right rail, section 04: what enters the 24-hour window, plus flagged events per half-day across the horizon.
 import { MAX_DAYS } from "./fmt.js";
-import { remaining, state, subscribe, touchFilters, upcoming } from "./state.js";
+import { remaining, state, subscribe, tierOf, touchFilters, upcoming } from "./state.js";
 
 const SLOTS = MAX_DAYS * 2; // half-day buckets from "now"
 const win = document.getElementById("window");
@@ -18,15 +18,16 @@ export function initStrip() {
     state.filters.slot = state.filters.slot === i ? null : i;
     touchFilters();
   });
-  subscribe(["elapsed", "events", "filters"], paint);
+  subscribe(["elapsed", "events", "filters", "horizon"], paint);
   paint();
 }
 
 function paint() {
   const up = upcoming();
-  // Same definition as triage/build_events.py warnings_24h: TCA inside the window, miss < 1 km, tier Critical.
+  // Same definition as triage/build_events.py warnings_24h: TCA inside the window, miss < 1 km, tier Critical
+  // (the tier shown: forecast final tier, or the latest message's).
   const inWin = up.filter((e) => remaining(e) <= 1);
-  const critIn = inWin.filter((e) => e.tier === 2).length;
+  const critIn = inWin.filter((e) => tierOf(e) === 2).length;
   if (sum) sum.textContent = inWin.length ? `${inWin.length} in window · ${critIn} critical` : "none yet";
   const stat = (n, label) => `<div class="stat"><b>${n}</b><span>${label}</span></div>`;
   win.innerHTML =
@@ -39,9 +40,10 @@ function paint() {
 
   const buckets = Array.from({ length: SLOTS }, () => [0, 0]);
   for (const e of up) {
-    if (e.tier === 0) continue;
+    const t = tierOf(e);
+    if (t === 0) continue;
     const i = Math.floor(remaining(e) / 0.5);
-    if (i >= 0 && i < SLOTS) buckets[i][e.tier - 1]++;
+    if (i >= 0 && i < SLOTS) buckets[i][t - 1]++;
   }
   const max = Math.max(1, ...buckets.map(([a, b]) => a + b));
   const scale = (n) => (n ? Math.max(4, Math.sqrt(n / max) * 100) : 0); // sqrt keeps the small slots visible

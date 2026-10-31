@@ -12,7 +12,7 @@
 //
 // d3 and topojson load the first time the tab opens; offline, the globe still draws without land outlines.
 import { CAUTIONS, MAX_DAYS, TIERS, clamp, esc, fmtDays, fmtDist, fmtPc } from "./fmt.js";
-import { passesFilters, remaining, set, state, subscribe } from "./state.js";
+import { baseOf, passesFilters, remaining, set, state, subscribe, tierOf } from "./state.js";
 
 const D3 = "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js";
 const TOPO = "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js";
@@ -110,7 +110,7 @@ export function initGlobe() {
   card.addEventListener("click", (ev) => ev.target.closest('[data-act="close"]') && closeCard());
   document.getElementById("top-tiers").addEventListener("click", (ev) => {
     if (!ev.target.closest('[data-act="critical"]')) return;
-    const c = state.events.find((e) => e.tier === 2 && remaining(e) > 0); // API order: most urgent first
+    const c = state.events.find((e) => tierOf(e) === 2 && remaining(e) > 0); // API order: soonest first within a tier
     if (c) set({ selectedId: c.event_id });
   });
 
@@ -126,6 +126,7 @@ export function initGlobe() {
   subscribe(["events", "summary"], rebuild);
   subscribe(["selectedId"], () => ((cardOpen = state.selectedId != null), aimAt(selected()), paintCard(), kick()));
   subscribe(["filters"], () => redraw());
+  subscribe(["horizon"], () => (paintTop(), cardOpen && paintCard(), redraw()));
   subscribe(["elapsed"], () => (paint24(), cardOpen && paintCard(), redraw()));
   rebuild();
 }
@@ -147,14 +148,28 @@ function buildSky() {
 
 }
 
-// Header: tier counts from the model, and the review workload the conservative rule would have queued vs. ours.
+// Header: tier counts in the tier shown, and the review workload of its base vs. it. Now: the conservative rule vs.
+// the model (summary counts). Final tier: the rule floor vs. the forecast (counted from the events' forecast).
 function paintTop() {
   const s = state.summary;
   if (!s) return;
-  const t = s.by_tier, b = s.by_baseline_tier;
-  const tier = (i, key) => `<span class="tt"><i style="background:${TIERS[i].color}"></i><b>${n(t[key] ?? 0)}</b> ${esc(TIERS[i].name)}</span>`;
-  document.getElementById("top-tiers").innerHTML =
-    `<button type="button" class="tt-btn" data-act="critical" title="Open the most urgent Critical">${tier(2, "Critical")}</button>${tier(1, "Elevated")}${tier(0, "Below threshold")}`;
+  const final = state.horizon === "final";
+  const count = (f) => {
+    const c = Object.fromEntries(TIERS.map((x) => [x.name, 0]));
+    for (const e of state.events) c[TIERS[f(e)].name]++;
+    return c;
+  };
+  const t = final ? count(tierOf) : s.by_tier, b = final ? count(baseOf) : s.by_baseline_tier;
+  if (final) {
+    const review = (x) => x.Elevated + x.Critical;
+    const esc_ = state.events.filter((e) => tierOf(e) > baseOf(e)).length;
+    paintTiers(t);
+    const el = document.getElementById("top-review");
+    el.innerHTML = `<span class="muted">${n(review(b))}</span> → <b>${n(review(t))}</b> forecast to need review <span class="muted">(rule floor → forecast, ${n(esc_)} escalated)</span>`;
+    el.title = `Elevated + Critical at closest approach. Rule floor at the latest message 2+ days out: ${n(review(b))}. Forecast final tier: ${n(review(t))}. The forecast never lowers the floor.`;
+    return;
+  }
+  paintTiers(t);
   const review = (x) => (x.Elevated ?? 0) + (x.Critical ?? 0);
   const el = document.getElementById("top-review");
   if (b) {
@@ -164,6 +179,12 @@ function paintTop() {
   } else {
     el.innerHTML = `<b>${n(review(t))}</b> to review`;
   }
+}
+
+function paintTiers(t) {
+  const tier = (i, key) => `<span class="tt"><i style="background:${TIERS[i].color}"></i><b>${n(t[key] ?? 0)}</b> ${esc(TIERS[i].name)}</span>`;
+  document.getElementById("top-tiers").innerHTML =
+    `<button type="button" class="tt-btn" data-act="critical" title="Open the most urgent Critical">${tier(2, "Critical")}</button>${tier(1, "Elevated")}${tier(0, "Below threshold")}`;
 }
 
 // One sentence, computed from the data: the point of the picture.
@@ -230,7 +251,8 @@ function pcScale(pc, grey = false) {
 function paintCard() {
   const e = selected();
   if (!cardOpen || !e) return void (card.hidden = true);
-  const L = e.latest, t = TIERS[e.tier], r = remaining(e), rule = ruleOf(e);
+  const L = e.latest, shown = tierOf(e), t = TIERS[shown], r = remaining(e), rule = ruleOf(e);
+  const fc = state.horizon === "final" && e.forecast ? e.forecast : null;
   const pc = L.max_risk_estimate_log10, m = L.miss_distance_m;
   const pcOk = pc != null && Number.isFinite(pc);
   const missCmp = m == null ? "" : m < MISS_CRIT_M ? "under 1 km" : m <= MISS_ELEV_M ? "1–5 km" : "over 5 km";
@@ -240,8 +262,10 @@ function paintCard() {
   card.style.setProperty("--tier", t.color);
   card.innerHTML = `
     <button type="button" class="gc-close" data-act="close" aria-label="Close the event card">×</button>
-    <h3 style="color:${t.color}"><span aria-hidden="true">${t.icon}</span> ${e.tier === 2 ? "Critical (Maneuver Required)" : esc(t.name)}</h3>
-    <p class="gc-sub num">EVT ${esc(e.event_id)} · ${esc(String(L.object_type).toLowerCase())}</p>
+    <h3 style="color:${t.color}"><span aria-hidden="true">${t.icon}</span> ${shown === 2 ? "Critical (Maneuver Required)" : esc(t.name)}</h3>
+    <p class="gc-sub num">EVT ${esc(e.event_id)} · ${esc(String(L.object_type).toLowerCase())}${fc ? " · forecast final tier" : ""}</p>
+    ${fc && fc.predicted_final_tier > fc.floor_tier ? `<p class="gc-line">Forecast escalates it from <b style="color:${TIERS[fc.floor_tier].color}">${esc(TIERS[fc.floor_tier].name)}</b> (rule floor) at closest approach: ${esc(fc.reasons?.[0] || "")}</p>` : ""}
+    ${fc && shown !== e.tier ? `<p class="gc-line">Latest message now: <b style="color:${TIERS[e.tier].color}">${esc(TIERS[e.tier].name)}</b>.</p>` : ""}
     <dl class="gc-rows">
       <div><dt>Miss distance</dt><dd class="num">${m == null ? "—" : fmtDist(m)} <span class="muted">${missCmp}</span></dd></div>
       <div${noCov ? ` class="grey" title="No usable covariance: do not rely on Pc alone"` : ""}><dt>Pc upper bound</dt><dd class="num">${pcOk ? `≤ ${fmtPc(pc)}` : "missing"}${noCov ? ` <span class="muted">no covariance</span>` : ""}</dd>${pcScale(pcOk ? pc : null, noCov)}</div>
@@ -442,7 +466,7 @@ function drawDots(proj, cx, cy) {
     ctx.strokeStyle = "rgba(4,10,18,.85)";
     ctx.lineWidth = 0.8;
     for (const d of dots) {
-      if (d.e.tier !== tier || remaining(d.e) <= 0) continue;
+      if (tierOf(d.e) !== tier || remaining(d.e) <= 0) continue;
       const q = lifted(proj, cx, cy, d);
       if (!q) continue;
       ctx.globalAlpha = passesFilters(d.e) ? 0.92 : 0.1;
@@ -495,8 +519,9 @@ function dotAt(ev) {
 function paintTip(d, ev) {
   const tip = document.getElementById("globe-tip");
   if (!d) { tip.hidden = true; return; }
-  const r = canvas.getBoundingClientRect(), t = TIERS[d.e.tier];
-  tip.innerHTML = `<b style="color:${t.color}">${t.icon} ${esc(t.name)}</b> · EVT ${esc(d.e.event_id)}<br>${fmtDist(d.e.latest.miss_distance_m)} · ${Math.abs(d.lat).toFixed(1)}° ${d.lat < 0 ? "S" : "N"}`;
+  const r = canvas.getBoundingClientRect(), t = TIERS[tierOf(d.e)];
+  const fc = state.horizon === "final" ? " (forecast)" : "";
+  tip.innerHTML = `<b style="color:${t.color}">${t.icon} ${esc(t.name)}${fc}</b> · EVT ${esc(d.e.event_id)}<br>${fmtDist(d.e.latest.miss_distance_m)} · ${Math.abs(d.lat).toFixed(1)}° ${d.lat < 0 ? "S" : "N"}`;
   tip.hidden = false;
   tip.style.left = `${Math.min(ev.clientX - r.left + 14, r.width - tip.offsetWidth - 4)}px`;
   tip.style.top = `${Math.max(4, ev.clientY - r.top - 12 - tip.offsetHeight)}px`;
