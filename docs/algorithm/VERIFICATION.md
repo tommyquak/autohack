@@ -1,6 +1,8 @@
 # Verification of algorithm.md, feature.md and baseline.py
 
-Checked 31 Oct 2026, against the README problem statement (Challenge #1 section, the source of truth),
+Checked 31 Oct 2026, against the README problem statement (the "Challenge track" section as of `53cd7a8`, the
+source of truth; `main`'s README has since been rewritten as the judge-facing write-up, which agrees that `risk` is
+label-only and that the 24 h panel is empty on test),
 `docs/CONTRACT.md`, `docs/PLAN.md`, `docs/TEAM.md`, `data/README.md`, `docs/HANDOVER.md`, `docs/ALGO.md` and the
 `triage/` code on `origin/main` at `4d297d1`. That commit has PR #3 (model) merged, plus the API, explain and
 `cautions` PRs. The resolution of the `risk`-as-input question is in §g.
