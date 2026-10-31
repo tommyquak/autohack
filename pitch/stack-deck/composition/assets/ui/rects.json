@@ -1,59 +1,59 @@
 {
  "workload": {
-  "x": 1041,
-  "y": 97,
-  "w": 515,
-  "h": 49,
-  "text": "FLAGGED FOR REVIEW\n802\n−288 vs rule\nCRITICAL KEPT\n196\nCRITICAL RECALL\n100%\n24,484 test CDMs"
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": "Flagged for review802−288 vs ruleCritical kept196Critical recall100%24,484 test CDMs, per message"
  },
  "seg": {
-  "x": 324,
-  "y": 105,
-  "w": 194,
-  "h": 33,
-  "text": "BASELINE RULE\nMODEL"
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": "\n          Baseline rule\n          Model\n        "
  },
  "queue": {
-  "x": 16,
-  "y": 245,
-  "w": 267,
-  "h": 819,
-  "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m\n■\nEVT 1158 debris\n2.00 d\nCritical\n223 m\n■\nEVT 805 debris\n2.00 d\nCritical\n900 m\n■\nEVT 1719 debris\n2.00 d\nCritical\n"
+  "x": -8,
+  "y": 588,
+  "w": 16,
+  "h": 476,
+  "text": ""
  },
  "row1": {
-  "x": 24,
-  "y": 245,
-  "w": 251,
+  "x": 0,
+  "y": 588,
+  "w": 16,
   "h": 52,
-  "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m"
+  "text": ""
  },
  "detail": {
-  "x": 1597,
-  "y": 85,
-  "w": 290,
-  "h": 526,
-  "text": "EVT 482\npayload · TCA in 2.00 d\n■\nCritical\nPC UPPER BOUND\n4.2e-5\n1e-6\n1e-4\nMISS DISTANCE\n601 m\n1 km\n5 km\nWHY\n⚠ No usable position uncertainty\nPc 10^-4.38 in [1e"
+  "x": 1937,
+  "y": 94,
+  "w": 0,
+  "h": 1041,
+  "text": ""
  },
  "hero": {
-  "x": 1597,
-  "y": 85,
-  "w": 290,
-  "h": 79,
-  "text": "EVT 482\npayload · TCA in 2.00 d\n■\nCritical"
+  "x": 1937,
+  "y": 94,
+  "w": 0,
+  "h": 150,
+  "text": ""
  },
  "why": {
-  "x": 1597,
-  "y": 306,
-  "w": 290,
-  "h": 108,
-  "text": "WHY\n⚠ No usable position uncertainty\nPc 10^-4.38 in [1e-6, 1e-4) (elevated band)\nmiss distance 601 m < 1 km"
+  "x": 1937,
+  "y": 431,
+  "w": 0,
+  "h": 378,
+  "text": ""
  },
  "workloadBaseline": {
-  "x": 1021,
-  "y": 97,
-  "w": 535,
-  "h": 49,
-  "text": "FLAGGED FOR REVIEW\n1,090\nrule alone\nCRITICAL KEPT\n196\nCRITICAL RECALL\n100%\n24,484 test CDMs"
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": "Flagged for review1,010rule aloneCritical kept196Critical recall100%24,484 test CDMs, per message"
  },
  "evLead": {
   "x": 328,
@@ -113,169 +113,483 @@
    "text": "Model\nrules plus a demotion classifier\n\t0\t100%\t44.7%\t2,206\t1\t0.910"
   }
  ],
- "hz-t00-callout": {
-  "x": 1327,
-  "y": 183,
-  "w": 420,
-  "h": 196,
-  "text": "EVT 1515 · unknown · 3,996 m · TCA 2.00 d\nElevated (Analyst Review) · Pc band + distance\nOPEN DECISION RECORD\nBACKEND TRACE\n1\nRule fired\nPc 10^-4.92 (elevated b"
+ "hz-482-c1-panel": {
+  "x": 1504,
+  "y": 64,
+  "w": 384,
+  "h": 243,
+  "text": "CASE 2/5\nCRITICAL · DISTANCE ONLY\nEVT 482 · payload\nSat M7 · crossing at -25.2° · 15.2 km/s · latest CDM T−2.00 d\nCDM 1/6 · received T−6.9 d · predicted miss 1,"
  },
- "hz-t00-honesty": {
-  "x": 702,
-  "y": 951,
-  "w": 515,
-  "h": 56,
-  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ "hz-482-c1-title": {
+  "x": 1505,
+  "y": 116,
+  "w": 382,
+  "h": 80,
+  "text": "EVT 482 · payload\nSat M7 · crossing at -25.2° · 15.2 km/s · latest CDM T−2.00 d"
  },
- "hz-t00-counts": {
-  "x": 756,
-  "y": 21,
-  "w": 401,
+ "hz-482-c1-cdm": {
+  "x": 1505,
+  "y": 196,
+  "w": 382,
+  "h": 110,
+  "text": "CDM 1/6 · received T−6.9 d · predicted miss 1,426 m · Pc ≤ 1e-5.1 · Elevated\nPredicted at closest approach · no usable radial uncertainty (placeholder sigma)"
+ },
+ "hz-482-c1-class": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": ""
+ },
+ "hz-482-c1-trace": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": ""
+ },
+ "hz-482-c1-cap": {
+  "x": 32,
+  "y": 52,
+  "w": 304,
+  "h": 33,
+  "text": "Prediction replay · where each CDM predicts the object will be at closest approach"
+ },
+ "hz-482-c1-honesty": {
+  "x": 644,
+  "y": 970,
+  "w": 632,
+  "h": 37,
+  "text": "Close-up: each CDM's predicted miss point at closest approach (R/T/N, to scale), replayed in the order received.\nOrbits: real size, shape and tilt; orientation "
+ },
+ "hz-482-c1-man": null,
+ "hz-482-c1-readout": {
+  "x": 1155,
+  "y": 1040,
+  "w": 176,
   "h": 17,
-  "text": "Passing now: 0 Critical · 2 Elevated · 40 below threshold"
+  "text": "CDM 1/6 received T−6.86 d"
  },
- "hz-t00-next": {
-  "x": 32,
-  "y": 56,
-  "w": 236,
-  "h": 104,
-  "text": "NEXT PASSES\nEVT 1515\nElevated · in 3 min\nEVT 1634\nElevated · in 18 min\nEVT 311\nElevated · in 57 min"
- },
- "hz-t00-log": {
-  "x": 32,
-  "y": 882,
-  "w": 236,
-  "h": 49,
-  "text": "FLAG LOG\nEVT 1515\nElevated · 3,996 m"
- },
- "hz-t30-callout": null,
- "hz-t30-honesty": {
-  "x": 702,
-  "y": 951,
-  "w": 515,
-  "h": 56,
-  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
- },
- "hz-t30-counts": {
-  "x": 756,
+ "hz-482-c1-counts": {
+  "x": 724,
   "y": 21,
-  "w": 401,
+  "w": 465,
   "h": 17,
-  "text": "Passing now: 1 Critical · 2 Elevated · 40 below threshold"
+  "text": "2,167 events · 196 Critical · 606 Elevated · 1,365 below threshold"
  },
- "hz-t30-next": {
+ "hz-482-c1-parts": [],
+ "hz-482-c3-panel": {
+  "x": 1504,
+  "y": 64,
+  "w": 384,
+  "h": 243,
+  "text": "CASE 2/5\nCRITICAL · DISTANCE ONLY\nEVT 482 · payload\nSat M7 · crossing at -25.2° · 15.2 km/s · latest CDM T−2.00 d\nCDM 1/6 · received T−6.9 d · predicted miss 1,"
+ },
+ "hz-482-c3-title": {
+  "x": 1505,
+  "y": 116,
+  "w": 382,
+  "h": 80,
+  "text": "EVT 482 · payload\nSat M7 · crossing at -25.2° · 15.2 km/s · latest CDM T−2.00 d"
+ },
+ "hz-482-c3-cdm": {
+  "x": 1505,
+  "y": 196,
+  "w": 382,
+  "h": 110,
+  "text": "CDM 1/6 · received T−6.9 d · predicted miss 1,426 m · Pc ≤ 1e-5.1 · Elevated\nCDM 3/6 · received T−4.9 d · predicted miss 578 m · Pc ≤ 1e-4.3 · Critical\nPredicte"
+ },
+ "hz-482-c3-class": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": ""
+ },
+ "hz-482-c3-trace": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": ""
+ },
+ "hz-482-c3-cap": {
   "x": 32,
-  "y": 56,
-  "w": 236,
-  "h": 104,
-  "text": "NEXT PASSES\nEVT 1630\nElevated · in 9 min\nEVT 482\nCritical · in 36 min\nEVT 1499\nElevated · in 98 min"
+  "y": 52,
+  "w": 304,
+  "h": 33,
+  "text": "Prediction replay · where each CDM predicts the object will be at closest approach"
  },
- "hz-t30-log": {
-  "x": 32,
-  "y": 827,
-  "w": 236,
-  "h": 104,
-  "text": "FLAG LOG\nEVT 311\nElevated · 2,112 m\nEVT 1634\nElevated · 3,417 m\nEVT 1515\nElevated · 3,996 m"
+ "hz-482-c3-honesty": {
+  "x": 644,
+  "y": 970,
+  "w": 632,
+  "h": 37,
+  "text": "Close-up: each CDM's predicted miss point at closest approach (R/T/N, to scale), replayed in the order received.\nOrbits: real size, shape and tilt; orientation "
  },
- "hz-t60-callout": null,
- "hz-t60-honesty": {
-  "x": 702,
-  "y": 951,
-  "w": 515,
-  "h": 56,
-  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ "hz-482-c3-man": null,
+ "hz-482-c3-readout": {
+  "x": 1155,
+  "y": 1040,
+  "w": 176,
+  "h": 17,
+  "text": "CDM 3/6 received T−4.92 d"
  },
- "hz-t60-counts": {
-  "x": 756,
+ "hz-482-c3-counts": {
+  "x": 724,
   "y": 21,
-  "w": 401,
+  "w": 465,
   "h": 17,
-  "text": "Passing now: 0 Critical · 1 Elevated · 40 below threshold"
+  "text": "2,167 events · 196 Critical · 606 Elevated · 1,365 below threshold"
  },
- "hz-t60-next": {
+ "hz-482-c3-parts": [],
+ "hz-482-c6-panel": {
+  "x": 1504,
+  "y": 64,
+  "w": 384,
+  "h": 486,
+  "text": "CASE 2/5\nCRITICAL · DISTANCE ONLY\nEVT 482 · payload\nSat M7 · crossing at -25.2° · 15.2 km/s · latest CDM T−2.00 d\nCDM 1/6 · received T−6.9 d · predicted miss 1,"
+ },
+ "hz-482-c6-title": {
+  "x": 1505,
+  "y": 116,
+  "w": 382,
+  "h": 80,
+  "text": "EVT 482 · payload\nSat M7 · crossing at -25.2° · 15.2 km/s · latest CDM T−2.00 d"
+ },
+ "hz-482-c6-cdm": {
+  "x": 1505,
+  "y": 196,
+  "w": 382,
+  "h": 110,
+  "text": "CDM 1/6 · received T−6.9 d · predicted miss 1,426 m · Pc ≤ 1e-5.1 · Elevated\nCDM 6/6 · received T−2.0 d · predicted miss 601 m · Pc ≤ 1e-4.4 · Critical\nPredicte"
+ },
+ "hz-482-c6-class": {
+  "x": 1505,
+  "y": 306,
+  "w": 382,
+  "h": 95,
+  "text": "Critical (Maneuver Planning) · distance only\nPc doesn't back a manoeuvre → analyst review\nOPEN DECISION RECORD"
+ },
+ "hz-482-c6-trace": {
+  "x": 1505,
+  "y": 400,
+  "w": 382,
+  "h": 149,
+  "text": "BACKEND TRACE\n1\nRule fired\nPc 10^-4.38 (elevated band) · miss 601 m < 1 km\n2\nModel allowed?\nNo: rule-defined Critical\n3\nDecision\nnot eligible → Maneuver Plannin"
+ },
+ "hz-482-c6-cap": {
   "x": 32,
-  "y": 56,
-  "w": 236,
-  "h": 104,
-  "text": "NEXT PASSES\nEVT 1499\nElevated · in 38 min\nEVT 578\nElevated · in 58 min\nEVT 2135\nElevated · in 71 min"
+  "y": 52,
+  "w": 304,
+  "h": 33,
+  "text": "Prediction replay · where each CDM predicts the object will be at closest approach"
  },
- "hz-t60-log": {
-  "x": 32,
-  "y": 827,
-  "w": 236,
-  "h": 104,
-  "text": "FLAG LOG\nEVT 482\nCritical · 601 m\nEVT 1630\nElevated · 1,924 m\nEVT 311\nElevated · 2,112 m"
+ "hz-482-c6-honesty": {
+  "x": 644,
+  "y": 970,
+  "w": 632,
+  "h": 37,
+  "text": "Close-up: each CDM's predicted miss point at closest approach (R/T/N, to scale), replayed in the order received.\nOrbits: real size, shape and tilt; orientation "
  },
- "hz-482-callout": {
-  "x": 1102,
-  "y": 114,
-  "w": 420,
-  "h": 196,
-  "text": "EVT 482 · payload · 601 m · TCA 2.00 d\nCritical (Maneuver Planning) · distance only\nOPEN DECISION RECORD\nBACKEND TRACE\n1\nRule fired\nPc 10^-4.38 (elevated band) "
+ "hz-482-c6-man": null,
+ "hz-482-c6-readout": {
+  "x": 1155,
+  "y": 1040,
+  "w": 176,
+  "h": 17,
+  "text": "CDM 6/6 received T−2.00 d"
  },
- "hz-482-honesty": {
-  "x": 702,
-  "y": 951,
-  "w": 515,
-  "h": 56,
-  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
- },
- "hz-482-counts": {
-  "x": 756,
+ "hz-482-c6-counts": {
+  "x": 724,
   "y": 21,
-  "w": 401,
+  "w": 465,
   "h": 17,
-  "text": "Passing now: 1 Critical · 0 Elevated · 40 below threshold"
+  "text": "2,167 events · 196 Critical · 606 Elevated · 1,365 below threshold"
  },
- "hz-482-next": {
+ "hz-482-c6-parts": [
+  {
+   "tag": "DIV.cls",
+   "x": 1521,
+   "y": 318,
+   "w": 350,
+   "h": 19,
+   "text": "Critical (Maneuver Planning) · distance only"
+  },
+  {
+   "tag": "DIV.note",
+   "x": 1521,
+   "y": 344,
+   "w": 350,
+   "h": 18,
+   "text": "Pc doesn't back a manoeuvre → analyst review"
+  },
+  {
+   "tag": "A.",
+   "x": 1521,
+   "y": 370,
+   "w": 145,
+   "h": 17,
+   "text": "OPEN DECISION RECORD"
+  },
+  {
+   "tag": "DIV.th",
+   "x": 1521,
+   "y": 412,
+   "w": 350,
+   "h": 15,
+   "text": "BACKEND TRACE"
+  },
+  {
+   "tag": "OL.trace",
+   "x": 1521,
+   "y": 431,
+   "w": 350,
+   "h": 106,
+   "text": "1\nRule fired\nPc 10^-4.38 (elevated band) · miss 601 m < 1 km\n2\nModel allowed?\nNo: rule-def"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 431,
+   "w": 350,
+   "h": 35,
+   "text": "1\nRule fired\nPc 10^-4.38 (elevated band) · miss 601 m < 1 km"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 466,
+   "w": 350,
+   "h": 18,
+   "text": "2\nModel allowed?\nNo: rule-defined Critical"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 484,
+   "w": 350,
+   "h": 35,
+   "text": "3\nDecision\nnot eligible → Maneuver Planning"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 519,
+   "w": 350,
+   "h": 18,
+   "text": "4\nGuardrails\n audit PASS (11 checks)"
+  }
+ ],
+ "hz-805-panel": {
+  "x": 1504,
+  "y": 64,
+  "w": 384,
+  "h": 505,
+  "text": "CASE 5/5\nCRITICAL · PC-BACKED\nEVT 805 · debris\nSat M2 · crossing at -73.4° · 13.8 km/s · latest CDM T−2.00 d\nCDM 1/3 · received T−2.6 d · predicted miss 638 m ·"
+ },
+ "hz-805-title": {
+  "x": 1505,
+  "y": 116,
+  "w": 382,
+  "h": 80,
+  "text": "EVT 805 · debris\nSat M2 · crossing at -73.4° · 13.8 km/s · latest CDM T−2.00 d"
+ },
+ "hz-805-cdm": {
+  "x": 1505,
+  "y": 196,
+  "w": 382,
+  "h": 94,
+  "text": "CDM 1/3 · received T−2.6 d · predicted miss 638 m · Pc ≤ 1e-3.8 · Critical\nCDM 3/3 · received T−2.0 d · predicted miss 900 m · Pc ≤ 1e-4.0 · Critical\nPredicted "
+ },
+ "hz-805-class": {
+  "x": 1505,
+  "y": 289,
+  "w": 382,
+  "h": 131,
+  "text": "Critical (Maneuver Planning) · Pc-backed\nIllustrative avoidance manoeuvre shown (operator-approved; never commanded by Second Look)\nOPEN DECISION RECORD"
+ },
+ "hz-805-trace": {
+  "x": 1505,
+  "y": 420,
+  "w": 382,
+  "h": 149,
+  "text": "BACKEND TRACE\n1\nRule fired\nPc 10^-3.96 ≥ 1e-4 · miss 900 m < 1 km\n2\nModel allowed?\nNo: rule-defined Critical\n3\nDecision\nnot eligible → Maneuver Planning\n4\nGuard"
+ },
+ "hz-805-cap": {
   "x": 32,
-  "y": 56,
-  "w": 236,
-  "h": 104,
-  "text": "NEXT PASSES\nEVT 482\nCritical · in 2 min\nEVT 1499\nElevated · in 64 min\nEVT 578\nElevated · in 84 min"
+  "y": 52,
+  "w": 304,
+  "h": 33,
+  "text": "Prediction replay · where each CDM predicts the object will be at closest approach"
  },
- "hz-482-log": {
-  "x": 32,
-  "y": 827,
-  "w": 236,
-  "h": 104,
-  "text": "FLAG LOG\nEVT 482\nCritical · 601 m\nEVT 1630\nElevated · 1,924 m\nEVT 311\nElevated · 2,112 m"
+ "hz-805-honesty": {
+  "x": 644,
+  "y": 970,
+  "w": 632,
+  "h": 37,
+  "text": "Close-up: each CDM's predicted miss point at closest approach (R/T/N, to scale), replayed in the order received.\nOrbits: real size, shape and tilt; orientation "
  },
- "hz-globe-callout": {
-  "x": 1219,
-  "y": 548,
-  "w": 420,
-  "h": 196,
-  "text": "EVT 482 · payload · 601 m · TCA 2.00 d\nCritical (Maneuver Planning) · distance only\nOPEN DECISION RECORD\nBACKEND TRACE\n1\nRule fired\nPc 10^-4.38 (elevated band) "
+ "hz-805-man": {
+  "x": 640,
+  "y": 883,
+  "w": 640,
+  "h": 47,
+  "text": "Illustrative avoidance manoeuvre, operator-approved. Second Look never commands one; no manoeuvre data in the dataset."
+ },
+ "hz-805-readout": {
+  "x": 1155,
+  "y": 1040,
+  "w": 176,
+  "h": 17,
+  "text": "CDM 3/3 received T−2.00 d"
+ },
+ "hz-805-counts": {
+  "x": 724,
+  "y": 21,
+  "w": 465,
+  "h": 17,
+  "text": "2,167 events · 196 Critical · 606 Elevated · 1,365 below threshold"
+ },
+ "hz-805-parts": [
+  {
+   "tag": "DIV.cls",
+   "x": 1521,
+   "y": 301,
+   "w": 350,
+   "h": 19,
+   "text": "Critical (Maneuver Planning) · Pc-backed"
+  },
+  {
+   "tag": "DIV.note",
+   "x": 1521,
+   "y": 328,
+   "w": 350,
+   "h": 54,
+   "text": "Illustrative avoidance manoeuvre shown (operator-approved; never commanded by Second Look)"
+  },
+  {
+   "tag": "A.",
+   "x": 1521,
+   "y": 390,
+   "w": 145,
+   "h": 17,
+   "text": "OPEN DECISION RECORD"
+  },
+  {
+   "tag": "DIV.th",
+   "x": 1521,
+   "y": 432,
+   "w": 350,
+   "h": 15,
+   "text": "BACKEND TRACE"
+  },
+  {
+   "tag": "OL.trace",
+   "x": 1521,
+   "y": 451,
+   "w": 350,
+   "h": 106,
+   "text": "1\nRule fired\nPc 10^-3.96 ≥ 1e-4 · miss 900 m < 1 km\n2\nModel allowed?\nNo: rule-defined Crit"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 451,
+   "w": 350,
+   "h": 35,
+   "text": "1\nRule fired\nPc 10^-3.96 ≥ 1e-4 · miss 900 m < 1 km"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 486,
+   "w": 350,
+   "h": 18,
+   "text": "2\nModel allowed?\nNo: rule-defined Critical"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 504,
+   "w": 350,
+   "h": 35,
+   "text": "3\nDecision\nnot eligible → Maneuver Planning"
+  },
+  {
+   "tag": "LI.on",
+   "x": 1521,
+   "y": 539,
+   "w": 350,
+   "h": 18,
+   "text": "4\nGuardrails\n audit PASS (11 checks)"
+  }
+ ],
+ "hz-globe-panel": {
+  "x": 1504,
+  "y": 64,
+  "w": 384,
+  "h": 226,
+  "text": "CASE 1/5\nELEVATED → DEMOTED (BELOW THRESHOLD)\nEVT 1071 · debris\nSat M4 · crossing at -80.1° · 9.9 km/s · latest CDM T−2.00 d\nCDM 5/15 · received T−5.3 d · predi"
+ },
+ "hz-globe-title": {
+  "x": 1505,
+  "y": 116,
+  "w": 382,
+  "h": 80,
+  "text": "EVT 1071 · debris\nSat M4 · crossing at -80.1° · 9.9 km/s · latest CDM T−2.00 d"
+ },
+ "hz-globe-cdm": {
+  "x": 1505,
+  "y": 196,
+  "w": 382,
+  "h": 94,
+  "text": "CDM 5/15 · received T−5.3 d · predicted miss 6,568 m · Pc ≤ 1e-5.2 · Elevated\nCDM 4/15 · received T−5.5 d · predicted miss 6,565 m · Pc ≤ 1e-5.1 · Elevated\nPred"
+ },
+ "hz-globe-class": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": ""
+ },
+ "hz-globe-trace": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": ""
+ },
+ "hz-globe-cap": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": "Prediction replay · where each CDM predicts the object will be at closest approach"
  },
  "hz-globe-honesty": {
-  "x": 702,
-  "y": 951,
-  "w": 515,
-  "h": 56,
-  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+  "x": 644,
+  "y": 970,
+  "w": 632,
+  "h": 37,
+  "text": "Close-up: each CDM's predicted miss point at closest approach (R/T/N, to scale), replayed in the order received.\nOrbits: real size, shape and tilt; orientation "
+ },
+ "hz-globe-man": null,
+ "hz-globe-readout": {
+  "x": 1151,
+  "y": 1040,
+  "w": 183,
+  "h": 17,
+  "text": "CDM 5/15 received T−5.32 d"
  },
  "hz-globe-counts": {
-  "x": 756,
+  "x": 724,
   "y": 21,
-  "w": 401,
+  "w": 465,
   "h": 17,
-  "text": "Passing now: 1 Critical · 0 Elevated · 40 below threshold"
+  "text": "2,167 events · 196 Critical · 606 Elevated · 1,365 below threshold"
  },
- "hz-globe-next": {
-  "x": 32,
-  "y": 56,
-  "w": 236,
-  "h": 104,
-  "text": "NEXT PASSES\nEVT 482\nCritical · in 2 min\nEVT 1499\nElevated · in 64 min\nEVT 578\nElevated · in 84 min"
- },
- "hz-globe-log": {
-  "x": 32,
-  "y": 827,
-  "w": 236,
-  "h": 104,
-  "text": "FLAG LOG\nEVT 482\nCritical · 601 m\nEVT 1630\nElevated · 1,924 m\nEVT 311\nElevated · 2,112 m"
- },
+ "hz-globe-parts": [],
  "dpChip": {
   "x": 1204,
   "y": 136,
@@ -284,39 +598,39 @@
   "text": "DECISION POINT · 2 DAYS"
  },
  "dpLeft": {
-  "x": 662,
+  "x": 545,
   "y": 136,
-  "w": 530,
+  "w": 647,
   "h": 35,
-  "text": "REAL CDM UPDATES\nA mixed sample, coloured by current tier: the 15 most urgent Critical, 15 Elevated, 10 below threshold"
+  "text": "REAL CDM UPDATES\nA mixed sample, coloured by current tier: the 15 most urgent Critical, 15 Elevated, 10 below threshold, plus every escalation"
  },
  "dpRight": {
   "x": 1404,
   "y": 136,
   "w": 484,
   "h": 35,
-  "text": "FORECAST FINAL TIER\nForecast arrives with the final-tier forecaster; showing the current tier"
+  "text": "FORECAST FINAL TIER\nOne mark per event, in the zone of its forecast final tier"
  },
  "dpCounts": {
   "x": 24,
   "y": 91,
-  "w": 979,
+  "w": 1092,
   "h": 26,
-  "text": "NOW 196 Critical · 606 Elevated\n→\nFORECAST FINAL pending the final-tier forecaster\nNEXT 24 H 0 none within 1 d of TCA at its latest update (soonest 2.00 d)"
+  "text": "NOW 196 Critical · 606 Elevated\n→\nFORECAST FINAL 477 Critical · 365 Elevated · 301 escalations\nNEXT 24 H 0 none within 1 d of TCA at its latest update (soonest "
  },
  "dpChart": {
   "x": 24,
   "y": 132,
   "w": 1872,
   "h": 909,
-  "text": "REAL CDM UPDATES\nA mixed sample, coloured by current tier: the 15 most urgent Critical, 15 Elevated, 10 below threshold\nDECISION POINT · 2 DAYS\nFORECAST FINAL T"
+  "text": "REAL CDM UPDATES\nA mixed sample, coloured by current tier: the 15 most urgent Critical, 15 Elevated, 10 below threshold, plus every escalation\nDECISION POINT · "
  },
  "dpCard": {
   "x": 1576,
   "y": 132,
   "w": 320,
   "h": 909,
-  "text": "EVT 482\n×\nNOW\n■ Critical\nCritical: miss distance 601 m is under 1 km\nFORECAST FINAL TIER\nForecast arrives with the final-tier forecaster; showing the current ti"
+  "text": "EVT 482\n×\nNOW\n■ Critical\nCritical: miss distance 601 m is under 1 km\nFORECAST FINAL TIER\n■ Critical\nP 0.98 for this tier\nLATEST UPDATE\n2.00 d to TCA · 601 m · P"
  },
  "dpChip482": {
   "x": 964,
@@ -342,9 +656,9 @@
  "rv482Status": {
   "x": 313,
   "y": 12,
-  "w": 1336,
+  "w": 1350,
   "h": 16,
-  "text": "Flagged 802 (−288 vs rule)\nIn queues 934\nNext 24 h: 0 within 1 km\n135 of 196 Critical are distance-only\n114 on escalation watch\nGuardrails PASS 7/7"
+  "text": "Flagged 802 (−288 vs rule)\nIn queues 934\nNext 24 h: 0 within 1 km\n135 of 196 Critical are distance-only\n114 on escalation watch\nGuardrails PASS 11/11"
  },
  "rv482Parts": [
   {
@@ -413,9 +727,9 @@
  "rv1071Status": {
   "x": 313,
   "y": 12,
-  "w": 1336,
+  "w": 1350,
   "h": 16,
-  "text": "Flagged 802 (−288 vs rule)\nIn queues 934\nNext 24 h: 0 within 1 km\n135 of 196 Critical are distance-only\n114 on escalation watch\nGuardrails PASS 7/7"
+  "text": "Flagged 802 (−288 vs rule)\nIn queues 934\nNext 24 h: 0 within 1 km\n135 of 196 Critical are distance-only\n114 on escalation watch\nGuardrails PASS 11/11"
  },
  "rv1071Parts": [
   {

@@ -2,11 +2,9 @@
 // plus the on-screen rectangles of the elements the deck highlights (composition/assets/ui/rects.json) and a frozen
 // copy of the live audit (composition/assets/ui/audit.json).
 //
-// 1. Serve the app (frozen data/demo reports, no API key):
-//      cd <repo> && uv run uvicorn server:app --port 8090
-//    The review page lives on feat/review-console until it merges; serve that branch on a second port
-//    (e.g. `git archive origin/feat/review-console | tar -x -C /tmp/review && cd /tmp/review && uv run uvicorn server:app --port 8091`).
-// 2. node tools/capture-ui.mjs [base-url] [review-base-url]   (defaults http://127.0.0.1:8090, same base for review)
+// 1. Serve the app (frozen data/demo reports, no API key; copy reports/model.joblib in for the model tiers):
+//      cd <repo> && uv run uvicorn server:app --port 8098
+// 2. node tools/capture-ui.mjs [base-url] [review-base-url]   (defaults http://127.0.0.1:8098, same base for review)
 //    Needs puppeteer-core; set PUPPETEER_DIR to a node_modules folder that has it if it is not resolvable here.
 // 3. Convert: for f in composition/assets/ui/*.png; do cwebp -quiet -q 86 "$f" -o "${f%.png}.webp" && rm "$f"; done
 import { createRequire } from "node:module";
@@ -15,7 +13,7 @@ import { fileURLToPath } from "node:url";
 
 const require = createRequire(process.env.PUPPETEER_DIR ? process.env.PUPPETEER_DIR + "/" : import.meta.url);
 const puppeteer = require("puppeteer-core");
-const BASE = process.argv[2] || "http://127.0.0.1:8090";
+const BASE = process.argv[2] || "http://127.0.0.1:8098";
 const REVIEW = process.argv[3] || BASE;
 const OUT = fileURLToPath(new URL("../composition/assets/ui/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
@@ -52,7 +50,7 @@ async function open(url, sel, ms = 2500) {
 let p = await open(`${BASE}/`, "#queue .row");
 await shot(p, "dash-model");
 await rects_(p, { workload: "#workload", seg: ".stage-bar .seg", queue: "#queue", row1: "#queue .row", detail: "#detail", hero: "#detail .hero", why: "#detail .why" });
-await p.click('[data-mode="baseline"]');
+await p.evaluate(() => document.querySelector('[data-mode="baseline"]').click());
 await wait(2500);
 await shot(p, "dash-baseline");
 await rect(p, "workloadBaseline", "#workload");
@@ -60,7 +58,7 @@ await p.close();
 
 // Evaluation tab (honest eval) and the event-1278 failure case.
 p = await open(`${BASE}/`, "#queue .row");
-await p.click('#tabs [data-tab="eval"]');
+await p.evaluate(() => document.querySelector('#tabs [data-tab="eval"]').click());
 await wait(3000);
 await shot(p, "eval");
 await rects_(p, { evLead: ".ev-lead", evTable: ".ev-table", evMatrix: ".ev-matrix", evFailure: ".ev-failure" });
@@ -75,12 +73,22 @@ p = await open(`${BASE}/#compare=1278`, "#queue .row", 4000);
 await shot(p, "compare-1278");
 await p.close();
 
-// Horizon: timed frames of the moving scene (simulated orbits), played as a flipbook in the deck.
-const HZ = [["hz-t00", "#t=0"], ["hz-t41", "#t=41"], ["hz-t44", "#t=44"], ["hz-482", "#demo=482"], ["hz-globe", "#view=globe&demo=482"]];
+// Horizon: the prediction replay, paused at chosen CDMs (#demo=<event>&cdm=<n>; no cdm = the case's end state with
+// decision, backend trace and the illustrative manoeuvre). Played as a cross-faded flipbook in the deck.
+// Event 482: CDM 1 and 3 (Elevated), CDM 6 (crosses 1 km -> Critical). Event 805: end state.
+const HZ = [["hz-482-c1", "#demo=482&cdm=1"], ["hz-482-c3", "#demo=482&cdm=3"], ["hz-482-c6", "#demo=482&cdm=6"], ["hz-805", "#demo=805"], ["hz-globe", "#view=globe"]];
 for (const [name, hash] of HZ) {
-  p = await open(`${BASE}/static/horizon.html${hash}`, "#scene", 6000);
+  p = await open(`${BASE}/static/horizon.html${hash}`, "#scene", 7000);
   await shot(p, name);
-  await rects_(p, { [name + "-callout"]: "#callout:not([hidden])", [name + "-honesty"]: ".honesty", [name + "-counts"]: "#counts", [name + "-next"]: ".panel.next", [name + "-log"]: ".panel.log" });
+  await rects_(p, {
+    [name + "-panel"]: ".case-panel", [name + "-title"]: "#b-title", [name + "-cdm"]: "#b-cdm", [name + "-class"]: "#b-class",
+    [name + "-trace"]: "#b-trace", [name + "-cap"]: "#replay-cap", [name + "-honesty"]: ".honesty", [name + "-man"]: "#manoeuvre:not([hidden])",
+    [name + "-readout"]: "#readout", [name + "-counts"]: "#counts",
+  });
+  rects[name + "-parts"] = await p.evaluate(() => [...document.querySelectorAll("#b-class > *, #b-trace > *, #b-trace li")].map((el) => {
+    const b = el.getBoundingClientRect();
+    return { tag: el.tagName + "." + el.className, x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height), text: (el.innerText || "").slice(0, 90) };
+  }));
   await p.close();
 }
 
