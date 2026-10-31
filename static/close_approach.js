@@ -49,7 +49,13 @@
   const km = (m) => m / 1000;
   const fmtDist = (m) => (m < 10_000 ? `${m.toFixed(0)} m` : `${(m / 1000).toFixed(1)} km`);
   const fmtKm = (v) => (Math.abs(v) < 10 ? v.toFixed(2) : v.toFixed(0));
-  const fmtPc = (log10) => `1e${log10.toFixed(1)}`;
+  // Pc from its log10, as people write it: -4.38 -> "4.2e-5" (not "1e-4.4").
+  const fmtPc = (log10) => {
+    if (log10 == null || !Number.isFinite(log10)) return "—";
+    let e = Math.floor(log10), m = Math.round(10 ** (log10 - e) * 10) / 10;
+    if (m >= 10) { m = 1; e += 1; }
+    return `${m.toFixed(1)}e${e}`;
+  };
   const UNKNOWN = '<span class="ca-unknown" title="not in the data">—</span>';
   // Plain-English position of the miss distance against the two distance lines.
   const distanceLine = (m) =>

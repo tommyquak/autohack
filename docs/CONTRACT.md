@@ -33,12 +33,15 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
                "sigma_r_m": {"chaser": 48.0, "target": 5.1},
                "max_risk_estimate_log10": -3.2, "object_type": "DEBRIS"},
     "true_tier": 2,
-    "history": [{"time_to_tca_days": 5.5, "miss_distance_m": 900.0,
+    "history": [{"time_to_tca_days": 5.5, "miss_distance_m": 900.0, "relative_position_rtn_m": [20.0, -700.0, 560.0],
                  "max_risk_estimate_log10": -4.1, "risk_log10": -4.4, "pred_tier": 2, "baseline_tier": 2}]
   }]
 }
 ```
 - Events sorted most urgent first (tier desc, then soonest TCA).
+- `history` = one entry per CDM, oldest first (largest `time_to_tca_days`). Each entry carries
+  `relative_position_rtn_m` = [R, T, N] in metres for that update, so R/T/N can be plotted against `time_to_tca_days`;
+  the last entry's value equals `latest.relative_position_rtn_m`.
 - Display-only context (never model inputs; not in the challenge's allowed-feature list): `latest.geocentric_latitude_deg` (latitude of the conjunction point), `latest.target_altitude_km` = [perigee, apogee] of our satellite, and `summary.by_latitude_band` (events and Criticals per 30° band). All `null` when the input file lacks those columns. There is no longitude in the data, so a globe can show a latitude band, not a point.
 - `summary.critical_drivers` = `{miss_only, pc_only, both}`: which rule makes each Critical event Critical at its latest CDM (miss < 1 km, Pc upper bound >= 1e-4, or both). Sums to `by_tier.Critical`.
 - `baseline_tier` = the conservative rule (worse of the `max_risk_estimate` tier and the miss tier) the model improves on; `summary.by_baseline_tier` counts it. The model only ever demotes, so `tier <= baseline_tier`.
