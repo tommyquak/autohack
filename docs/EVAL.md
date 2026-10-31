@@ -88,18 +88,30 @@ No test CDM is closer than 2 days to TCA, so the 0-2 day buckets are empty.
 The organisers' task (`challenge1_event_labels.xlsx`): predict each event's final tier from its messages with
 `time_to_tca >= 2` only. Cohort: `usable_for_training == yes`, 11,942 train events (8,946 / 2,162 / 834). The xlsx
 labels agree with our recomputed final tier on 13,154 of 13,154 events. Method, decision layer and limits:
-[FORECAST.md](FORECAST.md). Numbers from `data/demo/forecast_metrics.json` (`uv run python -m triage.forecast`).
+[FORECAST.md](FORECAST.md). Numbers from `data/demo/forecast_metrics.json` (`uv run python -m triage.forecast`),
+except the m* rule row (forecaster verifier's script, same folds).
 
 | Method (5-fold event CV, mean ± sd; 80/20 split in brackets) | Accuracy | Critical recall | Critical precision | Critical F2 | Escalations caught | False escalations |
 |---|---|---|---|---|---|---|
 | Always below threshold | 0.749 (0.749) | 0 (0) | 0 (0) | 0 (0) | 0/270 (0/50) | 0 (0) |
-| Persistence: miss-only tier | **0.938 ± 0.004** (0.943) | 0.865 ± 0.042 (0.886) | **0.857 ± 0.029** (0.902) | 0.863 ± 0.037 (0.889) | 0/270 (0/50) | 0 (0) |
+| Persistence: miss-only tier (keep today's tier) | **0.938 ± 0.004** (0.943) | 0.865 ± 0.042 (0.886) | **0.857 ± 0.029** (0.902) | 0.863 ± 0.037 (0.889) | 0/270 (0/50) | 0 (0) |
 | Persistence: `max_risk_estimate` + miss | 0.770 ± 0.012 (0.775) | 0.873 ± 0.041 (0.892) | 0.808 ± 0.036 (0.837) | 0.859 ± 0.036 (0.881) | 40/270 (10/50) | 2,135 (430) |
+| Rule: Critical if latest miss < m* (tuned train-only to 90% recall, CV only) | 0.892 ± 0.011 | 0.897 ± 0.044 | 0.755 ± 0.036 | 0.864 ± 0.032 | 47/270 | 687 |
 | *Reference: `risk` + miss (label column)* | *0.946 ± 0.005 (0.951)* | *0.866 ± 0.044 (0.886)* | *0.852 ± 0.029 (0.892)* | *0.863 ± 0.038 (0.887)* | *0/270 (0/50)* | *0 (0)* |
-| **Second Look forecast (bounded, 95% Critical recall target)** | 0.862 ± 0.011 (0.871) | **0.950 ± 0.025 (0.970)** | 0.565 ± 0.013 (0.579) | 0.835 ± 0.010 (0.854) | **115/270 (24/50)** | 1,139 (218) |
+| **Second Look forecast (bounded, 90% Critical recall target)** | 0.888 ± 0.012 (0.897) | **0.911 ± 0.050 (0.910)** | 0.757 ± 0.036 (0.788) | **0.875 ± 0.037** (0.883) | **79/270 (13/50)** | 775 (142) |
 
-**Where we lose:** miss-only persistence beats the bounded forecast on accuracy, macro F1 (0.887 vs 0.767), Critical
-precision and Critical F2. The forecast trades precision for recall: it catches 115 of 270 escalations that persistence
-never catches and lifts Critical recall to 0.950, at 1,139 false escalations (616 of them from keeping Pc-only Elevated
-events at Elevated, before the model escalates anything). At a 90% target it would reach Critical F2 0.875, above
-persistence, with 79 escalations caught and 775 false; that setting was seen only after the run, so it is not shipped.
+Confusion matrix (Second Look, CV pooled; rows true final tier below threshold / Elevated / Critical, columns
+predicted): `[[8019, 900, 27], [119, 1824, 219], [10, 64, 760]]`. Miss-only persistence:
+`[[8748, 179, 19], [327, 1733, 102], [14, 99, 721]]`.
+
+Recall-target sensitivity (CV): 0.85 → Critical recall 0.873, precision 0.808, F2 0.859, 47/270 caught, 703 false;
+**0.90 (shipped)** → 0.911, 0.757, 0.875, 79/270, 775; 0.95 → 0.950, 0.565, 0.835, 115/270, 1,139. The team chose
+0.90 after seeing these numbers (the original target was 0.95).
+
+**Where we win and lose:** the forecast wins on Critical recall, Critical F2 and escalations caught; miss-only
+persistence wins on accuracy, macro F1 (0.887 vs 0.834) and Critical precision, and raises no false escalations. 616 of
+the 775 false escalations come from the floor (keeping Pc-only Elevated events at Elevated) before the model escalates
+anything. A single miss-distance rule (m* about 1.1 km) does about as well for Critical escalation (F2 0.864 vs
+0.875); the model's added value is mainly the extra escalations caught (79 vs 47) at the cost of more false escalations
+(775 vs 687). On the 8,293-event Kelvins cohort (final message < 1 day, a better guide to test): Critical recall 0.883
+vs 0.820, F2 0.837 vs 0.817, accuracy 0.876 vs 0.935, 72/244 escalations caught vs 0.

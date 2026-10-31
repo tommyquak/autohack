@@ -1,7 +1,7 @@
 # Second Look: conjunction triage that preserves every rule-defined Critical
 
-**Autonomous SG 2026 · Airbus Challenge #1 (satellite collision avoidance).** Every team here will predict
-collision risk. Second Look cuts the review queue by a quarter, shows a decision record for every downgrade, and is
+**Autonomous SG 2026 · Airbus Challenge #1 (satellite collision avoidance).** Second
+Look cuts the review queue by a quarter, shows a decision record for every downgrade, and is
 architecturally forbidden from downgrading a rule-defined Critical: published NASA/ESA rules tier every warning, and a
 model may only remove over-warnings.
 
@@ -16,6 +16,34 @@ model may only remove over-warnings.
 > It also holds the three tier scores, the rule floor, the decision (floor kept / escalated) and the top reason.
 > The same predictions, with units, latitude and every message, are in [`predictions/test_final_tier_predictions.xlsx`](predictions/test_final_tier_predictions.xlsx).
 > [`predictions/test_predictions.csv`](predictions/test_predictions.csv) is the per-message tier (one row per test CDM), not the final tier.
+
+## Official task (organisers' update)
+
+Predict each event's **final tier** (its last CDM before TCA) from its CDMs **>= 2 days out** only. Scored by 5-fold
+event cross-validation over the 11,942 usable train events (`usable_for_training == yes`; no event split across folds),
+270 of which escalate after the 2-day cut. `test_data` has no final outcomes, so it is not scored. From
+[`data/demo/forecast_metrics.json`](data/demo/forecast_metrics.json) (mean over folds; counts summed):
+
+| 5-fold event CV, 11,942 events | Critical recall | Critical precision | Critical F2 | Escalations caught | False escalations | Accuracy |
+|---|---|---|---|---|---|---|
+| Keep today's tier (miss-only) | 0.865 | **0.857** | 0.863 | 0/270 | **0** | **0.938** |
+| **Second Look forecast** | **0.911** | 0.757 | **0.875** | **79/270** | 775 | 0.888 |
+
+- Second Look starts from today's tier, never lowers a rule-defined Critical (it preserves every rule-defined
+  Critical), and escalates when the model's score crosses a threshold set for a **90% final-Critical recall target**
+  (a target measured out of fold, not a guarantee).
+- **Where we lose:** keeping today's tier is more accurate (0.938 vs 0.888) and more precise on Critical (0.857 vs
+  0.757), and raises no false escalations. We buy higher Critical recall, better Critical F2 and 79 caught escalations
+  with 775 false escalations over 11,942 events. It wins on Critical recall, Critical F2 and escalations caught, and
+  loses on accuracy and Critical precision: it does not beat keeping today's tier across the board.
+- **A single distance rule does about as well for Critical escalation:** "Critical if the latest miss < m*" (m* tuned
+  train-only to the same 90% target, about 1.1 km) scores Critical recall 0.897, precision 0.755, F2 0.864, accuracy
+  0.892, with 47/270 escalations caught and 687 false. The model's added value is mainly the extra escalations caught
+  (79 vs 47), at the cost of more false escalations.
+- **Expected queue on test:** the forecast marks 255 of the 2,167 test events Critical, against 196 by rule. Test
+  events' latest message is mostly 2.0-2.4 days out (89% of events, median 2.19 d), so the 8,293-event cohort whose final message is never an input
+  (Critical recall 0.883, accuracy 0.876) is the better guide to test than the CV above. Scores are class-weighted,
+  not calibrated. Method, the 80/20 split, baselines and limits: [docs/FORECAST.md](docs/FORECAST.md).
 
 ## See it
 
@@ -68,9 +96,10 @@ The demotion threshold is the 1% quantile of out-of-fold scores on truly-Elevate
 AI alert-prioritisation tools rank alerts. Second Look bounds what the model may do (demote only Pc-only Elevated,
 never a rule-defined Critical, never with untrusted inputs) and records why for every downgrade.
 
-## Results (held-out test set: 24,484 CDMs, 2,167 events)
+## Results: per-message nowcast (supporting)
 
-From [`data/demo/metrics.json`](data/demo/metrics.json). True classes: 15,756 below threshold, 6,501 Elevated, 2,227 Critical.
+Held-out test set: 24,484 CDMs, 2,167 events. This is the tier of each CDM when it arrives (what the dashboard shows),
+not the official final-tier task above. From [`data/demo/metrics.json`](data/demo/metrics.json). True classes: 15,756 below threshold, 6,501 Elevated, 2,227 Critical.
 
 | Method | Critical recall | False alarms (truly below threshold) | Flagged | Under-tiered CDMs | Macro F1 |
 |---|---|---|---|---|---|
@@ -142,6 +171,22 @@ invisible. That is our next step; it is not shipped and has never been run on te
   review means the input can't be trusted (61 of the 84 needs-review test events also carry `no_covariance`).
 - Claude only rewords structured facts and uses only their numbers. It is instructed never to recommend a manoeuvre, and each response records `claude` or `template` as its source.
 - Tier 0 is "below threshold", never "safe". The analyst decides the manoeuvre.
+
+## Assumptions
+
+- **Final tier = the last CDM before TCA**, as in the organisers' labels (`challenge1_event_labels.xlsx`). Our
+  recomputed final tier agrees with theirs on 13,154 of 13,154 train events.
+- **Only CDMs >= 2 days before TCA are forecast inputs.** Later messages of an event are never seen by the forecast.
+- **`risk` = -30 is treated as Pc ≈ 0** (below every threshold), not as missing.
+- **Columns beyond the recommended list are display-only.** `latitude`, altitude and `mission_id` appear in the
+  dashboard but are never model inputs. `risk` is the label only.
+- **`test_data` has no final outcomes**, so the forecast is scored only by cross-validation on train events. The test
+  set gets demo predictions (`predictions/test_final_tier.csv`), never a score.
+- **The 3D horizon orbits are illustrative.** Where the view shows a real value it comes from the event (latitude,
+  relative speed, miss distance, time-to-TCA order), but longitude and RAAN are not in the data, so where each orbit
+  sits around the Earth is illustrative (`static/js/horizon-orbits.js`).
+- **A recall target is a target, not a guarantee.** The forecast's 90% and the nowcast's 99% are measured out of fold
+  on events drawn like the training events; they are not per event and may not carry over to a shifted live mix.
 
 ## What we don't solve yet
 
