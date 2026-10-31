@@ -4,6 +4,7 @@ import { TIERS, esc } from "./fmt.js";
 import { state, subscribe } from "./state.js";
 
 const el = document.getElementById("latitude");
+const sum = document.getElementById("lat-sum");
 
 export function initLatitude() {
   subscribe(["summary"], render);
@@ -17,6 +18,7 @@ function render() {
   if (!el) return;
   if (!bands) {
     el.innerHTML = `<p class="muted">No latitude in this data file.</p>`;
+    if (sum) sum.textContent = "no data";
     return;
   }
   const total = bands.reduce((s, b) => s + b.events, 0) || 1;
@@ -24,6 +26,10 @@ function render() {
   const hi = bands.filter((b) => b.lat_deg[0] >= 60 || b.lat_deg[1] <= -60);
   const hiEvents = hi.reduce((s, b) => s + b.events, 0), hiCrit = hi.reduce((s, b) => s + b.critical, 0);
   const max = Math.max(...bands.map((b) => b.events), 1);
+  if (sum) {
+    sum.textContent = `${Math.round((hiEvents / total) * 100)}% >60°`;
+    sum.title = `${Math.round((hiEvents / total) * 100)}% of events sit above 60° latitude`;
+  }
   const rows = [...bands].reverse().map((b) => {
     const w = (b.events / max) * 100, wc = (b.critical / max) * 100;
     return `<div class="lat-row" title="${esc(bandName(b.lat_deg))}: ${b.events} events, ${b.critical} Critical">

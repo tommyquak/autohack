@@ -12,7 +12,7 @@ export function initClock() {
     <button type="button" id="c-reset">Reset</button>
     <input type="range" id="c-scrub" min="0" max="${MAX_DAYS}" step="0.01" value="0" aria-label="Replay time in days">
     <span class="t num" id="c-t"></span>
-    ${SPEEDS.map((s) => `<button type="button" data-speed="${s}" aria-pressed="${s === state.speed}">${s}d/s</button>`).join("")}`;
+    <span class="speeds" role="group" aria-label="Replay speed, days per second">${SPEEDS.map((s) => `<button type="button" data-speed="${s}" aria-pressed="${s === state.speed}">${s}d/s</button>`).join("")}</span>`;
   const play = root.querySelector("#c-play"), scrub = root.querySelector("#c-scrub");
   play.addEventListener("click", () => {
     if (!state.playing && state.elapsed >= MAX_DAYS) set({ elapsed: 0 });
