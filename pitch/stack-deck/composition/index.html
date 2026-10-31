@@ -754,6 +754,97 @@
         font-weight: 800;
         color: #3fe0a0;
       }
+
+      /* ================= v2: one type scale for 1920x1080 projection =================
+         headline 72 · subhead 44 · body 30 · note 24 · label/eyebrow 24 mono caps · callout 24 · minimum 22.
+         Grid: 96 px margins, content from y 340 to 952; capture scenes use a 580 px text column at x 96 and a
+         1088x612 capture at x 736. One accent per scene (green), tier colours only where they mean a tier. */
+      .eyebrow { font-size: 24px; }
+      .eyebrow .num { padding: 2px 10px; margin-right: 14px; }
+      h1.head { font-size: 72px; line-height: 1.08; max-width: 1728px; }
+      .label { font-size: 24px; }
+      .src { font-size: 22px; }
+      .hud-bar .brand, .hud-bar .sceneno { font-size: 22px; }
+      .hud-bar .sceneno b { font-size: 28px; }
+      .hud-cap { font-size: 30px; bottom: 30px; }
+      .callout { font-size: 24px; max-width: 440px; padding: 10px 16px; }
+      .shot .stag { font-size: 22px; }
+      .shot .view { border-radius: 12px; border: 2px solid #22303a; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+      .wip, .pend { font-size: 22px; }
+      .pt { font-size: 30px; line-height: 1.25; padding-left: 18px; }
+      .note { font-size: 24px; line-height: 1.3; color: #a3b1ad; }
+      .sub { font-size: 44px; font-weight: 700; line-height: 1.15; }
+      .col-text { position: absolute; left: 96px; top: 340px; width: 580px; display: flex; flex-direction: column; gap: 28px; }
+      .cap-r { left: 736px; top: 340px; width: 1088px; height: 612px; }
+      #veil { position: fixed; inset: 0; z-index: 60; background: #07090b; opacity: 0; pointer-events: none; }
+
+      /* cover */
+      #s-cover .shot .view { border: 0; border-radius: 0; box-shadow: none; }
+      #s-cover .shade {
+        background: linear-gradient(90deg, rgba(7, 9, 11, 0.97) 0%, rgba(7, 9, 11, 0.93) 38%, rgba(7, 9, 11, 0.55) 52%, rgba(7, 9, 11, 0) 62%);
+      }
+      #s-cover .stack { top: 220px; width: 960px; }
+      #s-cover .t2 { font-size: 44px; margin-top: 14px; }
+      #s-cover .hook { margin-top: 44px; font-size: 34px; line-height: 1.3; max-width: 900px; }
+      #s-cover .team { margin-top: 48px; font-size: 22px; }
+      .honest {
+        position: absolute;
+        padding: 14px 18px;
+        background: rgba(7, 9, 11, 0.86);
+        border-left: 4px solid #eef3f1;
+        border-radius: 4px;
+      }
+      .honest .hc { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 24px; font-weight: 700; letter-spacing: 0.1em; color: #eef3f1; }
+      .honest .hs { margin-top: 6px; font-size: 22px; line-height: 1.3; color: #c9d3d0; }
+
+      /* problem */
+      #s-problem .big { font-size: 150px; }
+
+      /* usp */
+      #s-usp h1.head b { color: #3fe0a0; }
+      .beat { top: 340px; width: 552px; height: 600px; padding: 28px 30px; gap: 18px; }
+      .beat .bt { font-size: 22px; line-height: 1.35; }
+      .beat .bn { font-size: 64px; }
+      .beat .bx { font-size: 30px; line-height: 1.25; }
+      .rec { display: grid; grid-template-columns: 170px 1fr; gap: 10px 14px; font-size: 26px; line-height: 1.25; }
+      .rec .rk { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 22px; letter-spacing: 0.1em; color: #a3b1ad; padding-top: 3px; }
+
+      /* stack */
+      .cake { top: 340px; height: 584px; }
+      .cake .band { height: 96px; grid-template-columns: 56px 280px 1fr 250px; gap: 20px; }
+      .cake .band .nm { font-size: 34px; }
+      .cake .band .what { font-size: 30px; }
+      .cake .band .tech { font-size: 22px; }
+      .cake .freeze-l { font-size: 22px; }
+      .cake .tool { top: 524px; height: 60px; font-size: 22px; }
+
+      /* tables, bars, checks, code */
+      .tbl { position: absolute; border-collapse: separate; border-spacing: 0; }
+      .tbl th {
+        font-family: 'Spline Sans Mono', ui-monospace, monospace;
+        font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: #a3b1ad;
+        text-align: right; padding: 0 20px 14px; border-bottom: 2px solid #22303a;
+      }
+      .tbl th:first-child, .tbl td:first-child { text-align: left; }
+      .tbl td { padding: 14px 20px; text-align: right; border-bottom: 1px solid #1a242b; color: #dfe7e4; font-size: 30px; }
+      .tbl td.n { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+      .tbl tr.ours td { background: #0f1d19; color: #eef3f1; font-weight: 700; }
+      .tbl td small { display: block; font-size: 22px; color: #a3b1ad; font-weight: 400; margin-top: 2px; }
+      .bar-row { display: grid; gap: 10px; }
+      .bar-row .bl { font-size: 30px; color: #dfe7e4; }
+      .bar-row .track { position: relative; height: 48px; background: #121a20; border-radius: 6px; overflow: hidden; }
+      .bar-row .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; transform-origin: 0 50%; }
+      .bar-row .bv { position: absolute; right: 14px; top: 7px; font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 28px; font-weight: 700; color: #eef3f1; }
+      .chk {
+        display: grid; grid-template-columns: 36px 1fr 130px; align-items: center;
+        font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 22px; color: #dfe7e4;
+        padding: 7px 0; border-bottom: 1px solid #1a242b;
+      }
+      .chk .ok { color: #3fe0a0; font-weight: 700; }
+      .chk .c { text-align: right; color: #a3b1ad; }
+      .code { font-family: 'Spline Sans Mono', ui-monospace, monospace; font-size: 22px; line-height: 1.55; color: #c9d3d0; white-space: pre; }
+      .code .v { color: #eef3f1; font-weight: 600; }
+      .stamp { font-size: 36px; }
     </style>
   </head>
   <body>
@@ -762,55 +853,55 @@
   "slides": [
     {
       "sceneId": "cover",
-      "notes": "An analyst reads 2,167 close-approach events. One in four flagged events is noise. Second Look clears it, and by design it can never hide a Critical. Along the way it found where the rulebook itself wastes fuel. This deck walks through how it works, one layer at a time, in plain words.\n\n[about 24 s, from 0:00]\nHook on the slide: \"Every team here will predict collision risk. Second Look is built so it can never hide a Critical.\" No uniqueness claims. Background: our Globe tab (latitude bands; the traffic dots are illustrative, the data has no longitude). 2,167 events (events.json summary.n_events). One in four = 288 of 1,090 flagged events removed by the model, all truly below threshold at their latest CDM. The five chips are the five layers we walk through."
+      "notes": "This is Second Look, conjunction triage with bounded, inspectable demotion. It cuts the analyst's review queue by a quarter, shows a decision record for every downgrade, and it's architecturally forbidden from downgrading a rule-defined Critical. Behind me is our Horizon view: the orbits are simulated, but every flag, and the trace under it, is real.\n\n[about 26 s, from 0:00]\nBackground: four real captures of /static/horizon.html (#t=0, #t=41, #t=44, #demo=482), cross-faded. The orbits are simulated for illustration; real: each event's crossing latitude, relative speed, miss distance and time-to-TCA order (the page says so). The trace under EVT 482 comes from its certificate in events.json and the live GET /api/audit (11 checks PASS). Quarter = 1,090 → 802 events (README)."
     },
     {
       "sceneId": "problem",
-      "notes": "Our user is the conjunction analyst who looks at every flagged warning. Each warning is a CDM. Today's rule flags a CDM when its Pc upper bound or its miss distance crosses a threshold. The upper bound is deliberately loose, so it flags 54.2 percent of our test CDMs, and 4,526 of those are truly below threshold. On the dashboard, that's 1,090 events in the queue.\n\n[about 31 s, from 0:24]\n54.2% = metrics.json max_risk_estimate_rule.flagged_rate 0.5417 of 24,484 CDMs; 4,526 = confusion[0][1]. 1,090 = events.json summary.by_baseline_tier Elevated 894 + Critical 196 (the dashboard's \"FLAGGED FOR REVIEW · rule alone\"). Wording: tier 0 is \"below threshold\", never \"safe\"."
-    },
-    {
-      "sceneId": "stack",
-      "notes": "Keep this picture in mind for the rest of the deck. Data at the bottom, then the risk pipeline, the report files, the web server, and the dashboard on top. Each layer hands a finished result up. Every tier is decided in layer two and frozen in layer three. Claude sits beside the stack, reached only through the server, and only writes sentences.\n\n[about 29 s, from 0:55]\nBuilds bottom-up in data-flow order, then the freeze line, Claude with its dashed link to the server, tooling, and the dashboard thumbnail. Tooling: GitHub PRs, GitHub Actions CI (ruff + pytest, 71 tests), uv. Layers: README.md \"How it works\"; docs/CONTRACT.md."
-    },
-    {
-      "sceneId": "data",
-      "notes": "Layer one is the data, the organisers' CSVs. We train on 162,634 CDMs and test on 24,484 we never trained on. The loader keeps only the twelve allowed inputs plus the event id, the moment the file loads. The risk column is the true answer, so we only use it to score ourselves. On screen, the analyst sees the 2,167 test events.\n\n[about 29 s, from 1:24]\nThe stack shrinks into the rail: same picture, closer look. Train 162,634 / 13,154 events (docs/algorithm/algorithm.md §1.1). Test 24,484 / 2,167 (metrics.json; events.json). 12 inputs + event_id (triage/data.py FEATURES, EVENT); latitude and altitude are display only (DISPLAY_ONLY). True classes 15,756 / 6,501 / 2,227 (metrics.json class_counts). If asked \"the brief says 13 columns\": 12 inputs plus event_id, used for grouping only."
-    },
-    {
-      "sceneId": "pipeline",
-      "notes": "Layer two decides every tier. The NASA and ESA rules from the brief tier each CDM first. Then one model gets one narrow job: take away CDMs that are only Elevated because of the loose Pc bound and are really below threshold. Watch the dashboard: switch from the baseline rule to the model and the queue drops from 1,090 to 802. Critical is never touched.\n\n[about 30 s, from 1:53]\nRules: triage/tiers.py (Critical Pc ≥ 1e-4 or miss < 1 km; Elevated Pc ≥ 1e-6 or 1-5 km). Model: triage/model.py, gradient-boosted trees with monotonic constraints; demotion cut = 1% quantile of out-of-fold scores on truly Elevated candidates. False Elevated 4,526 → 2,206 (−51%), flagged 54.2% → 44.7% (metrics.json). Critical recall 100% comes from the rules, not the model. Both screenshots are real: the Baseline rule / Model toggle."
-    },
-    {
-      "sceneId": "files",
-      "notes": "Layer three is the hand-off. Four commands run once, before the demo, and write four files. During the demo nothing recalculates a tier, so the live system can't drift from what we evaluated. Look at event 482: the tier, the reasons and the caution in events.json are exactly what the detail panel shows. The files are the contract.\n\n[about 27 s, from 2:23]\ntrain → model.joblib, evaluate → metrics.json, build_events → events.json, predict → test_predictions.csv (README.md \"Run it\"). Frozen copies of events.json and metrics.json live in data/demo/ so teammates without the raw data see real numbers. Event 482 fields are verbatim from data/demo/events.json (first event). Contract: docs/CONTRACT.md."
-    },
-    {
-      "sceneId": "live",
-      "notes": "Layers four and five are live. A thin FastAPI server reads the report files and hands them to the browser; it has no code that changes a tier. The dashboard calls it: the ranked queue from slash api slash events, the selected event with its gauges and reasons, and the 3D Encounter view, which places both objects to scale.\n\n[about 27 s, from 2:50]\nRoutes from server.py: /api/summary, /api/events, /api/events/{id}, /api/metrics, /api/explain/{id}, /chat (GET page, POST copilot), /health, plus /config and /reset (which only clears a chat session). Reads reports/ first, falls back to data/demo/. 3D view: distances to scale, object icons enlarged (its own caption says so). Dashboard: plain JS modules, one per panel (static/js/)."
-    },
-    {
-      "sceneId": "click",
-      "notes": "Here's one click, end to end. The analyst clicks event 482. The browser asks the server for it, the server reads it from events.json, and the detail panel shows Critical, miss distance 601 metres, and a no-covariance caution. Only then, for the explanation, Claude rewords the same facts. With no key, the template writes it, and the tier is identical.\n\n[about 28 s, from 3:17]\nEVT 482: miss 601 m, Pc upper bound 10^-4.38, no_covariance (events.json first event; docs/demo-script.md). The capture had no API key, so the panel says \"Template summary of the fields above\"; with a key it says \"Written by Claude from the fields above\". Either way the response records claude or template as its source."
-    },
-    {
-      "sceneId": "claude",
-      "notes": "Claude is the voice, not the brain. It rewords fixed facts and powers the copilot through read-only tools, so every number it says traces back to a file. It never sets a tier, never invents a number, never recommends a manoeuvre. Here the copilot answered with no key: the fallback called list events, and every number came from that result.\n\n[about 28 s, from 3:45]\nGuardrail: any text containing \"safe\", \"safely\" or \"safety\" is thrown out and replaced by the template (triage/explain.py). Copilot eval (docs/eval_results.md, independent questions, fallback mode, 38 questions): round 2 after the fix round, 38/38 grounded, 38/38 avoid \"safe\", 38/38 no manoeuvre advice, 38/38 correct facts (round 1 was 35/38 grounded, 32/38 correct). Claude mode not yet evaluated (no credentials during the eval). The 188 in the capture is the fallback's count of Critical events with latest CDM within 3 days."
-    },
-    {
-      "sceneId": "proof",
-      "notes": "We didn't just build it, we tried to break it. Critical recall is 100 percent, because the rules guarantee it. One CDM is tiered too low: event 1278, 4.6 days out. Where we lose: the miss-distance rule has a better F1 but misses 91 Criticals. And our own gate said no twice, including to a model v2 that looked better.\n\n[about 28 s, from 4:13]\nCritical recall 100% (metrics.json model.critical_recall; by design). 1 under-tiered (confusion[1][0]); event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-5.92 (README.md \"Where it fails\"). Robustness 26/26, up from 20/26 (docs/robustness.md). Miss-distance rule F1 0.952 vs ours 0.910, misses 91 = 8 + 83 (metrics.json). First model flagged 100% of CDMs; v2: false alarms 2,214 → 1,694 (−23%) but 3 under-tiered vs limit 1, rejected (README.md). CI: ruff + 71 pytest tests on every PR."
-    },
-    {
-      "sceneId": "progress",
-      "notes": "Two pieces are in progress and not on main yet. The action queue sorts each event into maneuver planning, analyst review or monitor. It's rules only and can only raise attention. Kalent's forecast predicts the tier an event will end at. Today the next 24 hours panel is empty, because no test warning is within two days.\n\n[about 27 s, from 4:41]\nAction queue: draft code (triage/actions.py on a worktree branch), not merged; \"maneuver planning\" means start planning, never a decision. Forecast: design v1.1 in docs/algorithm/algorithm.md, no code or numbers on main; make no forecast claims. Minimum time to TCA in test = 2.0002 d; events_in_window 0 (events.json summary.warnings_24h). Persistence baseline catches 0 of 244 escalations on train events (algorithm.md §2.4), if asked. The placeholder frame is labelled as such: no recording exists."
+      "notes": "Our user is the conjunction analyst who looks at every flagged warning. Today's rule flags a warning when its Pc upper bound or its miss distance crosses a threshold. The bound is deliberately loose, so the rule flags 54.2 percent of our test CDMs, and 4,534 of those are truly below threshold. That's 1,090 events in the queue.\n\n[about 27 s, from 0:26]\n54.2% of 24,484 test CDMs; 4,534 false alarms = truly below threshold, flagged at any tier (README \"The problem\", docs/EVAL.md). README also quotes \"false Elevated\" 4,526: the difference is 8 CDMs shown Critical by the Pc bound. 1,090 = baseline Elevated 894 + Critical 196 (events.json summary). Tier 0 is \"below threshold\", never \"safe\"."
     },
     {
       "sceneId": "usp",
-      "notes": "Every team here will predict collision risk. Second Look is built so it can never hide a Critical. One: it removes noise, never danger. One in four flagged events goes, 1,090 to 802, and Critical recall is 100 percent by construction. Two: 135 of 196 Critical events are Critical on miss distance alone. Three: we rejected our own better model.\n\n[about 28 s, from 5:08]\nBeat 1 is an assurance argument, not an accuracy claim: the model may only remove Pc-only over-warnings, so Critical recall is 100% by construction (the rules, not the model). 288 removed events are all truly below threshold at their latest CDM. Beat 2: summary.critical_drivers miss_only 135, both 44, pc_only 17. NASA CA Handbook Rev 2: a miss-distance cutoff \"would result in a huge number of unnecessary mitigations\" (docs/algorithm/algorithm.md §2.2). We show which manoeuvres are Pc-backed; the analyst decides. Beat 3: v2 cut false alarms a further 23% but tiered 3 CDMs too low against our limit of 1 (v1 has 1), so it didn't ship. Receipts and honest eval are how we prove these claims."
+      "notes": "So here's what Second Look does differently. One: it cuts the queue by a quarter, 1,090 to 802 events. Two: every one of the 288 downgrades carries a certificate, so you can inspect why. Three: every rule-defined Critical stays Critical, because the model is never allowed to act on one. That's the claim: bounded, inspectable demotion.\n\n[about 26 s, from 0:53]\nEvent level: all 288 removed events were truly below threshold at their latest update. Message level: 1 genuinely Elevated CDM was demoted (event 1278, scene 9). Critical recall 100% on test comes from the rules, not the model. Do NOT say \"never misses a collision\" or \"the only\". Certificate fields: rules_fired, candidate / why_not_candidate, model_score vs threshold, decision, four invariants, holds (docs/CONTRACT.md §6). 196 rule-defined Critical events = audit check critical_by_rule_stays_critical."
+    },
+    {
+      "sceneId": "stack",
+      "notes": "How it works, in five layers. Data at the bottom, then the risk pipeline, the report files, the web server, and the analyst views on top. Every tier is decided in layer two and frozen in layer three, with its certificate. Claude sits to the side and only writes explanations. It never sets a tier.\n\n[about 26 s, from 1:19]\nLayers: README \"How it works\"; docs/CONTRACT.md. Without an API key a template writes the explanation and the tier is identical. The copilot (/chat) still exists but is not featured in this deck. Views: dashboard (/), review page (feat/review-console, PR open), decision point (/static/decision.html), horizon (/static/horizon.html)."
+    },
+    {
+      "sceneId": "pipeline",
+      "notes": "Layer two decides every tier. The NASA and ESA rules from the brief tier each message first. Then the model gets one narrow job: demote a warning that is Elevated only because of the loose Pc bound, and only when its inputs are usable and its score is under the threshold. Switch the dashboard to the model and the queue drops from 1,090 to 802. Critical is never touched.\n\n[about 32 s, from 1:45]\nRules: triage/tiers.py (Critical Pc ≥ 1e-4 or miss < 1 km; Elevated Pc ≥ 1e-6 or 1-5 km). Model: gradient-boosted trees with monotonic constraints (triage/model.py). Threshold = 1% quantile of out-of-fold scores on truly-Elevated candidates: a 99% recall target, measured out of fold, not a guarantee. Both screenshots are real: the Baseline rule / Model toggle."
+    },
+    {
+      "sceneId": "task",
+      "notes": "On 31 October the organisers sharpened the task: predict each event's final tier, with a probability, from the messages received at least two days out, and report Critical recall and a confusion matrix on an 80/20 split by event. This is our Decision point view: real tracks on the left, the forecast on the right. Our forecaster's numbers are still pending.\n\n[about 28 s, from 2:17]\nForecast numbers: [pending: final-tier forecaster] (PR \"Final-tier forecaster\"; docs/FORECAST.md is not on main yet, so we quote no numbers). Until it lands, the right side of /static/decision.html places each event by its current tier and says so on screen. Our current evaluation (later scenes) is per CDM on the organisers' test file, not the 80/20 event split. Every update in the data is ≥ 2 days out (minimum 2.0002 d)."
+    },
+    {
+      "sceneId": "record",
+      "notes": "Every downgrade opens to its decision record. Here's event 1071: Elevated by the Pc bound alone, eligible, a score of 0.00074 under the threshold of 0.0083, so it was demoted, and all invariants hold. Event 482 is a rule-defined Critical, so it isn't eligible and stays Critical. The record shows why. The analyst decides what to do.\n\n[about 27 s, from 2:45]\nReview page captured from feat/review-console (open PR, not on main yet); its top bar reads \"Guardrails PASS 7/7\" because that branch predates the 11-check audit on main. Event 1071: demoted Elevated → below threshold, debris, miss 6,388 m, 2.00 d. Event 482: payload, miss 601 m, placeholder sigma (no_covariance), queue MANEUVER PLANNING = start planning; whether to act is the operator's decision."
+    },
+    {
+      "sceneId": "live",
+      "notes": "And it proves it live. Every decision carries a certificate, and the Horizon trace reads it: rule fired, model not allowed, audit pass. GET slash api slash audit re-checks eleven invariants over all 2,167 events and 24,484 decisions. POST slash api slash triage tiers any CDM you send, with its certificate. Tamper with the file and the audit fails and names the check.\n\n[about 29 s, from 3:12]\nGET /api/audit on main: status PASS, 11/11 checks (frozen copy in assets/ui/audit.json; README still says 7/7, written before the four newer checks). Counts: 2,167 events, 24,484 CDM decisions, 153 kept, 288 demoted, 1,726 not eligible. All 288 demotions have score < threshold (the audit checks the stored score; it does not re-derive it). POST /api/triage without a model artifact runs \"rules only\"; the deck example is a sample CDM (data/sample) tiered Elevated with all four invariants true. Tamper test: docs/CONTRACT.md §6."
+    },
+    {
+      "sceneId": "eval",
+      "notes": "Now the honest part. The strongest simple baseline, the miss rule plus the Pc bound for Critical only, beats us on false alarms: 8 against our 2,214. The price is 1,012 truly Elevated messages shown as below threshold; we show one. Our value is the Pc-Elevated band. And on train cross-validation, the model removes 64.1 percent of false alarms, against 9.7 for a tuned Pc threshold.\n\n[about 31 s, from 3:41]\ndocs/EVAL.md and README \"Results\". Test table: status quo 100% / 4,534 / 0 under-tiered; miss-distance rule 95.9% (misses 91 Critical CDMs) / 0 / 1,116 (best macro F1 0.952, flattering by construction); miss rule + Pc for Critical only 100% / 8 / 1,012 (workload 31.5% vs our 44.7%); ours 100% / 2,214 / 1. The two untuned rules are fixed from the brief, so scoring them on test is a baseline, not tuning. CV (train only, nested, event-grouped 5-fold, same 99% rule): tuned Pc threshold 9.7% removed, 47 under-tiered; model 64.1%, 39 under-tiered."
+    },
+    {
+      "sceneId": "fail",
+      "notes": "Here's where it fails. One genuinely Elevated message was shown below threshold: event 1278, 4.62 days out. Its Pc bound was 10 to the minus 5.61; the truth was just over the Elevated line. The analyst would still see it: the updates before and after stayed Elevated. And on 26 junk and edge-case files, every one was rejected or flagged.\n\n[about 28 s, from 4:12]\nREADME \"Where it fails\": test row 14473, miss 23,375 m, true Pc 10^-5.92, shown below threshold with confidence 0.99 and no flag; the 5.12 d update before and the 4.39 d update after (needs review) stayed Elevated; baseline_tier is kept next to tier. Robustness 26/26 (docs/robustness.md): rejected clearly or flagged, never quietly tiered too low. Capture: dashboard Compare tab, #compare=1278."
+    },
+    {
+      "sceneId": "gate",
+      "notes": "We set our safety gate before testing and stuck to it. Model v2 cut false alarms by a further 23 percent, but it showed three truly Elevated messages as below threshold, against our limit of one. So it didn't ship. And we're honest that the gate is weak: test counts are noisy. The stricter gate is on cross-validation, and that's our next step.\n\n[about 29 s, from 4:40]\nREADME \"Our eval caught our bug\" and docs/EVAL.md \"Safety gate\". v1's CV rate predicts about 5.9 under-tiered CDMs on a test set this size, so seeing ≤ 1 had about a 2% chance (Poisson). Stricter gate: operator-invisible under-tier on train CV (not needs_review, no later update shown at its true tier): v1 23 CDMs in 10 events. v2@0.995: same workload (+1.1% false alarms), 17 under-tiered, 9 invisible; not shipped, never run on test. First model regressed log Pc and flagged 100% of CDMs."
+    },
+    {
+      "sceneId": "next",
+      "notes": "What's next. The final-tier forecaster for the official task is in an open pull request, and we won't quote its numbers until they're on main. The review page is also in review. And to be clear about limits: the 99 percent is a recall target, not a guarantee, and we don't yet have calibrated Pc, a live feed, orbit propagation, or test data inside two days.\n\n[about 31 s, from 5:09]\nPending: Critical recall and confusion matrix [pending: final-tier forecaster]; use docs/FORECAST.md numbers exactly once it is on main. No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Horizon orbits are simulated. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
     },
     {
       "sceneId": "close",
-      "notes": "So, Second Look. Rules decide every tier. The model only trims false alarms. Claude only words the explanation. And the analyst always decides. Thank you, we'd love your questions.\n\n[about 13 s, from 5:36]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports). Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Judge answers: docs/demo-script.md \"If a judge asks\"."
+      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 5:40]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md. Background: Horizon view pulled back to the globe (simulated orbits)."
     }
   ]
 }
@@ -824,38 +915,40 @@
       data-width="1920"
       data-height="1080"
     >
-      <!-- ============ COVER ============ -->
+      <!-- ============ COVER: the Horizon view as a flipbook ============ -->
       <div
         id="s-cover"
         class="scene clip"
         data-composition-id="cover"
-        data-cap="Rules decide every tier. The model only removes false alarms. The analyst decides."
+        data-cap="Rules decide every tier. The model may only remove over-warnings. The analyst decides."
         data-start="0"
         data-duration="10"
         data-label="Cover"
         data-track-index="1"
       >
-        <div class="shot" id="cover-shot" style="left: 700px; top: 60px; width: 1220px; height: 1020px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/globe.webp" alt="Second Look's Globe view: conjunction latitude bands" /></div></div>
+        <div class="shot" id="cover-shot" style="left: 0px; top: 0px; width: 1920px; height: 1080px">
+          <div class="view"><div class="cam" data-layout-allow-overflow>
+            <img src="assets/ui/hz-t00.webp" alt="Horizon view: an Elevated pass flagged" />
+            <img src="assets/ui/hz-t41.webp" alt="Horizon view: objects approaching" />
+            <img src="assets/ui/hz-t44.webp" alt="Horizon view: a Critical pass approaching" />
+            <img src="assets/ui/hz-482.webp" alt="Horizon view: event 482 flagged Critical with its backend trace" />
+          </div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
         </div>
         <div class="shade"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim>Autonomous SG 2026 · Airbus Challenge #1 · the stack</div>
+          <div class="eyebrow">Autonomous SG 2026 · Airbus Challenge #1</div>
         </div>
         <div class="stack">
-          <div class="t1" data-anim>SECOND LOOK</div>
-          <div class="t2" data-anim>conjunction triage</div>
-          <div class="hook" data-anim>Every team here will predict collision risk. <b>Second Look is built so it can never hide a Critical.</b></div>
-          <div class="chips" id="cover-chips">
-            <div class="chip">1 DATA</div>
-            <div class="chip">2 RISK PIPELINE</div>
-            <div class="chip">3 REPORT FILES</div>
-            <div class="chip">4 SERVER</div>
-            <div class="chip">5 DASHBOARD</div>
-          </div>
-          <div class="team" data-anim>Tommy · model, API, PM &nbsp; Franky · explanations, 3D, Compare &nbsp; Reagan · dashboard &nbsp; Kalent · independent evaluation</div>
+          <div class="t1">SECOND LOOK</div>
+          <div class="t2">bounded, inspectable demotion</div>
+          <div class="hook">Cuts the review queue by a quarter, shows a decision record for every downgrade, and is <b>architecturally forbidden from downgrading a rule-defined Critical.</b></div>
+          <div class="team">Tommy · Franky · Reagan · Kalent</div>
+        </div>
+        <div class="honest" id="cover-honest" style="left: 1224px; top: 836px; width: 600px">
+          <div class="hc">SIMULATED ORBITS, NOT DATA</div>
+          <div class="hs">Real: each event's latitude, speed, miss distance and pass order.</div>
         </div>
       </div>
 
@@ -864,7 +957,7 @@
         id="s-problem"
         class="scene clip"
         data-composition-id="problem"
-        data-cap="Our goal: remove false alarms without losing a single Critical."
+        data-cap="Goal: remove false alarms without downgrading a rule-defined Critical."
         data-start="10"
         data-duration="10"
         data-label="1 The problem"
@@ -872,446 +965,365 @@
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">1</span>The problem · the user</div>
-          <h1 class="head" data-anim>Today's rule flags more than half of all warnings</h1>
+          <div class="eyebrow"><span class="num">1</span>The problem</div>
+          <h1 class="head">Today's rule flags more than half of all warnings</h1>
         </div>
-        <div class="abs" style="left: 96px; top: 290px; width: 740px" id="pb-user">
-          <div class="label">The user</div>
-          <div style="margin-top: 10px; font-size: 32px; line-height: 1.25">A conjunction analyst on a satellite operator's flight dynamics team</div>
+        <div class="col-text" id="pb-col">
+          <div class="pt" id="pb-user"><b>The user:</b> a conjunction analyst on a flight dynamics team</div>
+          <div class="big num-t" id="pb-big" style="font-family: 'Spline Sans Mono', ui-monospace, monospace; font-weight: 600; line-height: 1">54.2%</div>
+          <div class="pt" id="pb-of">of <b class="mono">24,484</b> test CDMs are flagged</div>
+          <div class="pt" id="pb-false" style="border-left-color: #ffb547"><b class="mono a">4,534</b> of them are truly below threshold</div>
         </div>
-        <div class="abs big num-t" style="left: 90px; top: 450px" id="pb-big">54.2%</div>
-        <div class="abs" style="left: 96px; top: 618px; width: 740px; font-size: 28px; line-height: 1.3; color: #c9d3d0" id="pb-of">
-          of <b class="mono" style="color: #eef3f1">24,484</b> test CDMs are flagged by today's rule (Pc upper bound or miss distance over a threshold)
-        </div>
-        <div class="abs" style="left: 96px; top: 740px; width: 740px; font-size: 38px; line-height: 1.2; font-weight: 700" id="pb-false">
-          <span class="mono a">4,526</span> of them are truly below threshold
-        </div>
-        <div class="shot" id="pb-shot" style="left: 880px; top: 290px; width: 944px; height: 531px">
+        <div class="shot cap-r" id="pb-shot">
           <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-baseline.webp" alt="Dashboard, baseline rule" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
           <div class="stag">OUR DASHBOARD · BASELINE RULE</div>
         </div>
-        <div class="abs src" style="left: 880px; top: 840px" data-anim>SOURCE · data/demo/metrics.json · data/demo/events.json</div>
       </div>
 
-      <!-- ============ 2 · THE STACK ============ -->
+      <!-- ============ 2 · USP ============ -->
+      <div
+        id="s-usp"
+        class="scene clip"
+        data-composition-id="usp"
+        data-cap="Bounded, inspectable demotion."
+        data-start="20"
+        data-duration="10"
+        data-label="2 Why Second Look"
+        data-track-index="1"
+      >
+        <div class="grid-bg"></div>
+        <div class="pad">
+          <div class="eyebrow"><span class="num">2</span>Why Second Look</div>
+          <h1 class="head">Fewer alarms, every downgrade on record, <b>every rule-defined Critical kept</b></h1>
+        </div>
+        <div class="card beat" style="left: 96px" id="beat-1">
+          <div class="bt">01 · CUTS THE QUEUE BY A QUARTER</div>
+          <div class="shot" id="usp-shot" style="position: relative; width: 492px; height: 120px; flex: 0 0 120px">
+            <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-baseline.webp" alt="Queue headline, baseline rule" /><img src="assets/ui/dash-model.webp" alt="Queue headline, model" /></div></div>
+            <svg class="ov"></svg>
+            <div class="tags"></div>
+          </div>
+          <div class="bn" id="usp-count">1,090 → 802</div>
+          <div class="bx">events to review on the test set</div>
+          <div class="note" style="margin-top: auto">All 288 removed events were truly below threshold at their latest update.</div>
+        </div>
+        <div class="card beat" style="left: 684px" id="beat-2">
+          <div class="bt">02 · A RECORD FOR EVERY DOWNGRADE</div>
+          <div class="bn">288 <span style="font-size: 36px; color: #a3b1ad">of 288</span></div>
+          <div class="bx">demotions carry a certificate</div>
+          <div class="rec" id="usp-rec">
+            <span class="rk">RULE</span><span>Pc bound alone</span>
+            <span class="rk">ELIGIBLE</span><span>usable inputs</span>
+            <span class="rk">SCORE</span><span>under threshold</span>
+            <span class="rk">CHECKS</span><span class="g">4 of 4 hold</span>
+          </div>
+        </div>
+        <div class="card beat" style="left: 1272px" id="beat-3">
+          <div class="bt">03 · CAN'T DOWNGRADE A RULE-DEFINED CRITICAL</div>
+          <div class="bn">196 <span style="font-size: 36px; color: #a3b1ad">of 196</span></div>
+          <div class="bx">stay Critical. The model never acts on them.</div>
+          <div class="note" style="margin-top: auto">Critical recall on test is 100%, from the rules. We don't claim it never misses a collision.</div>
+        </div>
+      </div>
+
+      <!-- ============ 3 · THE STACK ============ -->
       <div
         id="s-stack"
         class="scene clip"
         data-composition-id="stack"
-        data-cap="Every tier is decided in layer 2 and written down in layer 3; Claude only writes sentences."
-        data-start="20"
-        data-duration="10"
-        data-label="2 The stack"
-        data-track-index="1"
-      >
-        <div class="grid-bg"></div>
-        <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">2</span>How it works · the whole stack</div>
-          <h1 class="head" data-anim>Five layers, each handing a finished result on</h1>
-        </div>
-        <div class="cake" id="cake-src">
-          <div class="band live" data-l="5" style="top: 0px"><span class="ix">05</span><span class="nm">Dashboard</span><span class="what">What the analyst sees and clicks</span><span class="tech">HTML · JS · CANVAS · PLOTLY</span></div>
-          <div class="band live" data-l="4" style="top: 116px"><span class="ix">04</span><span class="nm">Web server</span><span class="what">Reads the files; never changes a tier</span><span class="tech">FASTAPI · UVICORN</span></div>
-          <div class="band" data-l="3" style="top: 232px"><span class="ix">03</span><span class="nm">Report files</span><span class="what">Every decision, written down and frozen</span><span class="tech">EVENTS.JSON · METRICS.JSON</span></div>
-          <div class="band" data-l="2" style="top: 348px"><span class="ix">02</span><span class="nm">Risk pipeline</span><span class="what">Rules set every tier; the model only removes false alarms</span><span class="tech">PANDAS · SCIKIT-LEARN</span></div>
-          <div class="band" data-l="1" style="top: 464px"><span class="ix">01</span><span class="nm">Data</span><span class="what">The organisers' CSVs, allowed columns only</span><span class="tech">CSV</span></div>
-          <svg class="freeze" viewBox="0 0 1240 4" preserveAspectRatio="none" style="top: 226px"><line x1="0" y1="2" x2="1240" y2="2" stroke-width="4" stroke-dasharray="1 1" stroke-dashoffset="0" pathLength="1" /></svg>
-          <div class="freeze-l" style="top: 212px">DECISIONS FROZEN HERE</div>
-          <div class="tool"><span>TOOLING</span><b>GITHUB PRs</b><b>ACTIONS CI: RUFF + PYTEST, 71 TESTS</b><b>UV</b></div>
-        </div>
-        <svg class="abs" id="stack-conn" style="left: 1336px; top: 430px" width="64" height="20" viewBox="0 0 64 20">
-          <line x1="0" y1="10" x2="64" y2="10" stroke="#b58cff" stroke-width="3" stroke-dasharray="8 6" />
-        </svg>
-        <div class="abs" id="stack-claude" style="left: 1400px; top: 268px; width: 424px; min-height: 226px; padding: 18px 22px; border: 2px dashed #b58cff; border-radius: 12px; display: flex; flex-direction: column; gap: 8px">
-          <div class="mono p" style="font-size: 24px; font-weight: 700; letter-spacing: 0.12em">CLAUDE · TO THE SIDE</div>
-          <div style="font-size: 27px; line-height: 1.2">Writes sentences and answers questions</div>
-          <div style="font-size: 27px; font-weight: 800">Never sets a tier</div>
-          <div class="m" style="font-size: 22px; line-height: 1.25">No key: template and rule-based fallback</div>
-        </div>
-        <div class="abs" id="stack-thumb" style="left: 1400px; top: 560px; width: 424px">
-          <div class="label" style="font-size: 21px">Layer 5 on screen</div>
-          <div class="shot" style="position: relative; margin-top: 10px; width: 424px; height: 239px">
-            <div class="view"><img src="assets/ui/dash-model.webp" alt="Dashboard" style="width: 100%; height: 100%; display: block" /></div>
-          </div>
-          <div style="margin-top: 12px; font-size: 23px; line-height: 1.25; color: #c9d3d0">Every number on it comes from layer 3's files</div>
-        </div>
-      </div>
-
-      <!-- ============ 3 · LAYER 1 DATA ============ -->
-      <div
-        id="s-data"
-        class="scene clip"
-        data-composition-id="data"
-        data-cap="The risk column scores us; it is never an input."
+        data-cap="Every tier is decided in layer 2 and frozen, with its certificate, in layer 3."
         data-start="30"
         data-duration="10"
-        data-label="3 Layer 1 Data"
+        data-label="3 The stack"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">3</span>Layer 1 · Data</div>
-          <h1 class="head" data-anim>Allowed columns in; the true risk is the answer key</h1>
+          <div class="eyebrow"><span class="num">3</span>How it works</div>
+          <h1 class="head">Five layers, each handing a finished result on</h1>
         </div>
-        <div class="cake-slot" data-cur="1"></div>
-        <div class="rail-l">LAYER 1 OF 5 · DATA</div>
-        <div class="col-l">
-          <div class="pt">Train: <b class="mono">162,634</b> CDMs in <b class="mono">13,154</b> events</div>
-          <div class="pt">Test: <b class="mono">24,484</b> CDMs in <b class="mono">2,167</b> events</div>
-          <div class="pt">One event = the CDMs about one close approach, up to 7 days before it</div>
+        <div class="cake" id="cake-src">
+          <div class="band live" data-l="5" style="top: 0px"><span class="ix">05</span><span class="nm">Analyst views</span><span class="what">Review, horizon, dashboard</span><span class="tech">JS · THREE.JS</span></div>
+          <div class="band live" data-l="4" style="top: 104px"><span class="ix">04</span><span class="nm">Web server</span><span class="what">Serves files, audits live</span><span class="tech">FASTAPI</span></div>
+          <div class="band" data-l="3" style="top: 208px"><span class="ix">03</span><span class="nm">Report files</span><span class="what">Decisions + certificates</span><span class="tech">EVENTS.JSON</span></div>
+          <div class="band" data-l="2" style="top: 312px"><span class="ix">02</span><span class="nm">Risk pipeline</span><span class="what">Rules tier; model trims</span><span class="tech">SCIKIT-LEARN</span></div>
+          <div class="band" data-l="1" style="top: 416px"><span class="ix">01</span><span class="nm">Data</span><span class="what">The organisers' CSVs</span><span class="tech">CSV</span></div>
+          <svg class="freeze" viewBox="0 0 1240 4" preserveAspectRatio="none" style="top: 202px"><line x1="0" y1="2" x2="1240" y2="2" stroke-width="4" stroke-dasharray="1 1" stroke-dashoffset="0" pathLength="1" /></svg>
+          <div class="freeze-l" style="top: 188px">DECISIONS FROZEN HERE</div>
+          <div class="tool"><span>TOOLING</span><b>GITHUB PRs</b><b>CI: RUFF + PYTEST</b><b>UV</b></div>
         </div>
-        <div class="abs label" style="left: 558px; top: 268px" data-anim>What we read from each CDM row</div>
-        <div class="abs chips" id="data-in" style="left: 558px; top: 312px; width: 1266px">
-          <span class="col">time_to_tca</span><span class="col">miss_distance</span><span class="col">relative_speed</span><span class="col">relative_position_r</span><span class="col">relative_position_t</span><span class="col">relative_position_n</span><span class="col">c_object_type</span><span class="col">c_sigma_r</span><span class="col">t_sigma_r</span><span class="col">max_risk_estimate</span><span class="col">F10</span><span class="col">AP</span>
+        <svg class="abs" id="stack-conn" style="left: 1336px; top: 440px" width="64" height="20" viewBox="0 0 64 20">
+          <line x1="0" y1="10" x2="64" y2="10" stroke="#b58cff" stroke-width="3" stroke-dasharray="8 6" />
+        </svg>
+        <div class="abs" id="stack-claude" style="left: 1400px; top: 340px; width: 424px; padding: 22px 24px; border: 2px dashed #b58cff; border-radius: 12px; display: flex; flex-direction: column; gap: 10px">
+          <div class="mono p" style="font-size: 24px; font-weight: 700; letter-spacing: 0.12em">CLAUDE · TO THE SIDE</div>
+          <div style="font-size: 30px; line-height: 1.2">Only writes explanations</div>
+          <div style="font-size: 30px; font-weight: 800">Never sets a tier</div>
         </div>
-        <div class="abs g mono" style="left: 558px; top: 482px; font-size: 22px" data-anim>12 ALLOWED INPUTS</div>
-        <div class="abs chips" id="data-other" style="left: 558px; top: 522px; width: 1266px">
-          <span class="col grp">event_id · grouping only</span><span class="col disp">latitude · altitude · display only</span><span class="col key" id="data-key">risk · ANSWER KEY, NEVER AN INPUT</span>
-        </div>
-        <div class="abs" id="data-classes" style="left: 558px; top: 648px; width: 540px">
-          <div class="label" style="font-size: 21px">True test classes (the answer key)</div>
-          <div class="tierbar" style="margin-top: 12px">
-            <span style="width: 64.35%; background: #8a9490"></span><span style="width: 26.55%; background: #ffb547"></span><span style="width: 9.1%; background: #ff5a64"></span>
+        <div class="abs" id="stack-thumb" style="left: 1400px; top: 640px; width: 424px">
+          <div class="label">Layer 5 on screen</div>
+          <div class="shot" style="position: relative; margin-top: 12px; width: 424px; height: 239px">
+            <div class="view"><img src="assets/ui/review-482.webp" alt="Review page" style="width: 100%; height: 100%; display: block" /></div>
           </div>
-          <div class="mono" style="margin-top: 12px; font-size: 21px; line-height: 1.5; color: #c9d3d0">
-            <span style="color: #b9c2bf">15,756 below threshold</span> · <span class="a">6,501 Elevated</span> · <span class="r">2,227 Critical</span>
-          </div>
-          <div class="src" style="margin-top: 22px">SOURCE · triage/data.py · data/demo/metrics.json</div>
-        </div>
-        <div class="shot" id="data-shot" style="left: 1140px; top: 612px; width: 684px; height: 362px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-model.webp" alt="Dashboard queue" /></div></div>
-          <svg class="ov"></svg>
-          <div class="tags"></div>
         </div>
       </div>
 
-      <!-- ============ 4 · LAYER 2 PIPELINE ============ -->
+      <!-- ============ 4 · RISK PIPELINE ============ -->
       <div
         id="s-pipe"
         class="scene clip"
         data-composition-id="pipeline"
-        data-cap="False Elevated 4,526 → 2,206 (−51%). Critical recall stays 100%, because the rules guarantee it."
+        data-cap="1,090 → 802 events in the queue. Every rule-defined Critical stays Critical."
         data-start="40"
         data-duration="10"
-        data-label="4 Layer 2 Risk pipeline"
+        data-label="4 Risk pipeline"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">4</span>Layer 2 · Risk pipeline</div>
-          <h1 class="head" data-anim>Rules tier everything; the model only trims noise</h1>
+          <div class="eyebrow"><span class="num">4</span>Layer 2 · Risk pipeline</div>
+          <h1 class="head">Rules tier everything; the model only removes over-warnings</h1>
         </div>
-        <div class="cake-slot" data-cur="2"></div>
-        <div class="rail-l">LAYER 2 OF 5 · RISK PIPELINE</div>
-        <div class="col-l" style="gap: 18px">
-          <div class="pt"><b>1 Rules tier every CDM.</b> Critical: Pc ≥ 1e-4 or miss &lt; 1 km. Elevated: Pc ≥ 1e-6 or 1–5 km.</div>
-          <div class="pt"><b>2 Model, one move:</b> Elevated → below threshold, only for CDMs Elevated on a loose Pc bound, &gt; 5 km apart.</div>
+        <div class="col-text" id="pipe-col">
+          <div class="pt"><b>1 · Rules</b> tier every CDM with the NASA and ESA thresholds.</div>
+          <div class="pt"><b>2 · The model</b> may only demote Elevated to below threshold, when the Pc bound alone made it Elevated.</div>
           <div class="pt" id="pipe-lock" style="border-left-color: #ff5a64"><b>Critical is never touched.</b></div>
         </div>
-        <div class="shot" id="pipe-shot" style="left: 574px; top: 268px; width: 1250px; height: 703px">
+        <div class="shot cap-r" id="pipe-shot">
           <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-baseline.webp" alt="Dashboard, baseline rule" /><img src="assets/ui/dash-model.webp" alt="Dashboard, model" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
         </div>
       </div>
 
-      <!-- ============ 5 · LAYER 3 FILES ============ -->
+      <!-- ============ 5 · THE OFFICIAL TASK ============ -->
       <div
-        id="s-files"
+        id="s-task"
         class="scene clip"
-        data-composition-id="files"
-        data-cap="The files are the contract between the Python side and the web side."
+        data-composition-id="task"
+        data-cap="The decision point is 2 days out. Forecast numbers arrive with the final-tier forecaster."
         data-start="50"
         data-duration="10"
-        data-label="5 Layer 3 Report files"
+        data-label="5 The official task"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">5</span>Layer 3 · Report files</div>
-          <h1 class="head" data-anim>Every decision is computed once, then frozen</h1>
+          <div class="eyebrow"><span class="num">5</span>The official task · update of 31 Oct</div>
+          <h1 class="head">Predict each event's final tier, 2 days out</h1>
         </div>
-        <div class="cake-slot" data-cur="3"></div>
-        <div class="rail-l">LAYER 3 OF 5 · REPORT FILES</div>
-        <div class="col-l">
-          <div class="pt"><b>Before the demo:</b> four commands, run once</div>
-          <div class="pt"><b>During the demo:</b> nothing recalculates a tier</div>
-          <div class="pt">The dashboard shows what the files say, word for word</div>
+        <div class="col-text" id="task-col" style="gap: 22px">
+          <div class="pt"><b>Input:</b> CDM updates ≥ 2 days before closest approach</div>
+          <div class="pt"><b>Output:</b> the final tier, with a probability</div>
+          <div class="pt"><b>Score:</b> 80/20 split by event; Critical recall, confusion matrix</div>
+          <div class="card" id="task-res" style="padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; border-color: #ffb547">
+            <div class="label">Our forecast</div>
+            <div class="pend">[pending: final-tier forecaster]</div>
+          </div>
         </div>
-        <div class="card tile" style="left: 558px"><span class="cmd">triage.train →</span><span class="file">model.joblib</span></div>
-        <div class="card tile" style="left: 881px"><span class="cmd">triage.evaluate →</span><span class="file">metrics.json</span></div>
-        <div class="card tile" style="left: 1204px"><span class="cmd">triage.build_events →</span><span class="file">events.json</span></div>
-        <div class="card tile" style="left: 1527px; width: 297px"><span class="cmd">triage.predict →</span><span class="file" style="font-size: 22px">test_predictions.csv</span></div>
-        <div class="abs" id="files-freeze" style="left: 870px; top: 256px; width: 657px; height: 174px; border: 3px solid #3fe0a0; border-radius: 16px"></div>
-        <div class="abs mono g" id="files-freeze-l" style="left: 870px; top: 440px; font-size: 22px; font-weight: 700; letter-spacing: 0.08em">FROZEN COPY IN data/demo/ · REAL NUMBERS WITHOUT THE RAW DATA</div>
-        <div class="abs card json" id="files-json" style="left: 558px; top: 500px; width: 520px; height: 470px"><span class="g">events.json › event 482</span>
-<span class="k">"tier_name":</span> <span class="v">"Critical"</span>
-<span class="k">"baseline_tier":</span> <span class="v">2</span>
-<span class="k">"reasons":</span> [
-  <span class="v">"Pc 10^-4.38 in [1e-6, 1e-4)</span>
-<span class="v">   (elevated band)"</span>,
-  <span class="v">"miss distance 601 m &lt; 1 km"</span> ]
-<span class="k">"cautions":</span> [<span class="v">"no_covariance"</span>]
-<span class="k">"latest":</span> { <span class="k">"miss_distance_m":</span> <span class="v">601.0</span>,
-  <span class="k">"time_to_tca_days":</span> <span class="v">2.0</span> … }</div>
-        <svg class="abs" id="files-arrow" style="left: 1080px; top: 715px" width="34" height="40" viewBox="0 0 34 40">
-          <path d="M2 20 H26 M18 10 L30 20 L18 30" fill="none" stroke="#3fe0a0" stroke-width="4" />
-        </svg>
-        <div class="shot" id="files-shot" style="left: 1116px; top: 500px; width: 708px; height: 470px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-model.webp" alt="Dashboard detail panel" /></div></div>
+        <div class="shot cap-r" id="task-shot">
+          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/decision.webp" alt="Decision point chart" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
+          <div class="stag">OUR DECISION POINT VIEW</div>
         </div>
       </div>
 
-      <!-- ============ 6 · LAYERS 4-5 SERVER + DASHBOARD ============ -->
+      <!-- ============ 6 · DECISION RECORD ============ -->
+      <div
+        id="s-record"
+        class="scene clip"
+        data-composition-id="record"
+        data-cap="The record shows why; the analyst decides what to do."
+        data-start="60"
+        data-duration="10"
+        data-label="6 Decision record"
+        data-track-index="1"
+      >
+        <div class="grid-bg"></div>
+        <div class="pad">
+          <div class="eyebrow"><span class="num">6</span>Decision record · the human decides</div>
+          <h1 class="head">Every downgrade opens to its decision record</h1>
+        </div>
+        <div class="col-text" id="rec-col">
+          <div class="pt"><b>Event 1071, demoted:</b> score <span class="mono">0.00074</span>, under the threshold <span class="mono">0.0083</span></div>
+          <div class="pt" style="border-left-color: #ff5a64"><b>Event 482, not eligible:</b> a rule-defined Critical. It stays Critical.</div>
+          <div class="pt"><b>The analyst decides</b> whether to act.</div>
+        </div>
+        <div class="shot cap-r" id="rec-shot">
+          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/review-1071.webp" alt="Review page, event 1071, demoted" /><img src="assets/ui/review-482.webp" alt="Review page, event 482, stays Critical" /></div></div>
+          <svg class="ov"></svg>
+          <div class="tags"></div>
+          <div class="stag">OUR REVIEW PAGE · PR OPEN</div>
+        </div>
+      </div>
+
+      <!-- ============ 7 · IT PROVES IT LIVE ============ -->
       <div
         id="s-live"
         class="scene clip"
         data-composition-id="live"
-        data-cap="The server has no code that changes a tier; the dashboard is one plain JS file per panel."
-        data-start="60"
-        data-duration="10"
-        data-label="6 Layers 4-5 Server and dashboard"
-        data-track-index="1"
-      >
-        <div class="grid-bg"></div>
-        <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">6</span>Layers 4 + 5 · Server and dashboard</div>
-          <h1 class="head" data-anim>A thin server hands those files to the screen</h1>
-        </div>
-        <div class="cake-slot" data-cur="4"></div>
-        <div class="rail-l">LAYERS 4-5 OF 5 · LIVE</div>
-        <div class="col-l" id="live-routes" style="gap: 12px">
-          <div class="route">GET /api/summary</div>
-          <div class="route">GET /api/events</div>
-          <div class="route">GET /api/events/{id}</div>
-          <div class="route">GET /api/metrics</div>
-          <div class="route">GET /api/explain/{id}</div>
-          <div class="route">POST /chat <i>copilot</i></div>
-          <div class="route">GET /health</div>
-          <div class="src" style="margin-top: 6px; line-height: 1.4">reads reports/, falls back to data/demo/</div>
-        </div>
-        <div class="shot" id="live-shot" style="left: 574px; top: 268px; width: 1250px; height: 703px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-model.webp" alt="Dashboard" /><img src="assets/ui/encounter.webp" alt="3D Encounter view" /></div></div>
-          <svg class="ov"></svg>
-          <div class="tags"></div>
-        </div>
-      </div>
-
-      <!-- ============ 7 · ONE CLICK ============ -->
-      <div
-        id="s-click"
-        class="scene clip"
-        data-composition-id="click"
-        data-cap="The tier, reason and caution were already in events.json; Claude only words the last step."
+        data-cap="A tampered events.json turns the audit FAIL and names the check."
         data-start="70"
         data-duration="10"
-        data-label="7 One click end to end"
+        data-label="7 It proves it live"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">7</span>One click, end to end</div>
-          <h1 class="head" data-anim>One click walks down the stack and back up</h1>
+          <div class="eyebrow"><span class="num">7</span>It proves it live</div>
+          <h1 class="head">Each decision has a certificate; the server audits them live</h1>
         </div>
-        <svg class="abs" id="click-svg" style="left: 96px; top: 268px" width="1080" height="706" viewBox="0 0 1080 706">
-          <defs>
-            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#eef3f1" /></marker>
-            <marker id="ahp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b58cff" /></marker>
-          </defs>
-          <g id="lanes" font-size="24" font-weight="700" text-anchor="middle" letter-spacing="2">
-            <text x="135" y="28" fill="#eef3f1">BROWSER</text>
-            <text x="405" y="28" fill="#eef3f1">SERVER</text>
-            <text x="675" y="28" fill="#eef3f1">events.json</text>
-            <text x="945" y="28" fill="#b58cff">CLAUDE</text>
-            <line x1="135" y1="50" x2="135" y2="700" stroke="#22303a" stroke-width="3" />
-            <line x1="405" y1="50" x2="405" y2="700" stroke="#22303a" stroke-width="3" />
-            <line x1="675" y1="50" x2="675" y2="700" stroke="#22303a" stroke-width="3" />
-            <line x1="945" y1="50" x2="945" y2="700" stroke="#b58cff" stroke-opacity="0.5" stroke-width="3" stroke-dasharray="8 8" />
-          </g>
-          <g font-size="22" fill="#eef3f1">
-            <g class="cs" data-s="1"><circle cx="135" cy="100" r="12" fill="#3fe0a0" /><text x="160" y="108">1  Analyst clicks EVT 482 in the queue</text></g>
-            <g class="cs" data-s="2"><line class="ca" x1="135" y1="180" x2="405" y2="180" stroke="#eef3f1" stroke-width="3" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1 1" /><text x="150" y="166">2  GET /api/events/482</text></g>
-            <g class="cs" data-s="3"><line class="ca" x1="405" y1="260" x2="675" y2="260" stroke="#eef3f1" stroke-width="3" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1 1" /><text x="420" y="246">3  read the event</text>
-              <line class="ca" x1="675" y1="322" x2="405" y2="322" stroke="#a3b1ad" stroke-width="3" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1 1" /><text x="420" y="350" fill="#a3b1ad">tier + history, as frozen</text></g>
-            <g class="cs" data-s="4"><line class="ca" x1="405" y1="420" x2="135" y2="420" stroke="#eef3f1" stroke-width="3" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1 1" /><text x="150" y="406">4  Critical · miss 601 m · no_covariance</text></g>
-            <g class="cs" data-s="5"><line class="ca" x1="135" y1="510" x2="405" y2="510" stroke="#eef3f1" stroke-width="3" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1 1" /><text x="150" y="496">5  GET /api/explain/482</text>
-              <line class="ca" x1="405" y1="570" x2="945" y2="570" stroke="#b58cff" stroke-width="3" marker-end="url(#ahp)" pathLength="1" stroke-dasharray="1 1" /><text x="420" y="556" fill="#b58cff">reword the same facts, words only</text>
-              <line class="ca" x1="945" y1="640" x2="135" y2="640" stroke="#b58cff" stroke-width="3" marker-end="url(#ahp)" pathLength="1" stroke-dasharray="1 1" /><text x="150" y="680" fill="#c9d3d0">text tagged claude or template · no key: the template</text></g>
-          </g>
-        </svg>
-        <div class="shot" id="click-shot" style="left: 1216px; top: 268px; width: 608px; height: 703px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-model.webp" alt="Dashboard queue and detail" /></div></div>
+        <div class="shot" id="live-shot" style="left: 96px; top: 340px; width: 860px; height: 470px">
+          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/hz-482.webp" alt="Horizon view backend trace for event 482" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
+          <div class="stag">BACKEND TRACE · HORIZON VIEW</div>
+        </div>
+        <div class="abs card" id="live-triage" style="left: 96px; top: 834px; width: 860px; padding: 14px 22px">
+          <div class="code"><span class="g">POST /api/triage</span>  {"cdms": [ any CDM ]}
+→ tier, rules fired, <span class="v">4 of 4 invariants</span>, "holds": <span class="v">true</span></div>
+        </div>
+        <div class="abs card" id="live-audit" style="left: 996px; top: 340px; width: 828px; height: 612px; padding: 22px 28px; display: flex; flex-direction: column">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span class="mono" style="font-size: 28px; font-weight: 700; color: #eef3f1">GET /api/audit</span>
+            <span class="stamp" id="live-pass" style="color: #3fe0a0; border-color: #3fe0a0">PASS 11/11</span>
+          </div>
+          <div class="note" style="margin: 10px 0 12px">2,167 events · 24,484 CDM decisions</div>
+          <div id="live-checks"></div>
         </div>
       </div>
 
-      <!-- ============ 8 · CLAUDE ============ -->
+      <!-- ============ 8 · HONEST EVAL ============ -->
       <div
-        id="s-claude"
+        id="s-eval"
         class="scene clip"
-        data-composition-id="claude"
-        data-cap="Pull the key and every tier is identical; only the wording changes."
+        data-composition-id="eval"
+        data-cap="Our value is the Pc-Elevated band: 1 truly-Elevated CDM shown low, against 1,012."
         data-start="80"
         data-duration="10"
-        data-label="8 Where Claude fits"
+        data-label="8 Honest evaluation"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num" style="background: #b58cff">8</span><span class="p">Where Claude fits, and where it doesn't</span></div>
-          <h1 class="head" data-anim>Claude is the voice, never the brain</h1>
+          <div class="eyebrow"><span class="num">8</span>Honest evaluation</div>
+          <h1 class="head">A simple rule beats us on false alarms, and misses Elevated</h1>
         </div>
-        <div class="abs" style="left: 96px; top: 272px; width: 780px; display: flex; flex-direction: column; gap: 16px" id="cl-lists">
-          <div class="label p">Claude does</div>
-          <div class="does"><span class="ic g">✓</span><span>Rewords an event's fixed facts into a short note <span class="mono m" style="font-size: 22px">/api/explain</span></span></div>
-          <div class="does"><span class="ic g">✓</span><span>Answers questions through read-only tools <span class="mono m" style="font-size: 22px">/chat</span></span></div>
-          <div class="label" style="margin-top: 14px">Claude never</div>
-          <div class="does"><span class="ic r">✕</span><span>Sets or changes a tier</span></div>
-          <div class="does"><span class="ic r">✕</span><span>Invents a number</span></div>
-          <div class="does"><span class="ic r">✕</span><span>Recommends a manoeuvre</span></div>
-          <div class="does" style="font-size: 24px; color: #c9d3d0"><span class="ic m">!</span><span>Any text with "safe" is thrown out; the template answers instead</span></div>
-        </div>
-        <div class="abs switch" id="cl-switch" style="left: 96px; top: 800px; width: 780px">
-          <div class="knob"><i id="cl-knob"></i></div>
-          <span>API key ON: Claude words it · OFF: template and rule-based fallback · <b style="color: #eef3f1">same tier either way</b></span>
-        </div>
-        <div class="shot" id="cl-shot" style="left: 920px; top: 272px; width: 904px; height: 560px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/chat-answer.webp" alt="The copilot answering a question" /></div></div>
-          <svg class="ov"></svg>
-          <div class="tags"></div>
-          <div class="stag" style="background: #b58cff">OUR COPILOT · /chat · NO KEY</div>
-        </div>
-        <div class="abs" id="cl-eval" style="left: 920px; top: 850px; width: 904px; font-size: 23px; line-height: 1.35; color: #c9d3d0">
-          Independent eval, fallback mode, 38 questions: <b class="mono" style="color: #eef3f1">38/38</b> avoid "safe" · <b class="mono" style="color: #eef3f1">38/38</b> no manoeuvre advice · <b class="mono" style="color: #eef3f1">38/38</b> grounded (after one fix round). Claude mode not yet evaluated.
+        <table class="tbl" id="ev-tbl" style="left: 96px; top: 350px; width: 1100px">
+          <thead><tr><th>Test set</th><th>Critical recall</th><th>False alarms</th><th>Under-tiered</th></tr></thead>
+          <tbody>
+            <tr><td>Pc upper-bound rule<small>status quo</small></td><td class="n">100%</td><td class="n">4,534</td><td class="n">0</td></tr>
+            <tr><td>Miss-distance rule<small>misses 91 Critical CDMs</small></td><td class="n">95.9%</td><td class="n">0</td><td class="n">1,116</td></tr>
+            <tr id="ev-strong"><td>Miss rule + Pc for Critical<small>strongest simple baseline</small></td><td class="n">100%</td><td class="n" id="ev-8">8</td><td class="n" id="ev-1012">1,012</td></tr>
+            <tr class="ours"><td>Second Look<small>rules + model</small></td><td class="n">100%</td><td class="n">2,214</td><td class="n" id="ev-1">1</td></tr>
+          </tbody>
+        </table>
+        <div class="abs card" id="ev-cv" style="left: 1236px; top: 340px; width: 588px; padding: 26px 28px; display: flex; flex-direction: column; gap: 22px">
+          <div class="label">Beyond a tuned rule? (train CV)</div>
+          <div class="pt" style="padding-left: 0; border: 0">False alarms removed, same 99% rule</div>
+          <div class="bar-row"><div class="bl">Tuned Pc threshold</div><div class="track"><div class="fill" id="ev-bar-a" style="width: 9.7%; background: #a3b1ad"></div><span class="bv">9.7%</span></div></div>
+          <div class="bar-row"><div class="bl">Second Look</div><div class="track"><div class="fill" id="ev-bar-b" style="width: 64.1%; background: #3fe0a0"></div><span class="bv">64.1%</span></div></div>
+          <div class="note">Under-tiered on CV: 47 vs 39</div>
         </div>
       </div>
 
-      <!-- ============ 9 · PROOF ============ -->
+      <!-- ============ 9 · WHERE IT FAILS ============ -->
       <div
-        id="s-proof"
+        id="s-fail"
         class="scene clip"
-        data-composition-id="proof"
-        data-cap="We tried to break it, and our own gate decides, not our enthusiasm."
+        data-composition-id="fail"
+        data-cap="We show our failure case, and how an analyst would still see it."
         data-start="90"
         data-duration="10"
-        data-label="9 How we know it works"
+        data-label="9 Where it fails"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">9</span>How we know it works</div>
-          <h1 class="head" data-anim>We test against baselines, junk and our own gate</h1>
+          <div class="eyebrow"><span class="num">9</span>Where it fails</div>
+          <h1 class="head">One truly Elevated CDM was shown below threshold</h1>
         </div>
-        <div class="card stat" style="left: 96px"><div class="n">100%</div><div class="d">Critical recall, <b>by the rules, not the model</b></div></div>
-        <div class="card stat" style="left: 534px; border-color: #ffb547"><div class="n a">1</div><div class="d">CDM tiered too low: <b>event 1278</b>, 4.62 days out</div></div>
-        <div class="card stat" style="left: 972px"><div class="n">26/26</div><div class="d">junk and edge-case files rejected clearly or flagged</div></div>
-        <div class="card stat" style="left: 1410px"><div class="n">91</div><div class="d">Criticals the miss-distance rule misses. <b>Where we lose:</b> its F1 0.952 beats our 0.910</div></div>
-        <div class="shot" id="pr-shot" style="left: 96px; top: 470px; width: 900px; height: 506px">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/eval.webp" alt="Evaluation tab" /><img src="assets/ui/compare-1278.webp" alt="Compare view, event 1278" /></div></div>
+        <div class="col-text" id="fail-col">
+          <div class="pt" style="border-left-color: #ffb547"><b>Event 1278, 4.62 days out:</b> demoted. The truth is Elevated.</div>
+          <div class="pt"><b>How you'd know:</b> the updates before and after stayed Elevated.</div>
+          <div class="card" id="fail-26" style="padding: 18px 22px; display: flex; gap: 20px; align-items: center">
+            <span class="mono" style="font-size: 56px; font-weight: 600">26/26</span>
+            <span class="note">junk and edge-case files rejected or flagged</span>
+          </div>
+        </div>
+        <div class="shot cap-r" id="fail-shot">
+          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/compare-1278.webp" alt="Compare view, event 1278" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
-        </div>
-        <div class="abs card" id="pr-gate" style="left: 1036px; top: 470px; width: 788px; height: 506px; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px">
-          <div class="label">Our own gate said no, twice</div>
-          <div style="font-size: 27px; line-height: 1.25"><b>First model</b> flagged 100% of CDMs. Our eval caught it, so we redesigned it as targeted demotion.</div>
-          <div style="font-size: 27px; line-height: 1.25"><b>Model v2</b> cut false alarms by a further 23%, but tiered <b class="a">3</b> CDMs too low, against our limit of <b>1</b>.</div>
-          <div><span class="stamp" id="pr-stamp">REJECTED</span></div>
-          <div class="src" style="margin-top: auto">CI: ruff + 71 pytest tests on every pull request · README.md · docs/robustness.md</div>
+          <div class="stag">OUR DASHBOARD · COMPARE</div>
         </div>
       </div>
 
-      <!-- ============ 10 · IN PROGRESS ============ -->
+      <!-- ============ 10 · OUR SAFETY GATE ============ -->
       <div
-        id="s-progress"
+        id="s-gate"
         class="scene clip"
-        data-composition-id="progress"
-        data-cap="No forecast claims in the demo; the analyst always decides."
+        data-composition-id="gate"
+        data-cap="We set our safety gate before testing and stuck to it."
         data-start="100"
         data-duration="10"
-        data-label="10 In progress"
+        data-label="10 Safety gate"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">10</span>What's in progress</div>
-          <h1 class="head" data-anim>Two pieces are in progress and not on main yet</h1>
+          <div class="eyebrow"><span class="num">10</span>Our safety gate</div>
+          <h1 class="head">Gate set before testing. We stuck to it.</h1>
         </div>
-        <div class="abs card" id="wip-a" style="left: 96px; top: 268px; width: 840px; height: 560px; padding: 26px 30px; display: flex; flex-direction: column; gap: 16px">
-          <div><span class="wip">IN PROGRESS · DRAFT, NOT MERGED</span></div>
-          <div style="font-size: 38px; font-weight: 800">Action queue</div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap"><span class="q" style="border-color: #ff5a64">MANEUVER PLANNING</span><span class="q" style="border-color: #ffb547">ANALYST REVIEW</span><span class="q">MONITOR</span></div>
-          <div style="font-size: 25px; line-height: 1.3; color: #dfe7e4">Rules only, reading events.json; it can only raise attention. "Maneuver planning" means start planning, never a decision.</div>
-          <div class="placeholder" style="position: relative; flex: 1">[demo clip: each event sorted into MANEUVER PLANNING · ANALYST REVIEW · MONITOR in the queue · not recorded yet]</div>
+        <div class="abs card" id="gate-a" style="left: 96px; top: 340px; width: 840px; height: 480px; padding: 30px 34px; display: flex; flex-direction: column; gap: 24px">
+          <div class="label">Model v2</div>
+          <div class="pt" style="padding-left: 0; border: 0">Cut false alarms a further <b class="mono">23%</b>.</div>
+          <div class="pt" style="padding-left: 0; border: 0">But showed <b class="mono a">3</b> truly-Elevated CDMs low. Our limit, set before testing: <b class="mono">1</b>.</div>
+          <div><span class="stamp" id="gate-stamp">DIDN'T SHIP</span></div>
+          <div class="note" style="margin-top: auto">Our first model flagged 100% of CDMs; our eval caught it.</div>
         </div>
-        <div class="abs card" id="wip-b" style="left: 984px; top: 268px; width: 840px; height: 560px; padding: 26px 30px; display: flex; flex-direction: column; gap: 16px">
-          <div><span class="wip">IN PROGRESS · DESIGN WRITTEN, NO CODE ON MAIN</span></div>
-          <div style="font-size: 38px; font-weight: 800">Kalent's forecast</div>
-          <div style="font-size: 25px; line-height: 1.3; color: #dfe7e4">Predicts the tier an event will end at, from CDMs 2+ days before closest approach. Design v1.1 in docs/algorithm/algorithm.md.</div>
-          <div class="shot" id="wip-shot" style="position: relative; width: 780px; height: 200px">
-            <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-model.webp" alt="Next 24 hours panel" /></div></div>
-            <svg class="ov"></svg>
-            <div class="tags"></div>
-          </div>
-          <div style="font-size: 24px; line-height: 1.3; color: #c9d3d0">It would fill this panel: empty today, because no test CDM is within 2 days of closest approach (minimum 2.0002 d).</div>
-        </div>
-        <div class="abs" id="wip-gaps" style="left: 96px; top: 856px; width: 1728px; font-size: 25px; line-height: 1.35; color: #a3b1ad">
-          <b style="color: #eef3f1">Also open:</b> Claude-mode copilot not evaluated · no calibrated Pc · no live CDM feed · no longitude, so the Globe shows latitude bands only.
+        <div class="abs card" id="gate-b" style="left: 984px; top: 340px; width: 840px; height: 480px; padding: 30px 34px; display: flex; flex-direction: column; gap: 24px">
+          <div class="label">Why that gate is weak</div>
+          <div class="pt">Under-tier counts on test are noisy.</div>
+          <div class="pt">A stricter gate: under-tier an operator can't see, on train CV.</div>
+          <div class="pt" style="border-left-color: #3fe0a0"><b>Next:</b> v2 at 0.995 halves it on CV. Not shipped.</div>
         </div>
       </div>
 
-      <!-- ============ 11 · USP ============ -->
+      <!-- ============ 11 · IN PROGRESS ============ -->
       <div
-        id="s-usp"
+        id="s-next"
         class="scene clip"
-        data-composition-id="usp"
-        data-cap="Receipts and honest evaluation are how we prove these claims."
+        data-composition-id="next"
+        data-cap="No forecast claims until the forecaster's numbers are on main."
         data-start="110"
         data-duration="10"
-        data-label="11 Why Second Look"
+        data-label="11 In progress"
         data-track-index="1"
       >
         <div class="grid-bg"></div>
         <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">11</span>Why Second Look</div>
-          <h1 class="head" data-anim>Every team here will predict collision risk. <b>Second Look is built so it can never hide a Critical.</b></h1>
+          <div class="eyebrow"><span class="num">11</span>What's in progress</div>
+          <h1 class="head">Next: the final-tier forecaster</h1>
         </div>
-        <div class="card beat" style="left: 96px" id="beat-1">
-          <div class="bt"><span>1</span>BUILT TO REMOVE NOISE, NEVER TO HIDE DANGER</div>
-          <div class="shot" id="usp-shot" style="position: relative; width: 400px; height: 128px; flex: 0 0 128px">
-            <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/dash-baseline.webp" alt="Queue headline, baseline rule" /><img src="assets/ui/dash-model.webp" alt="Queue headline, model" /></div></div>
-            <svg class="ov"></svg>
-            <div class="tags"></div>
-          </div>
-          <div class="bn">1 in 4</div>
-          <div class="bx">flagged events is noise: <b class="mono" id="usp-count">1,090 → 802</b> events in the queue.</div>
-          <div class="bx" style="font-size: 23px">The model may only remove Pc-only over-warnings, so Critical recall is 100% by construction.</div>
-          <div class="bs">An assurance argument, not an accuracy claim.</div>
+        <div class="abs card" id="nx-a" style="left: 96px; top: 340px; width: 840px; height: 460px; padding: 30px 34px; display: flex; flex-direction: column; gap: 20px">
+          <div><span class="wip">IN PROGRESS · OPEN PR</span></div>
+          <div class="sub">Final-tier forecaster</div>
+          <div class="pt" style="padding-left: 0; border: 0">Final tier with a probability, from updates ≥ 2 days out.</div>
+          <div class="pend" style="align-self: flex-start">Critical recall [pending: final-tier forecaster]</div>
+          <div class="pend" style="align-self: flex-start">Confusion matrix [pending: final-tier forecaster]</div>
         </div>
-        <div class="card beat" style="left: 680px" id="beat-2">
-          <div class="bt"><span>2</span>WE FOUND WHERE THE RULEBOOK WASTES FUEL</div>
-          <div class="bn">135 <span style="font-size: 36px; color: #a3b1ad">of 196</span></div>
-          <div class="bx">Critical events are Critical on miss distance alone, not backed by Pc.</div>
-          <div>
-            <div class="tierbar" id="usp-bar" style="height: 40px">
-              <span style="width: 68.9%; background: #ff5a64; opacity: 0.55"></span><span style="width: 22.4%; background: #ff5a64"></span><span style="width: 8.7%; background: #ff8a91"></span>
-            </div>
-            <div class="mono" style="margin-top: 8px; font-size: 19px; color: #c9d3d0">135 miss only · 44 both · 17 Pc only</div>
-          </div>
-          <div class="bs">NASA's handbook: a miss-distance cutoff "would result in a huge number of unnecessary mitigations."</div>
-          <div class="bx" style="font-size: 23px">We show which manoeuvres are Pc-backed; the analyst decides.</div>
+        <div class="abs card" id="nx-b" style="left: 984px; top: 340px; width: 840px; height: 460px; padding: 30px 34px; display: flex; flex-direction: column; gap: 22px">
+          <div><span class="wip">ALSO OPEN</span></div>
+          <div class="pt">Review page: in an open PR</div>
+          <div class="pt">Stricter v2: CV only, not shipped</div>
+          <div class="pt">The 99% is a recall target, not a guarantee</div>
         </div>
-        <div class="card beat" style="left: 1264px" id="beat-3">
-          <div class="bt"><span>3</span>WE REJECTED OUR OWN BETTER MODEL</div>
-          <div class="bn">v2</div>
-          <div class="bx">Cut false alarms by a further <b class="mono">23%</b>.</div>
-          <div class="bx">But our gate caught it tiering <b class="mono a">3</b> CDMs too low, against a limit of <b class="mono">1</b>.</div>
-          <div><span class="stamp" id="usp-stamp" style="font-size: 34px">DIDN'T SHIP</span></div>
-          <div class="src" style="margin-top: auto; line-height: 1.4">SOURCES · data/demo/events.json summary · docs/algorithm/algorithm.md §2.2 · README.md</div>
+        <div class="abs pt" id="nx-gaps" style="left: 96px; top: 860px; width: 1728px; color: #a3b1ad; border-left-color: #6f7d79">
+          <b style="color: #eef3f1">Not solved yet:</b> calibrated Pc · live CDM feed · orbit propagation · the final 2 days
         </div>
       </div>
 
@@ -1326,25 +1338,26 @@
         data-label="Close"
         data-track-index="1"
       >
-        <div class="grid-bg"></div>
-        <div class="pad">
-          <div class="eyebrow" data-anim><span class="num">12</span>Second Look</div>
-          <h1 class="head" data-anim>Rules decide. The model only trims false alarms. Claude only words. The analyst decides.</h1>
+        <div class="shot" id="close-shot" style="left: 0px; top: 0px; width: 1000px; height: 1080px">
+          <div class="view" style="border: 0; border-radius: 0; box-shadow: none"><div class="cam" data-layout-allow-overflow><img src="assets/ui/hz-globe.webp" alt="Horizon view, pulled back to the globe" /></div></div>
+          <svg class="ov"></svg>
+          <div class="tags"></div>
         </div>
-        <div class="cake-slot" data-cur="0" data-scale="0.66" data-top="360"></div>
-        <div class="right" id="close-right">
+        <div class="abs" style="left: 0; top: 0; width: 1920px; height: 1080px; background: linear-gradient(90deg, rgba(7, 9, 11, 0) 0%, rgba(7, 9, 11, 0.2) 36%, rgba(7, 9, 11, 0.96) 52%, rgba(7, 9, 11, 0.98) 100%)"></div>
+        <div class="right" id="close-right" style="left: 1000px; top: 190px; width: 824px">
           <div class="t1">SECOND LOOK</div>
-          <div class="t2">conjunction triage</div>
-          <div class="t3">Run it: uv run uvicorn server:app<br />Interfaces: docs/CONTRACT.md · Method: docs/ALGO.md</div>
+          <div class="t2" style="font-size: 44px">preserves every rule-defined Critical</div>
+          <div class="t3" style="font-family: 'Archivo', system-ui, sans-serif; font-size: 34px; line-height: 1.45; color: #eef3f1">Rules decide every tier.<br />The model only removes over-warnings.<br />Claude only writes explanations.<br />The analyst decides.</div>
           <div class="t4">Thank you.</div>
         </div>
+        <div class="honest" id="close-honest" style="left: 96px; top: 880px"><div class="hc">SIMULATED ORBITS, NOT DATA</div></div>
       </div>
     </div>
-    <div id="scan"></div>
+    <div id="veil"></div>
 
     <!-- Slide timing: written by tools/build.py (live deck: 10 s scenes). -->
     <script id="stack-timing">
-      window.STACK_TIMING = /*TIMING*/{"total": 130, "scenes": [["s-cover", 0, 10, 0], ["s-problem", 10, 10, 0], ["s-stack", 20, 10, 0], ["s-data", 30, 10, 0], ["s-pipe", 40, 10, 0], ["s-files", 50, 10, 0], ["s-live", 60, 10, 0], ["s-click", 70, 10, 0], ["s-claude", 80, 10, 0], ["s-proof", 90, 10, 0], ["s-progress", 100, 10, 0], ["s-usp", 110, 10, 0], ["s-close", 120, 10, 0]]}/*END*/;
+      window.STACK_TIMING = /*TIMING*/{"total": 130, "scenes": [["s-cover", 0, 10, 0], ["s-problem", 10, 10, 0], ["s-usp", 20, 10, 0], ["s-stack", 30, 10, 0], ["s-pipe", 40, 10, 0], ["s-task", 50, 10, 0], ["s-record", 60, 10, 0], ["s-live", 70, 10, 0], ["s-eval", 80, 10, 0], ["s-fail", 90, 10, 0], ["s-gate", 100, 10, 0], ["s-next", 110, 10, 0], ["s-close", 120, 10, 0]]}/*END*/;
     </script>
     <script>
       (function () {
@@ -1360,7 +1373,7 @@
           var el = document.getElementById(sc[0]);
           var bar = document.createElement("div");
           bar.className = "hud-bar";
-          bar.innerHTML = '<span class="brand"><b>SECOND LOOK</b> · CONJUNCTION TRIAGE STACK</span>' +
+          bar.innerHTML = '<span class="brand"><b>SECOND LOOK</b> · CONJUNCTION TRIAGE</span>' +
             '<span class="sceneno">SCENE <b>' + two(k + 1) + "</b>/" + two(N) + "</span>";
           el.appendChild(bar);
           var cap = el.getAttribute("data-cap");
@@ -1372,62 +1385,46 @@
           }
         });
 
-        // The layer cake from the stack slide, cloned into each layer slide (same place, same size),
-        // so each layer slide opens on the whole stack and zooms it down into a "you are here" rail.
-        var cakeSrc = document.getElementById("cake-src");
-        $$(".cake-slot").forEach(function (slot) {
-          var c = cakeSrc.cloneNode(true);
-          c.removeAttribute("id");
-          c.classList.add("cake-copy");
-          var cur = slot.getAttribute("data-cur");
-          if (cur === "4") { $$('.band[data-l="4"], .band[data-l="5"]', c).forEach(function (b) { b.classList.add("cur"); }); }
-          else if (cur !== "0") { var b = $('.band[data-l="' + cur + '"]', c); if (b) b.classList.add("cur"); }
-          slot.parentNode.replaceChild(c, slot);
-          c.dataset.cur = cur;
-          if (slot.dataset.top) c.style.top = slot.dataset.top + "px";
-          if (slot.dataset.scale) c.dataset.scale = slot.dataset.scale;
+        // The live audit's 11 checks (frozen from GET /api/audit by tools/capture-ui.mjs: assets/ui/audit.json).
+        var CHECKS = [
+          ["events_complete", 2167], ["tiers_well_formed", 2167], ["critical_by_rule_stays_critical", 196],
+          ["not_below_miss_rule", 2167], ["unusable_uncertainty_not_demoted", 63], ["demotions_below_threshold", 288],
+          ["threshold_matches_model", 441], ["model_only_demotes", 2167], ["certificates_consistent", 2167],
+          ["latest_matches_history", 2167], ["every_cdm_respects_rule_floor", 24484],
+        ];
+        var box = document.getElementById("live-checks");
+        CHECKS.forEach(function (c) {
+          var row = document.createElement("div");
+          row.className = "chk";
+          row.innerHTML = '<span class="ok">✓</span><span>' + c[0] + '</span><span class="c">' + c[1].toLocaleString("en") + "</span>";
+          box.appendChild(row);
         });
 
         // ---- UI capture frames: a camera over a 1920x1080 screenshot, rings and callouts on top ----
         // Rectangles are CSS px in the screenshot, from tools/capture-ui.mjs (assets/ui/rects.json).
         var R = {
           whole: { x: 0, y: 0, w: 1920, h: 1080 },
-          header: { x: 316, y: 86, w: 780, h: 72 },
-          seg: { x: 324, y: 113, w: 194, h: 33 },
-          head1090: { x: 538, y: 93, w: 214, h: 57 },
-          head802: { x: 538, y: 93, w: 166, h: 57 },
-          headPair: { x: 534, y: 92, w: 230, h: 58 },
-          funnelCloud: { x: 1150, y: 200, w: 96, h: 680 },
-          queueTop: { x: 10, y: 200, w: 285, h: 260 },
-          row1: { x: 24, y: 245, w: 251, h: 52 },
-          stampArea: { x: 16, y: 50, w: 280, h: 260 },
-          stamp: { x: 24, y: 109, w: 251, h: 35 },
-          detailTop: { x: 1600, y: 52, w: 300, h: 345 },
-          heroGauges: { x: 1605, y: 84, w: 291, h: 185 },
-          why: { x: 1605, y: 285, w: 291, h: 108 },
-          caution: { x: 1603, y: 309, w: 230, h: 20 },
-          explain: { x: 1605, y: 409, w: 291, h: 274 },
-          explainSrc: { x: 1603, y: 636, w: 245, h: 18 },
-          detailAll: { x: 1600, y: 52, w: 300, h: 640 },
-          next24: { x: 1600, y: 744, w: 300, h: 43 },
-          rightRail: { x: 1595, y: 600, w: 310, h: 240 },
-          enc3d: { x: 640, y: 310, w: 600, h: 420 },
-          encSphere: { x: 830, y: 380, w: 220, h: 220 },
-          encStats: { x: 324, y: 137, w: 1232, h: 140 },
-          evTable: { x: 320, y: 270, w: 990, h: 245 },
-          evMissRow: { x: 328, y: 349, w: 972, h: 52 },
-          evModelRow: { x: 328, y: 453, w: 972, h: 52 },
-          cmpChart: { x: 320, y: 140, w: 1240, h: 600 },
-          cmpPoint: { x: 928, y: 514, w: 56, h: 50 },
-          cmpChip: { x: 430, y: 690, w: 132, h: 28 },
-          chatTop: { x: 525, y: 120, w: 480, h: 90 },
-          chatFallback: { x: 528, y: 128, w: 430, h: 30 },
-          chatTool: { x: 528, y: 166, w: 432, h: 30 },
-          chatAnswer: { x: 525, y: 312, w: 700, h: 170 },
-          chatAnsLine: { x: 528, y: 316, w: 850, h: 22 },
-          chatFocus: { x: 528, y: 493, w: 252, h: 30 },
-          chatFocusArea: { x: 525, y: 300, w: 700, h: 240 },
-          globe: { x: 590, y: 110, w: 900, h: 900 },
+          seg: { x: 324, y: 105, w: 194, h: 33 },
+          head1090: { x: 1021, y: 93, w: 205, h: 57 },
+          head802: { x: 1041, y: 93, w: 190, h: 57 },
+          critKept: { x: 1240, y: 93, w: 316, h: 57 },
+          headPair: { x: 1021, y: 92, w: 540, h: 58 },
+          hzObj482: { x: 1520, y: 308, w: 90, h: 90 },
+          hzCall482: { x: 1102, y: 114, w: 420, h: 196 },
+          hzTrace: { x: 1104, y: 196, w: 416, h: 104 },
+          hzAllowed: { x: 1110, y: 245, w: 405, h: 20 },
+          hzGuard: { x: 1110, y: 280, w: 405, h: 20 },
+          dpChip: { x: 1204, y: 136, w: 188, h: 18 },
+          dpLine: { x: 1290, y: 175, w: 16, h: 820 },
+          dpRight: { x: 1310, y: 190, w: 470, h: 470 },
+          rvRule: { x: 468, y: 362, w: 720, h: 26 },
+          rvElig: { x: 468, y: 393, w: 720, h: 26 },
+          rvScore: { x: 468, y: 425, w: 720, h: 26 },
+          rvDec: { x: 468, y: 458, w: 720, h: 26 },
+          rvEligB: { x: 468, y: 388, w: 720, h: 26 },
+          rvDecB: { x: 468, y: 455, w: 720, h: 26 },
+          cmpChart: { x: 320, y: 200, w: 1170, h: 420 },
+          cmpPoint: { x: 925, y: 512, w: 60, h: 56 },
         };
         function Shot(id) {
           var el = document.getElementById(id);
@@ -1451,352 +1448,306 @@
         }
         function camCover(sh) { return camAt(sh, R.whole, Math.max(sh.FW / 1920, sh.FH / 1080)); }
         function scr(c, r) { return { x: c.x + r.x * c.scale, y: c.y + r.y * c.scale, w: r.w * c.scale, h: r.h * c.scale }; }
-        function ring(sh, c, r, color, pad) {
+        function ring(sh, c, r, color, pad, round) {
           pad = pad == null ? 8 : pad;
           var b = scr(c, r);
           var el = document.createElementNS(NS, "rect");
-          var at = { x: b.x - pad, y: b.y - pad, width: b.w + 2 * pad, height: b.h + 2 * pad, rx: 8, fill: "none",
+          var at = { x: b.x - pad, y: b.y - pad, width: b.w + 2 * pad, height: b.h + 2 * pad, rx: round ? (b.w + 2 * pad) / 2 : 8, fill: "none",
             stroke: color || "#3fe0a0", "stroke-width": 4, pathLength: 1, "stroke-dasharray": "1 1", "stroke-dashoffset": 1 };
           for (var k in at) el.setAttribute(k, at[k]);
           sh.svg.appendChild(el);
           return el;
         }
-        // side: b (below), t (above), r (right), l (left) of the ring, in frame coordinates.
+        // side: b (below), t (above), r (right), l (left) of the ring, in frame coordinates; kept inside the frame.
         function tag(sh, c, r, html, side, color, width) {
-          var b = scr(c, r), g = 18;
+          var b = scr(c, r), g = 18, w = width || 440;
           var d = document.createElement("div");
           d.className = "callout";
           d.innerHTML = html;
           if (color) d.style.borderColor = color;
-          if (width) d.style.maxWidth = width + "px";
-          if (side === "b") { d.style.left = Math.max(8, b.x - 8) + "px"; d.style.top = b.y + b.h + g + "px"; }
-          else if (side === "t") { d.style.left = Math.max(8, b.x - 8) + "px"; d.style.bottom = sh.FH - b.y + g + "px"; }
-          else if (side === "r") { d.style.left = b.x + b.w + g + "px"; d.style.top = Math.max(8, b.y - 6) + "px"; }
-          else { d.style.right = sh.FW - b.x + g + "px"; d.style.top = Math.max(8, b.y - 6) + "px"; }
+          d.style.maxWidth = w + "px";
+          var lx = Math.max(12, Math.min(b.x - 8, sh.FW - w - 12));
+          if (side === "b") { d.style.left = lx + "px"; d.style.top = b.y + b.h + g + "px"; }
+          else if (side === "t") { d.style.left = lx + "px"; d.style.bottom = sh.FH - b.y + g + "px"; }
+          else if (side === "r") { d.style.left = b.x + b.w + g + "px"; d.style.top = Math.max(12, b.y - 6) + "px"; }
+          else { d.style.right = sh.FW - b.x + g + "px"; d.style.top = Math.max(12, b.y - 6) + "px"; }
           sh.tags.appendChild(d);
           return d;
         }
 
-        // ---- motion vocabulary (one idea at a time; every tween deterministic and seek-safe) ----
+        // ---- motion vocabulary: calm and consistent. Short drifts with ease-out, gentle staggers, rings that draw
+        // on, slow eased camera moves, cross-fades. No back, elastic or bounce eases. Deterministic and seek-safe.
+        var EASE = "power2.out";
         function M(tl, k) {
           return {
-            rise: function (els, t, st) { return tl.fromTo(els, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.55 * k, ease: "power3.out", stagger: (st || 0) * k }, t); },
-            fade: function (els, t, d, st) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: (d || 0.5) * k, ease: "none", stagger: (st || 0) * k }, t); },
-            left: function (els, t, st) { return tl.fromTo(els, { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.6 * k, ease: "power3.out", stagger: (st || 0) * k }, t); },
-            right: function (els, t, st) { return tl.fromTo(els, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.5 * k, ease: "power3.out", stagger: (st || 0) * k }, t); },
-            pop: function (els, t) { return tl.fromTo(els, { opacity: 0, scale: 0.82 }, { opacity: 1, scale: 1, duration: 0.45 * k, ease: "back.out(2.2)" }, t); },
-            drop: function (els, t) { return tl.fromTo(els, { opacity: 0, y: -40 }, { opacity: 1, y: 0, duration: 0.5 * k, ease: "bounce.out" }, t); },
-            draw: function (els, t, d, st) { return tl.fromTo(els, { opacity: 1, attr: { "stroke-dashoffset": 1 } }, { opacity: 1, attr: { "stroke-dashoffset": 0 }, duration: (d || 0.55) * k, ease: "power2.inOut", stagger: (st || 0) * k }, t); },
-            out: function (els, t) { return tl.to(els, { opacity: 0, duration: 0.3 * k, ease: "none" }, t); },
-            cam: function (sh, c, t, d) { return tl.to(sh.cam, { x: c.x, y: c.y, scale: c.scale, duration: (d || 1.2) * k, ease: "power2.inOut" }, t); },
-            camFrom: function (sh, c0, c1, t, d) { return tl.fromTo(sh.cam, { x: c0.x, y: c0.y, scale: c0.scale }, { x: c1.x, y: c1.y, scale: c1.scale, duration: (d || 1.2) * k, ease: "power2.inOut" }, t); },
-            xfade: function (img, t, d) { return tl.fromTo(img, { opacity: 0 }, { opacity: 1, duration: (d || 0.9) * k, ease: "power1.inOut" }, t); },
+            rise: function (els, t, st) { return tl.fromTo(els, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6 * k, ease: EASE, stagger: (st == null ? 0.18 : st) * k }, t); },
+            fade: function (els, t, d, st) { return tl.fromTo(els, { opacity: 0 }, { opacity: 1, duration: (d || 0.6) * k, ease: "sine.inOut", stagger: (st || 0) * k }, t); },
+            right: function (els, t, st) { return tl.fromTo(els, { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.6 * k, ease: EASE, stagger: (st == null ? 0.18 : st) * k }, t); },
+            soft: function (els, t) { return tl.fromTo(els, { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.6 * k, ease: EASE }, t); },
+            draw: function (els, t, d, st) { return tl.fromTo(els, { opacity: 1, attr: { "stroke-dashoffset": 1 } }, { opacity: 1, attr: { "stroke-dashoffset": 0 }, duration: (d || 0.7) * k, ease: "power2.inOut", stagger: (st || 0) * k }, t); },
+            out: function (els, t) { return tl.to(els, { opacity: 0, duration: 0.5 * k, ease: "sine.inOut" }, t); },
+            cam: function (sh, c, t, d) { return tl.to(sh.cam, { x: c.x, y: c.y, scale: c.scale, duration: (d || 1.6) * k, ease: "sine.inOut" }, t); },
+            camFrom: function (sh, c0, c1, t, d) { return tl.fromTo(sh.cam, { x: c0.x, y: c0.y, scale: c0.scale }, { x: c1.x, y: c1.y, scale: c1.scale, duration: (d || 1.6) * k, ease: "sine.inOut" }, t); },
+            xfade: function (img, t, d) { return tl.fromTo(img, { opacity: 0 }, { opacity: 1, duration: (d || 0.9) * k, ease: "sine.inOut" }, t); },
             hide: function (els, t) { return tl.fromTo(els, { opacity: 0 }, { opacity: 0, duration: 0.01 }, t); },
             count: function (el, a, b, t, d, fmt) {
               var o = { v: a };
-              return tl.fromTo(o, { v: a }, { v: b, duration: (d || 1) * k, ease: "power2.out", onUpdate: function () { el.textContent = fmt(o.v); } }, t);
+              return tl.fromTo(o, { v: a }, { v: b, duration: (d || 1) * k, ease: EASE, onUpdate: function () { el.textContent = fmt(o.v); } }, t);
             },
-            stamp: function (el, rot, t) { return tl.fromTo(el, { opacity: 0, scale: 1.7, rotation: rot }, { opacity: 1, scale: 1, rotation: rot, duration: 0.4 * k, ease: "power4.in" }, t); },
+            stamp: function (el, rot, t) { return tl.fromTo(el, { opacity: 0, scale: 1.08, rotation: rot }, { opacity: 1, scale: 1, rotation: rot, duration: 0.6 * k, ease: EASE }, t); },
+            grow: function (els, t, d) { return tl.fromTo(els, { scaleX: 0 }, { scaleX: 1, transformOrigin: "0 50%", duration: (d || 0.9) * k, ease: EASE }, t); },
           };
         }
         var en = function (v) { return Math.round(v).toLocaleString("en"); };
+        function head(m, id, t) { m.fade($$("#" + id + " .eyebrow, #" + id + " h1.head"), t, 0.6, 0.15); }
 
         // Each build(tl, t0, k) adds one scene's reveals at t0. LEN is the live length in seconds; the deck
         // timeline squeezes builds into the first 4.6 s so the slideshow's rest frame (scene midpoint)
         // shows the finished slide.
         var B = {}, LEN = {};
 
-        // Cover
+        // Cover: the Horizon view as a flipbook (four real captures, cross-faded) under one slow push-in.
         var cover = Shot("cover-shot");
-        var coverC0 = camFit(cover, R.globe, 0), coverC1 = camAt(cover, R.globe, coverC0.scale * 1.07);
-        LEN["s-cover"] = 4.5;
+        var coverC0 = camAt(cover, R.whole, 1), coverC1 = camAt(cover, { x: 1150, y: 230, w: 500, h: 300 }, 1.1);
+        var coverRingObj = ring(cover, coverC1, R.hzObj482, "#ff5a64", 6, true);
+        var coverRingTrace = ring(cover, coverC1, R.hzTrace, "#3fe0a0", 6);
+        var coverTag = tag(cover, coverC1, R.hzObj482, "backend trace, from the decision's certificate", "b", null, 400);
+        LEN["s-cover"] = 8.4;
         B["s-cover"] = function (tl, t, k) {
           var m = M(tl, k);
-          m.camFrom(cover, coverC0, coverC1, t, 9);
+          m.hide(cover.imgs.slice(1), t);
+          m.camFrom(cover, coverC0, coverC1, t, 6.4);
+          m.xfade(cover.imgs[1], t + 1.4 * k, 1.0);
+          m.xfade(cover.imgs[2], t + 2.9 * k, 1.0);
+          m.xfade(cover.imgs[3], t + 4.4 * k, 1.0);
           m.fade($("#s-cover .eyebrow"), t + 0.1 * k);
-          m.rise($("#s-cover .t1"), t + 0.3 * k);
-          m.rise($("#s-cover .t2"), t + 0.75 * k);
-          m.rise($("#s-cover .hook"), t + 1.4 * k);
-          m.rise($$("#cover-chips .chip"), t + 2.4 * k, 0.15);
-          m.fade($("#s-cover .team"), t + 3.6 * k);
+          m.rise($$("#s-cover .t1, #s-cover .t2"), t + 0.3 * k, 0.25);
+          m.rise($("#s-cover .hook"), t + 1.3 * k);
+          m.fade($("#s-cover .team"), t + 2.2 * k);
+          m.rise($("#cover-honest"), t + 2.8 * k);
+          m.draw(coverRingObj, t + 6.5 * k);
+          m.draw(coverRingTrace, t + 6.9 * k);
+          m.rise(coverTag, t + 7.3 * k);
         };
 
         // Problem
         var pb = Shot("pb-shot");
-        var pbW = camCover(pb), pbH = camFit(pb, R.header, 24, 1.6);
+        var pbW = camCover(pb), pbH = camFit(pb, R.headPair, 60, 1.8);
         var pbRing = ring(pb, pbH, R.head1090, "#ffb547");
-        var pbTag = tag(pb, pbH, R.head1090, "today: <b>1,090</b> events in the analyst's queue", "b", "#ffb547");
+        var pbTag = tag(pb, pbH, R.head1090, "today: <b>1,090</b> events in the queue", "b", "#ffb547", 420);
         LEN["s-problem"] = 7;
         B["s-problem"] = function (tl, t, k) {
           var m = M(tl, k), big = $("#pb-big");
-          m.fade($$("#s-problem .eyebrow, #s-problem h1.head"), t);
-          m.rise($("#pb-user"), t + 0.3 * k);
-          m.fade(big, t + 1.0 * k, 0.3);
+          head(m, "s-problem", t);
+          m.rise($("#pb-user"), t + 0.4 * k);
+          m.fade(big, t + 1.0 * k, 0.4);
           m.count(big, 0, 54.2, t + 1.0 * k, 1.4, function (v) { return v.toFixed(1) + "%"; });
           m.rise($("#pb-of"), t + 1.6 * k);
-          m.fade(pb.el, t + 2.2 * k, 0.5);
+          m.fade(pb.el, t + 2.0 * k);
           tl.set(pb.cam, { x: pbW.x, y: pbW.y, scale: pbW.scale, immediateRender: true }, t);
-          m.rise($("#pb-false"), t + 3.0 * k);
-          m.cam(pb, pbH, t + 3.4 * k, 1.3);
-          m.draw(pbRing, t + 4.8 * k);
-          m.rise(pbTag, t + 5.2 * k);
-          m.fade($("#s-problem .src"), t + 5.6 * k);
-        };
-
-        // Stack
-        LEN["s-stack"] = 7;
-        B["s-stack"] = function (tl, t, k) {
-          var m = M(tl, k);
-          m.fade($$("#s-stack .eyebrow, #s-stack h1.head"), t);
-          [1, 2, 3, 4, 5].forEach(function (l, i) { m.rise($('#cake-src .band[data-l="' + l + '"]'), t + (0.4 + i * 0.55) * k); });
-          m.draw($("#cake-src .freeze line"), t + 3.4 * k, 0.8);
-          m.fade($("#cake-src .freeze-l"), t + 3.8 * k);
-          m.left($("#stack-claude"), t + 4.4 * k);
-          m.fade($("#stack-conn"), t + 5.0 * k);
-          m.fade($("#cake-src .tool"), t + 5.5 * k);
-          m.rise($("#stack-thumb"), t + 6.1 * k);
-        };
-
-        // Shared opening for layer slides: the whole stack shrinks into the rail; other layers dim.
-        function railIn(tl, sceneSel, t, k) {
-          var m = M(tl, k), cake = $(sceneSel + " .cake-copy");
-          m.fade($$(sceneSel + " .eyebrow, " + sceneSel + " h1.head"), t);
-          tl.fromTo(cake, { scale: 1, x: 0, y: 0 }, { scale: 0.34, x: 0, y: 0, duration: 1.0 * k, ease: "power3.inOut" }, t + 0.2 * k);
-          tl.fromTo($$(".band:not(.cur), .tool, .freeze, .freeze-l", cake), { opacity: 1 }, { opacity: 0.3, duration: 0.5 * k }, t + 0.8 * k);
-          m.fade($(sceneSel + " .rail-l"), t + 1.1 * k);
-        }
-
-        // Layer 1 Data
-        var dsh = Shot("data-shot");
-        var dW = camCover(dsh), dZ = camFit(dsh, R.stampArea, 10, 2.2);
-        var dRing = ring(dsh, dZ, R.stamp), dTag = tag(dsh, dZ, R.stamp, "on screen: the 2,167 test events", "b");
-        LEN["s-data"] = 7.4;
-        B["s-data"] = function (tl, t, k) {
-          var m = M(tl, k);
-          railIn(tl, "#s-data", t, k);
-          m.fade($("#s-data .label"), t + 1.0 * k);
-          m.rise($$("#data-in .col"), t + 1.2 * k, 0.07);
-          m.fade($("#s-data .abs.g"), t + 2.2 * k);
-          m.rise($$("#data-other .col:not(.key)"), t + 2.6 * k, 0.2);
-          m.drop($("#data-key"), t + 3.3 * k);
-          m.rise($$("#s-data .col-l .pt"), t + 3.9 * k, 0.25);
-          m.rise($("#data-classes"), t + 4.8 * k);
-          m.fade(dsh.el, t + 5.4 * k);
-          tl.set(dsh.cam, { x: dW.x, y: dW.y, scale: dW.scale, immediateRender: true }, t);
-          m.cam(dsh, dZ, t + 5.6 * k, 1.0);
-          m.draw(dRing, t + 6.6 * k);
-          m.rise(dTag, t + 6.9 * k);
-        };
-
-        // Layer 2 Pipeline: baseline rule -> model, on the real dashboard
-        var ps = Shot("pipe-shot");
-        var pW = camCover(ps), pH = camFit(ps, R.header, 30, 1.7);
-        var pRingSeg = ring(ps, pW, R.seg), pTagSeg = tag(ps, pW, R.seg, "Baseline rule: today's status quo", "b");
-        var pRing1090 = ring(ps, pH, R.head1090, "#ffb547"), pRing802 = ring(ps, pH, R.head802);
-        var pTag802 = tag(ps, pH, R.head802, "Model on: <b>802</b> events, 288 fewer · Critical kept: 196", "b");
-        var pRingCloud = ring(ps, pW, R.funnelCloud, "#a3b1ad", 6);
-        var pTagCloud = tag(ps, pW, R.funnelCloud, "demoted dots fade from amber to grey", "l", "#a3b1ad");
-        LEN["s-pipe"] = 9;
-        B["s-pipe"] = function (tl, t, k) {
-          var m = M(tl, k);
-          railIn(tl, "#s-pipe", t, k);
-          tl.set(ps.cam, { x: pW.x, y: pW.y, scale: pW.scale, immediateRender: true }, t);
-          m.hide(ps.imgs[1], t);
-          m.fade(ps.el, t + 0.8 * k);
-          m.rise($$("#s-pipe .col-l .pt:not(#pipe-lock)"), t + 1.4 * k, 0.6);
-          m.draw(pRingSeg, t + 1.6 * k);
-          m.rise(pTagSeg, t + 1.9 * k);
-          m.out([pRingSeg, pTagSeg], t + 3.0 * k);
-          m.cam(ps, pH, t + 3.0 * k, 1.1);
-          m.draw(pRing1090, t + 4.1 * k);
-          m.xfade(ps.imgs[1], t + 4.9 * k, 0.9);
-          m.out(pRing1090, t + 5.2 * k);
-          m.draw(pRing802, t + 5.8 * k);
-          m.rise(pTag802, t + 6.1 * k);
-          m.pop($("#pipe-lock"), t + 6.6 * k);
-          m.out([pRing802, pTag802], t + 7.4 * k);
-          m.cam(ps, pW, t + 7.4 * k, 1.0);
-          m.draw(pRingCloud, t + 8.4 * k);
-          m.rise(pTagCloud, t + 8.6 * k);
-        };
-
-        // Layer 3 Files: the file says it, the screen shows it
-        var fs = Shot("files-shot");
-        var fZ = camFit(fs, R.detailTop, 12);
-        var fRingHero = ring(fs, fZ, { x: 1605, y: 84, w: 291, h: 56 }), fTagHero = tag(fs, fZ, { x: 1605, y: 84, w: 291, h: 56 }, "tier_name", "l");
-        var fRingWhy = ring(fs, fZ, { x: 1605, y: 336, w: 291, h: 58 }), fTagWhy = tag(fs, fZ, { x: 1605, y: 358, w: 291, h: 36 }, "reasons", "l");
-        var fRingCau = ring(fs, fZ, R.caution, "#ffb547", 6), fTagCau = tag(fs, fZ, { x: 1603, y: 296, w: 230, h: 20 }, "cautions", "l", "#ffb547");
-        LEN["s-files"] = 8;
-        B["s-files"] = function (tl, t, k) {
-          var m = M(tl, k);
-          railIn(tl, "#s-files", t, k);
-          m.rise($$("#s-files .tile"), t + 1.1 * k, 0.35);
-          m.pop($("#files-freeze"), t + 2.7 * k);
-          m.fade($("#files-freeze-l"), t + 3.1 * k);
-          m.rise($$("#s-files .col-l .pt"), t + 2.5 * k, 0.4);
-          m.rise($("#files-json"), t + 3.8 * k);
-          m.fade($("#files-arrow"), t + 4.4 * k);
-          m.fade(fs.el, t + 4.6 * k);
-          tl.set(fs.cam, { x: fZ.x, y: fZ.y, scale: fZ.scale, immediateRender: true }, t);
-          m.draw(fRingHero, t + 5.3 * k); m.rise(fTagHero, t + 5.5 * k);
-          m.draw(fRingWhy, t + 6.2 * k); m.rise(fTagWhy, t + 6.4 * k);
-          m.draw(fRingCau, t + 7.1 * k); m.rise(fTagCau, t + 7.3 * k);
-        };
-
-        // Layers 4-5: a dashboard tour served by the routes
-        var ls = Shot("live-shot");
-        var lW = camCover(ls), lQ = camFit(ls, R.queueTop, 20, 2.1), lD = camFit(ls, R.detailTop, 20, 2.0), l3 = camFit(ls, R.enc3d, 30, 1.9);
-        var lRingRow = ring(ls, lQ, R.row1), lTagRow = tag(ls, lQ, R.row1, "ranked queue · GET /api/events", "r");
-        var lRingHero = ring(ls, lD, R.heroGauges), lTagHero = tag(ls, lD, R.heroGauges, "GET /api/events/482<br>tier · Pc gauge · miss gauge", "l");
-        var lRingWhy = ring(ls, lD, R.why), lTagWhy = tag(ls, lD, R.why, "why: the rules that fired", "l");
-        var lRing3d = ring(ls, l3, R.encSphere, "#5ea9ff", 4), lTag3d = tag(ls, l3, R.encSphere, "3D Encounter: positions to scale, object icons enlarged", "r", "#5ea9ff", 420);
-        LEN["s-live"] = 9;
-        B["s-live"] = function (tl, t, k) {
-          var m = M(tl, k);
-          railIn(tl, "#s-live", t, k);
-          tl.set(ls.cam, { x: lW.x, y: lW.y, scale: lW.scale, immediateRender: true }, t);
-          m.hide(ls.imgs[1], t);
-          m.fade(ls.el, t + 0.8 * k);
-          m.right($$("#live-routes > *"), t + 1.2 * k, 0.18);
-          m.cam(ls, lQ, t + 1.8 * k, 1.1);
-          m.draw(lRingRow, t + 2.9 * k); m.rise(lTagRow, t + 3.1 * k);
-          m.out([lRingRow, lTagRow], t + 4.0 * k);
-          m.cam(ls, lD, t + 4.0 * k, 1.2);
-          m.draw(lRingHero, t + 5.2 * k); m.rise(lTagHero, t + 5.4 * k);
-          m.draw(lRingWhy, t + 5.9 * k); m.rise(lTagWhy, t + 6.1 * k);
-          m.out([lRingHero, lTagHero, lRingWhy, lTagWhy], t + 6.8 * k);
-          m.xfade(ls.imgs[1], t + 6.8 * k, 0.7);
-          m.cam(ls, l3, t + 6.9 * k, 1.1);
-          m.draw(lRing3d, t + 8.1 * k); m.rise(lTag3d, t + 8.3 * k);
-        };
-
-        // One click: the sequence diagram builds in data-flow order; the inset follows on screen
-        var cs = Shot("click-shot");
-        var cQ = camFit(cs, R.queueTop, 10, 2.3), cD = camFit(cs, R.detailTop, 10), cE = camFit(cs, R.explain, 14);
-        var cRingRow = ring(cs, cQ, R.row1), cRingHero = ring(cs, cD, R.heroGauges), cRingWhy = ring(cs, cD, R.why);
-        var cRingSrc = ring(cs, cE, R.explainSrc, "#b58cff", 6);
-        var cTagSrc = tag(cs, cE, R.explainSrc, "no key in this capture: the template wrote it", "t", "#b58cff", 420);
-        LEN["s-click"] = 8.6;
-        B["s-click"] = function (tl, t, k) {
-          var m = M(tl, k), step = function (s) { return $('#click-svg .cs[data-s="' + s + '"]'); };
-          m.fade($$("#s-click .eyebrow, #s-click h1.head"), t);
-          m.fade($("#lanes"), t + 0.3 * k);
-          m.fade(cs.el, t + 0.5 * k);
-          tl.set(cs.cam, { x: cQ.x, y: cQ.y, scale: cQ.scale, immediateRender: true }, t);
-          m.fade(step(1), t + 1.0 * k); m.draw(cRingRow, t + 1.1 * k);
-          m.fade(step(2), t + 2.0 * k, 0.2); m.draw($$(".ca", step(2)), t + 2.0 * k);
-          m.fade(step(3), t + 3.0 * k, 0.2); m.draw($$(".ca", step(3)), t + 3.0 * k, 0.5, 0.5);
-          m.out(cRingRow, t + 4.2 * k);
-          m.fade(step(4), t + 4.3 * k, 0.2); m.draw($$(".ca", step(4)), t + 4.3 * k);
-          m.cam(cs, cD, t + 4.4 * k, 1.0);
-          m.draw([cRingHero, cRingWhy], t + 5.3 * k, 0.55, 0.3);
-          m.out([cRingHero, cRingWhy], t + 6.3 * k);
-          m.fade(step(5), t + 6.3 * k, 0.2); m.draw($$(".ca", step(5)), t + 6.3 * k, 0.5, 0.55);
-          m.cam(cs, cE, t + 6.5 * k, 1.0);
-          m.draw(cRingSrc, t + 7.7 * k); m.rise(cTagSrc, t + 7.9 * k);
-        };
-
-        // Claude: the copilot answering from read-only tools (fallback, no key)
-        var qs = Shot("cl-shot");
-        var qW = camFit(qs, { x: 520, y: 60, w: 880, h: 500 }, 10), qT = camFit(qs, R.chatTop, 14, 1.8), qA = camFit(qs, R.chatFocusArea, 14, 1.6);
-        var qRingFb = ring(qs, qT, R.chatFallback, "#b58cff", 4), qTagFb = tag(qs, qT, R.chatFallback, "no key: the local fallback answered", "t", "#b58cff", 520);
-        var qRingTool = ring(qs, qT, R.chatTool, "#3fe0a0", 4), qTagTool = tag(qs, qT, R.chatTool, "a read-only tool call", "b", null, 520);
-        var qRingAns = ring(qs, qA, { x: 528, y: 316, w: 690, h: 22 }, "#3fe0a0", 4), qTagAns = tag(qs, qA, { x: 528, y: 316, w: 690, h: 22 }, "every number comes from the tool's result", "t");
-        var qRingFoc = ring(qs, qA, R.chatFocus, "#3fe0a0", 4), qTagFoc = tag(qs, qA, R.chatFocus, "flies the dashboard to EVT 482", "r", null, 340);
-        LEN["s-claude"] = 9;
-        B["s-claude"] = function (tl, t, k) {
-          var m = M(tl, k), kids = $$("#cl-lists > *");
-          m.fade($$("#s-claude .eyebrow, #s-claude h1.head"), t);
-          m.rise(kids.slice(0, 3), t + 0.4 * k, 0.35);
-          m.rise(kids.slice(3, 7), t + 1.6 * k, 0.3);
-          m.rise(kids[7], t + 2.9 * k);
-          m.fade(qs.el, t + 0.8 * k);
-          tl.set(qs.cam, { x: qW.x, y: qW.y, scale: qW.scale, immediateRender: true }, t);
-          m.cam(qs, qT, t + 1.6 * k, 1.1);
-          m.draw(qRingFb, t + 2.7 * k); m.rise(qTagFb, t + 2.9 * k);
-          m.draw(qRingTool, t + 3.6 * k); m.rise(qTagTool, t + 3.8 * k);
-          m.out([qRingFb, qTagFb, qRingTool, qTagTool], t + 4.8 * k);
-          m.cam(qs, qA, t + 4.8 * k, 1.1);
-          m.draw(qRingAns, t + 5.9 * k); m.rise(qTagAns, t + 6.1 * k);
-          m.draw(qRingFoc, t + 6.8 * k); m.rise(qTagFoc, t + 7.0 * k);
-          m.rise($("#cl-switch"), t + 7.4 * k);
-          tl.fromTo($("#cl-knob"), { x: 38 }, { x: 0, duration: 0.4 * k, ease: "power2.inOut" }, t + 8.0 * k);
-          m.fade($("#cl-eval"), t + 8.4 * k);
-        };
-
-        // Proof: baselines, event 1278, our own gate
-        var rs = Shot("pr-shot");
-        var rT = camFit(rs, R.evTable, 14), rC = camFit(rs, R.cmpChart, 10);
-        var rRingMiss = ring(rs, rT, R.evMissRow, "#ffb547", 2), rTagMiss = tag(rs, rT, R.evMissRow, "where we lose: best F1, misses 91 Criticals", "t", "#ffb547");
-        var rRingModel = ring(rs, rT, R.evModelRow, "#3fe0a0", 2), rTagModel = tag(rs, rT, R.evModelRow, "ours: 0 missed, 1 under-tiered", "b");
-        var rRingPt = ring(rs, rC, R.cmpPoint, "#ffb547", 4), rTagPt = tag(rs, rC, R.cmpPoint, "event 1278 at 4.62 d: Pc bound 10^-5.61, shown below threshold; the truth is Elevated", "b", "#ffb547", 460);
-        LEN["s-proof"] = 9;
-        B["s-proof"] = function (tl, t, k) {
-          var m = M(tl, k);
-          m.fade($$("#s-proof .eyebrow, #s-proof h1.head"), t);
-          $$("#s-proof .stat").forEach(function (el, i) { tl.fromTo(el, { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration: 0.45 * k, ease: "back.out(1.8)" }, t + (0.4 + i * 0.45) * k); });
-          tl.set(rs.cam, { x: rT.x, y: rT.y, scale: rT.scale, immediateRender: true }, t);
-          m.hide(rs.imgs[1], t);
-          m.fade(rs.el, t + 2.4 * k);
-          m.draw(rRingMiss, t + 3.0 * k); m.rise(rTagMiss, t + 3.2 * k);
-          m.draw(rRingModel, t + 4.0 * k); m.rise(rTagModel, t + 4.2 * k);
-          m.out([rRingMiss, rTagMiss, rRingModel, rTagModel], t + 5.2 * k);
-          m.xfade(rs.imgs[1], t + 5.2 * k, 0.8);
-          m.cam(rs, rC, t + 5.2 * k, 1.0);
-          m.draw(rRingPt, t + 6.3 * k); m.rise(rTagPt, t + 6.5 * k);
-          m.rise($("#pr-gate"), t + 2.8 * k);
-          m.stamp($("#pr-stamp"), -6, t + 7.6 * k);
-        };
-
-        // In progress
-        var ws = Shot("wip-shot");
-        var wZ = camFit(ws, R.next24, 10), wR = camFit(ws, R.rightRail, 0);
-        var wRing = ring(ws, wZ, R.next24, "#ffb547", 2);
-        LEN["s-progress"] = 6;
-        B["s-progress"] = function (tl, t, k) {
-          var m = M(tl, k);
-          m.fade($$("#s-progress .eyebrow, #s-progress h1.head"), t);
-          m.rise($("#wip-a"), t + 0.4 * k);
-          m.rise($$("#wip-a > *"), t + 0.7 * k, 0.3);
-          m.rise($("#wip-b"), t + 2.2 * k);
-          m.rise($$("#wip-b > *"), t + 2.5 * k, 0.3);
-          tl.set(ws.cam, { x: wR.x, y: wR.y, scale: wR.scale, immediateRender: true }, t);
-          m.cam(ws, wZ, t + 3.4 * k, 1.0);
-          m.draw(wRing, t + 4.4 * k);
-          m.fade($("#wip-gaps"), t + 5.2 * k);
+          m.rise($("#pb-false"), t + 2.8 * k);
+          m.cam(pb, pbH, t + 3.2 * k, 1.8);
+          m.draw(pbRing, t + 5.0 * k);
+          m.rise(pbTag, t + 5.4 * k);
         };
 
         // USP: three beats
         var us = Shot("usp-shot");
-        var uZ = camFit(us, R.head802, 6);
+        var uZ = camFit(us, R.headPair, 4);
         var uRing = ring(us, uZ, R.head802, "#3fe0a0", 2);
-        LEN["s-usp"] = 8.6;
+        LEN["s-usp"] = 7.6;
         B["s-usp"] = function (tl, t, k) {
-          var m = M(tl, k), b1 = $$("#beat-1 > *"), b2 = $$("#beat-2 > *"), b3 = $$("#beat-3 > *");
-          m.fade($("#s-usp .eyebrow"), t);
-          m.rise($("#s-usp h1.head"), t + 0.2 * k);
-          m.rise($$("#s-usp .beat"), t + 1.2 * k, 0.25);
+          var m = M(tl, k);
+          head(m, "s-usp", t);
+          m.rise($$("#s-usp .beat"), t + 0.8 * k, 0.2);
           tl.set(us.cam, { x: uZ.x, y: uZ.y, scale: uZ.scale, immediateRender: true }, t);
           m.hide(us.imgs[1], t);
-          m.rise(b1, t + 1.6 * k, 0.12);
-          m.xfade(us.imgs[1], t + 2.6 * k, 0.8);
-          m.draw(uRing, t + 3.3 * k);
-          m.count($("#usp-count"), 1090, 802, t + 2.6 * k, 0.9, function (v) { return "1,090 → " + en(v); });
-          m.rise(b2, t + 3.8 * k, 0.15);
-          tl.fromTo($$("#usp-bar span"), { scaleX: 0 }, { scaleX: 1, transformOrigin: "0 50%", duration: 0.5 * k, ease: "power2.out", stagger: 0.2 * k }, t + 4.3 * k);
-          m.rise(b3.filter(function (e) { return !e.querySelector("#usp-stamp"); }), t + 6.0 * k, 0.15);
-          m.stamp($("#usp-stamp"), -5, t + 7.6 * k);
+          m.rise($$("#beat-1 > *"), t + 1.2 * k);
+          m.xfade(us.imgs[1], t + 2.2 * k, 0.9);
+          m.count($("#usp-count"), 1090, 802, t + 2.2 * k, 1.0, function (v) { return "1,090 → " + en(v); });
+          m.draw(uRing, t + 3.0 * k);
+          m.rise($$("#beat-2 > *:not(.rec)"), t + 3.5 * k);
+          m.right($$("#usp-rec > *"), t + 4.1 * k, 0.15);
+          m.rise($$("#beat-3 > *"), t + 5.6 * k, 0.22);
         };
 
-        // Close: the whole stack comes back, complete
-        var closeCake = $("#s-close .cake-copy");
-        LEN["s-close"] = 3.5;
+        // Stack: bottom-up, in data-flow order
+        LEN["s-stack"] = 6.6;
+        B["s-stack"] = function (tl, t, k) {
+          var m = M(tl, k);
+          head(m, "s-stack", t);
+          [1, 2, 3, 4, 5].forEach(function (l, i) { m.rise($('#cake-src .band[data-l="' + l + '"]'), t + (0.4 + i * 0.5) * k); });
+          m.draw($("#cake-src .freeze line"), t + 3.1 * k, 0.9);
+          m.fade($("#cake-src .freeze-l"), t + 3.5 * k);
+          m.rise($("#stack-claude"), t + 4.1 * k);
+          m.fade($("#stack-conn"), t + 4.6 * k);
+          m.fade($("#cake-src .tool"), t + 5.0 * k);
+          m.rise($("#stack-thumb"), t + 5.5 * k);
+        };
+
+        // Pipeline: baseline rule -> model, on the real dashboard
+        var ps = Shot("pipe-shot");
+        var pW = camCover(ps), pH = camFit(ps, R.headPair, 50, 1.9);
+        var pRingSeg = ring(ps, pW, R.seg), pTagSeg = tag(ps, pW, R.seg, "Baseline rule: today's status quo", "b", null, 400);
+        var pRing1090 = ring(ps, pH, R.head1090, "#ffb547"), pRing802 = ring(ps, pH, R.head802);
+        var pTag802 = tag(ps, pH, R.head802, "Model on: <b>802</b> events, 288 fewer", "b", null, 380);
+        var pRingCrit = ring(ps, pH, R.critKept, "#ff5a64");
+        LEN["s-pipe"] = 8.2;
+        B["s-pipe"] = function (tl, t, k) {
+          var m = M(tl, k), pts = $$("#pipe-col .pt");
+          head(m, "s-pipe", t);
+          tl.set(ps.cam, { x: pW.x, y: pW.y, scale: pW.scale, immediateRender: true }, t);
+          m.hide(ps.imgs[1], t);
+          m.fade(ps.el, t + 0.4 * k);
+          m.rise(pts.slice(0, 2), t + 0.8 * k, 0.25);
+          m.draw(pRingSeg, t + 1.4 * k);
+          m.rise(pTagSeg, t + 1.8 * k);
+          m.out([pRingSeg, pTagSeg], t + 3.0 * k);
+          m.cam(ps, pH, t + 3.0 * k, 1.6);
+          m.draw(pRing1090, t + 4.4 * k);
+          m.xfade(ps.imgs[1], t + 5.0 * k, 1.0);
+          m.out(pRing1090, t + 5.2 * k);
+          m.draw(pRing802, t + 5.8 * k);
+          m.rise(pTag802, t + 6.2 * k);
+          m.draw(pRingCrit, t + 7.0 * k);
+          m.soft(pts[2], t + 7.2 * k);
+        };
+
+        // The official task: the decision point chart (real tracks left, forecast right)
+        var ts = Shot("task-shot");
+        var tW = camCover(ts), tC = camFit(ts, { x: 700, y: 120, w: 1200, h: 900 }, 0);
+        var tRingLine = ring(ts, tC, R.dpLine, "#3fe0a0", 4);
+        var tTagLine = tag(ts, tC, R.dpChip, "the decision point: 2 days out", "t", null, 360);
+        var tRingRight = ring(ts, tC, R.dpRight, "#ffb547", 4);
+        var tTagRight = tag(ts, tC, R.dpRight, "forecast final tier: shows the current tier until the forecaster lands", "b", "#ffb547", 380);
+        LEN["s-task"] = 7.6;
+        B["s-task"] = function (tl, t, k) {
+          var m = M(tl, k);
+          head(m, "s-task", t);
+          m.rise($$("#task-col > .pt"), t + 0.4 * k, 0.25);
+          m.fade(ts.el, t + 0.6 * k);
+          tl.set(ts.cam, { x: tW.x, y: tW.y, scale: tW.scale, immediateRender: true }, t);
+          m.cam(ts, tC, t + 1.6 * k, 1.6);
+          m.draw(tRingLine, t + 3.2 * k, 0.9); m.rise(tTagLine, t + 3.6 * k);
+          m.draw(tRingRight, t + 4.8 * k); m.rise(tTagRight, t + 5.2 * k);
+          m.rise($("#task-res"), t + 6.4 * k);
+        };
+
+        // Decision record: event 1071 (demoted), then event 482 (not eligible), on the review page
+        var rs = Shot("rec-shot");
+        var rW = camFit(rs, { x: 420, y: 41, w: 1100, h: 620 }, 0), rZ = camFit(rs, { x: 460, y: 60, w: 760, h: 430 }, 6);
+        var rRings = [R.rvRule, R.rvElig, R.rvScore, R.rvDec].map(function (r) { return ring(rs, rZ, r, "#3fe0a0", 4); });
+        var rTagScore = tag(rs, rZ, R.rvRule, "rule → eligible → score → decision", "t", null, 440);
+        var rRingB = ring(rs, rZ, R.rvEligB, "#ff5a64", 4), rRingDecB = ring(rs, rZ, R.rvDecB, "#ff5a64", 4);
+        var rTagB = tag(rs, rZ, R.rvEligB, "482: rule-defined Critical, can't be demoted", "t", "#ff5a64", 440);
+        LEN["s-record"] = 8.4;
+        B["s-record"] = function (tl, t, k) {
+          var m = M(tl, k), col = $$("#rec-col > *");
+          head(m, "s-record", t);
+          m.fade(rs.el, t + 0.4 * k);
+          m.hide(rs.imgs[1], t);
+          tl.set(rs.cam, { x: rW.x, y: rW.y, scale: rW.scale, immediateRender: true }, t);
+          m.cam(rs, rZ, t + 1.0 * k, 1.5);
+          m.draw(rRings, t + 2.5 * k, 0.6, 0.22);
+          m.rise(rTagScore, t + 3.6 * k);
+          m.rise(col[0], t + 2.5 * k);
+          m.out(rRings.concat([rTagScore]), t + 5.0 * k);
+          m.xfade(rs.imgs[1], t + 5.0 * k, 1.0);
+          m.draw([rRingB, rRingDecB], t + 6.0 * k, 0.6, 0.2);
+          m.rise(rTagB, t + 6.5 * k);
+          m.rise(col[1], t + 6.0 * k);
+          m.rise(col[2], t + 7.2 * k);
+        };
+
+        // Proves it live: the trace on the Horizon view, the live audit, POST /api/triage
+        var lv = Shot("live-shot");
+        var lW = camFit(lv, { x: 600, y: 60, w: 1300, h: 600 }, 0), lZ = camFit(lv, R.hzCall482, 20);
+        var lRingAllowed = ring(lv, lZ, R.hzAllowed, "#3fe0a0", 4), lRingGuard = ring(lv, lZ, R.hzGuard, "#3fe0a0", 4);
+        var lTag = tag(lv, lZ, R.hzGuard, "model not allowed · audit PASS", "b", null, 420);
+        LEN["s-live"] = 8;
+        B["s-live"] = function (tl, t, k) {
+          var m = M(tl, k);
+          head(m, "s-live", t);
+          m.fade(lv.el, t + 0.4 * k);
+          tl.set(lv.cam, { x: lW.x, y: lW.y, scale: lW.scale, immediateRender: true }, t);
+          m.cam(lv, lZ, t + 1.0 * k, 1.6);
+          m.draw([lRingAllowed, lRingGuard], t + 2.6 * k, 0.6, 0.2);
+          m.rise(lTag, t + 3.1 * k);
+          m.rise($("#live-audit"), t + 3.4 * k);
+          m.right($$("#live-checks .chk"), t + 3.8 * k, 0.15);
+          m.stamp($("#live-pass"), -3, t + 5.7 * k);
+          m.rise($("#live-triage"), t + 6.4 * k);
+        };
+
+        // Honest eval: the stronger baselines, then train CV vs a tuned threshold
+        LEN["s-eval"] = 7.6;
+        B["s-eval"] = function (tl, t, k) {
+          var m = M(tl, k), rows = $$("#ev-tbl tbody tr");
+          head(m, "s-eval", t);
+          m.fade($("#ev-tbl thead"), t + 0.4 * k);
+          m.rise(rows.slice(0, 2), t + 0.7 * k, 0.22);
+          m.rise(rows[2], t + 1.6 * k);
+          tl.fromTo($("#ev-8"), { color: "#dfe7e4" }, { color: "#3fe0a0", duration: 0.5 * k, ease: "sine.inOut" }, t + 2.3 * k);
+          tl.fromTo($("#ev-1012"), { color: "#dfe7e4" }, { color: "#ffb547", duration: 0.5 * k, ease: "sine.inOut" }, t + 2.9 * k);
+          m.rise(rows[3], t + 3.5 * k);
+          tl.fromTo($("#ev-1"), { color: "#eef3f1" }, { color: "#3fe0a0", duration: 0.5 * k, ease: "sine.inOut" }, t + 4.1 * k);
+          m.rise($("#ev-cv"), t + 4.7 * k);
+          m.grow($("#ev-bar-a"), t + 5.5 * k, 0.7);
+          m.grow($("#ev-bar-b"), t + 6.1 * k, 1.1);
+        };
+
+        // Where it fails: event 1278 on the Compare view, then 26/26
+        var fs = Shot("fail-shot");
+        var fW = camFit(fs, { x: 320, y: 60, w: 1260, h: 680 }, 0), fZ = camFit(fs, R.cmpChart, 10);
+        var fRingPt = ring(fs, fZ, R.cmpPoint, "#ffb547", 4, true);
+        var fTagPt = tag(fs, fZ, R.cmpPoint, "4.62 d: Pc bound 10^-5.61, demoted; truly Elevated", "t", "#ffb547", 420);
+        LEN["s-fail"] = 7;
+        B["s-fail"] = function (tl, t, k) {
+          var m = M(tl, k), col = $$("#fail-col > *");
+          head(m, "s-fail", t);
+          m.fade(fs.el, t + 0.4 * k);
+          tl.set(fs.cam, { x: fW.x, y: fW.y, scale: fW.scale, immediateRender: true }, t);
+          m.cam(fs, fZ, t + 1.0 * k, 1.5);
+          m.draw(fRingPt, t + 2.6 * k); m.rise(fTagPt, t + 3.0 * k);
+          m.rise(col[0], t + 1.4 * k);
+          m.rise(col[1], t + 3.8 * k);
+          m.soft(col[2], t + 5.6 * k);
+        };
+
+        // Safety gate
+        LEN["s-gate"] = 6.6;
+        B["s-gate"] = function (tl, t, k) {
+          var m = M(tl, k), a = $$("#gate-a > *"), b = $$("#gate-b > *");
+          head(m, "s-gate", t);
+          m.rise($("#gate-a"), t + 0.4 * k);
+          m.rise(a.slice(0, 3), t + 0.7 * k, 0.25);
+          m.stamp($("#gate-stamp"), -4, t + 2.3 * k);
+          m.fade(a[4], t + 2.9 * k);
+          m.rise($("#gate-b"), t + 3.5 * k);
+          m.rise(b, t + 3.8 * k, 0.25);
+        };
+
+        // In progress
+        LEN["s-next"] = 5.4;
+        B["s-next"] = function (tl, t, k) {
+          var m = M(tl, k);
+          head(m, "s-next", t);
+          m.rise($("#nx-a"), t + 0.4 * k);
+          m.rise($$("#nx-a > *"), t + 0.7 * k, 0.2);
+          m.rise($("#nx-b"), t + 2.4 * k);
+          m.rise($$("#nx-b > *"), t + 2.7 * k, 0.2);
+          m.fade($("#nx-gaps"), t + 4.4 * k);
+        };
+
+        // Close: the globe settles back, the four roles land
+        var cl = Shot("close-shot");
+        var clC0 = camAt(cl, { x: 660, y: 340, w: 400, h: 400 }, 1.48), clC1 = camAt(cl, { x: 660, y: 340, w: 400, h: 400 }, 1.4);
+        LEN["s-close"] = 4;
         B["s-close"] = function (tl, t, k) {
-          var m = M(tl, k), s = Number(closeCake.dataset.scale || 0.66);
-          m.fade($("#s-close .eyebrow"), t);
-          m.rise($("#s-close h1.head"), t + 0.2 * k);
-          tl.fromTo(closeCake, { opacity: 0, scale: s, x: 0, y: 0 }, { opacity: 1, scale: s, x: 0, y: 0, duration: 1.0 * k, ease: "none" }, t + 0.9 * k);
-          m.rise($$("#close-right > *"), t + 1.6 * k, 0.3);
+          var m = M(tl, k);
+          m.camFrom(cl, clC0, clC1, t, 4);
+          m.rise($$("#close-right > *"), t + 0.4 * k, 0.22);
+          m.fade($("#close-honest"), t + 2.2 * k);
         };
 
         // ---- the deck timeline (seeked by the slideshow; builds squeezed to finish before midpoint) ----
@@ -1811,23 +1762,39 @@
         window.__timelines = window.__timelines || {};
         window.__timelines["deck"] = tl;
 
-        // ---- live presenting: the wrapper page calls this on each slide change, never during a render ----
-        // The slideshow seeks straight to each slide's rest frame, so the builds would never be seen;
-        // this replays the slide's build in real time, one idea at a time.
-        var live = null;
+        // ---- live presenting: only the wrapper page arms this (renders and checks never do) ----
+        // On each slide change: one calm transition (the new slide fades up from the background over 600 ms),
+        // then the slide's build replays in real time. Re-entering a slide, forwards or backwards, kills the old
+        // build at its end state and starts clean. prefers-reduced-motion: instant, finished states.
+        var live = null, current = null;
         var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var veil = document.getElementById("veil");
         window.__stackEnter = function (id) {
+          if (id === current) return;
+          current = id;
           if (live) { live.progress(1).kill(); live = null; }
           if (reduced) return;
-          var scan = document.getElementById("scan");
-          if (scan && scan.animate) {
-            scan.animate([{ transform: "translateY(0px)", opacity: 0.9 }, { transform: "translateY(1080px)", opacity: 0 }], { duration: 220, easing: "linear" });
-          }
           var sc = document.querySelector('[data-composition-id="' + id + '"]');
           var b = sc && B[sc.id];
-          if (!b) return;
           live = gsap.timeline();
-          b(live, 0, 1);
+          live.fromTo(veil, { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "sine.inOut" }, 0);
+          if (sc) live.fromTo(sc, { scale: 1.012 }, { scale: 1, duration: 0.7, ease: "sine.inOut" }, 0);
+          if (b) b(live, 0.15, 1);
+        };
+        // Arm: watch the scenes' visibility so the transition starts in the same frame as the slide change.
+        window.__stackArm = function () {
+          if (window.__stackArmed) return;
+          window.__stackArmed = true;
+          var scenes = $$(".scene");
+          function check() {
+            for (var i = 0; i < scenes.length; i++) {
+              var cs = getComputedStyle(scenes[i]);
+              if (cs.visibility !== "hidden" && cs.display !== "none" && cs.opacity !== "0") { window.__stackEnter(scenes[i].getAttribute("data-composition-id")); return; }
+            }
+          }
+          var mo = new MutationObserver(check);
+          scenes.forEach(function (s) { mo.observe(s, { attributes: true, attributeFilter: ["style", "class", "hidden"] }); });
+          check();
         };
       })();
     </script>
