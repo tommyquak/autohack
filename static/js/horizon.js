@@ -24,6 +24,40 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
 
+// Guardrail audit (GET /api/audit), fetched once; the trace's last step reads it.
+let audit = null;
+fetch("/api/audit").then((r) => (r.ok ? r.json() : null)).then((a) => { audit = a || { status: "unavailable" }; })
+  .catch(() => { audit = { status: "unavailable" }; });
+
+// ---------- backend trace: what the pipeline did for this event, from its certificate (docs/CONTRACT.md) ----------
+const shortReason = (r) => r
+  .replace(/^miss distance (.+?) < 1 km$/, "miss $1 < 1 km")
+  .replace(/^miss distance (.+?) km within 1-5 km$/, "miss $1 km in 1–5 km")
+  .replace(/^Pc 10\^(-?[\d.]+) >= 1e-4.*$/, "Pc 10^$1 ≥ 1e-4")
+  .replace(/^Pc 10\^(-?[\d.]+) in \[1e-6, 1e-4\).*$/, "Pc 10^$1 (elevated band)");
+const WHY_NOT = { Critical: "rule-defined Critical" };
+const CHECK = `<svg class="ok" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5l2.3 2.3 4.7-5.3"/></svg>`;
+function traceSteps(e) {
+  const c = e.certificate;
+  const queue = titleCase(e.action && e.action.queue);
+  const steps = [["Rule fired", esc((e.reasons || []).map(shortReason).join(" · ") || "none")]];
+  if (!c) {
+    steps.push(["Model allowed?", `<span class="m">no certificate in this report</span>`]);
+  } else {
+    steps.push(["Model allowed?", c.candidate ? "Yes: demotion candidate" : `No: ${esc(WHY_NOT[c.why_not_candidate] || c.why_not_candidate || "not eligible")}`]);
+    if (c.candidate && c.model_score != null && c.threshold != null) {
+      steps.push(["Score vs threshold", `${c.model_score.toFixed(4)} ${c.model_score < c.threshold ? "<" : "≥"} ${c.threshold.toFixed(4)}`]);
+    }
+    steps.push(["Decision", `${esc(c.decision)} → ${esc(queue)}`]);
+  }
+  const a = audit;
+  const g = !a ? `<span class="m">checking…</span>`
+    : a.status === "PASS" ? `${CHECK} audit PASS <span class="m">(${(a.checks || []).length} checks)</span>`
+    : `<span class="m">audit ${esc(a.status)}</span>`;
+  steps.push(["Guardrails", g]);
+  return steps;
+}
+
 async function main() {
   let events, icons;
   try {
@@ -475,12 +509,47 @@ function start(P, icons, bg) {
 
   // ---------- flag + callout ----------
   const callout = $("#callout"), leader = $("#leader line");
-  let active = null, activeSince = 0;
+  let active = null, activeSince = 0, traceTimers = [];
+  const traceBtn = $("#trace-toggle");
+  let traceOn = true;
+  try { traceOn = localStorage.getItem("horizon.trace") !== "off"; } catch { /* storage blocked: default on */ }
+  traceBtn.setAttribute("aria-pressed", String(traceOn));
+  traceBtn.addEventListener("click", () => {
+    traceOn = !traceOn;
+    traceBtn.setAttribute("aria-pressed", String(traceOn));
+    try { localStorage.setItem("horizon.trace", traceOn ? "on" : "off"); } catch { /* ignore */ }
+    const t = callout.querySelector(".trace");
+    if (t) t.hidden = !traceOn;
+  });
+  function renderTrace(e) {
+    traceTimers.forEach(clearTimeout);
+    traceTimers = [];
+    const steps = traceSteps(e);
+    const ol = document.createElement("ol");
+    ol.className = "trace";
+    ol.hidden = !traceOn;
+    ol.setAttribute("aria-label", "Backend trace");
+    ol.innerHTML = `<li class="th">Backend trace</li>` + steps.map(([k, v], i) =>
+      `<li class="${reduced ? "on" : ""}"><span class="n">${i + 1}</span><span class="k">${k}</span><span class="v">${v}</span></li>`).join("");
+    callout.append(ol);
+    if (!reduced) {
+      [...ol.querySelectorAll("li:not(.th)")].forEach((li, i) => traceTimers.push(setTimeout(() => li.classList.add("on"), 180 + i * 250)));
+    }
+    // the audit may land after the flag: refresh the last line once it does
+    if (!audit) {
+      const wait = setInterval(() => {
+        if (!audit || !ol.isConnected) { if (!ol.isConnected) clearInterval(wait); return; }
+        clearInterval(wait);
+        const last = ol.querySelector("li:last-child .v");
+        if (last) last.innerHTML = traceSteps(e).at(-1)[1];
+      }, 200);
+    }
+  }
   function setActive(o, now) {
     if (o === active) return;
     active = o;
     activeSince = now;
-    if (!o) { callout.hidden = true; leader.parentElement.style.display = "none"; return; }
+    if (!o) { traceTimers.forEach(clearTimeout); callout.hidden = true; leader.parentElement.style.display = "none"; return; }
     const e = o.enc.event, L = e.latest;
     callout.dataset.tier = String(e.tier);
     callout.style.setProperty("--c", e.tier >= 2 ? "var(--crit)" : "var(--elev)");
@@ -489,6 +558,7 @@ function start(P, icons, bg) {
       <div class="l1"><b>EVT ${e.event_id}</b> · ${esc(typeLabel(o.enc.type))} · ${fmtDist(L.miss_distance_m)} · TCA ${L.time_to_tca_days.toFixed(2)} d</div>
       <div class="l2">${TIER_NAME[e.tier]} (${esc(titleCase(e.action && e.action.queue))}) <span class="muted">·</span> ${basis(e)}</div>
       <a href="/static/review.html#event=${e.event_id}">Open decision record</a>`;
+    renderTrace(e);
     callout.hidden = false;
     // restart the entrance animation
     callout.style.animation = "none"; void callout.offsetWidth; callout.style.animation = "";
