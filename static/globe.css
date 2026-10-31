@@ -13,8 +13,6 @@
 .globe-key { position: absolute; top: 40px; right: 0; width: 176px; font: 11px/1.4 var(--mono); color: var(--muted); }
 .gk-title { text-transform: uppercase; letter-spacing: .08em; font-size: 10px; margin-bottom: 4px; }
 .gk-sep { margin-top: 12px; }
-.gk-ramp { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #4fc3f7, #ffb347, #ff4a3d); }
-.gk-scale { display: flex; justify-content: space-between; margin-top: 2px; }
 .gk-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; color: var(--ink); text-transform: none; }
 .gk-row i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .gk-row .gk-ring { width: 14px; height: 0; border-radius: 0; border-top: 1.5px solid rgba(150, 205, 255, .85); }
@@ -43,3 +41,8 @@
 .rail-toggle.right svg { transform: scaleX(-1); }
 .layout.hide-left .rail-toggle.left svg { transform: scaleX(-1); }
 .layout.hide-right .rail-toggle.right svg { transform: none; }
+
+.gk-note { margin: 6px 0 0; font: 11px/1.4 var(--sans); color: var(--muted); }
+.globe-tip { position: absolute; z-index: 3; pointer-events: none; padding: 6px 9px; font: 12px/1.45 var(--mono); white-space: nowrap;
+  background: rgba(6, 12, 22, .95); border: 1px solid var(--hair2); border-radius: 4px; }
+.globe-tip[hidden] { display: none; }
