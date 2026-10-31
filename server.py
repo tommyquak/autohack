@@ -101,6 +101,15 @@ def api_metrics():
     return load_report("metrics.json")
 
 
+@app.get("/api/explain/{event_id}")
+async def api_explain(event_id: int, llm: bool = True):
+    """Plain-English summary of one event: Claude when available, deterministic template otherwise."""
+    event = _events_by_id().get(event_id)
+    if event is None:
+        raise HTTPException(404, f"event {event_id} not in reports/events.json")
+    return await explain.explain(event, use_llm=llm)
+
+
 # ---------- pages ----------
 
 PLACEHOLDER = """<!doctype html><meta charset="utf-8"><title>Conjunction Triage</title>
@@ -154,12 +163,3 @@ async def chat(req: ChatRequest):
 def reset(req: ChatRequest):
     SESSIONS.pop(req.session_id or "", None)
     return {"ok": True}
-
-
-@app.get("/api/explain/{event_id}")
-async def explain_event(event_id: int, llm: bool = True):
-    """Plain-English summary of one event: Claude when available, deterministic template otherwise."""
-    event = explain.load_event(event_id)
-    if event is None:
-        raise HTTPException(404, f"event {event_id} not in reports/events.json (run python -m triage.build_events)")
-    return await explain.explain(event, use_llm=llm)

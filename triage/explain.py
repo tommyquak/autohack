@@ -14,14 +14,11 @@ import json
 import math
 import os
 import re
-from functools import cache
-from pathlib import Path
 
 import anthropic
 
 from triage.tiers import RISK_CRITICAL
 
-EVENTS_PATH = Path(__file__).resolve().parent.parent / "reports" / "events.json"
 LLM_TIMEOUT_S = 20.0
 # Pc peaks when the combined position sigma is about miss/sqrt(2); with a larger sigma, Pc falls
 # because of uncertainty, not because the objects are further apart ("probability dilution").
@@ -152,15 +149,3 @@ def _has_credentials() -> bool:
 
 def _dist(m: float) -> str:
     return f"{m:.0f} m" if m < 10_000 else f"{m / 1000:,.0f} km"
-
-
-@cache
-def _events_by_id(path: Path, mtime: float) -> dict[int, dict]:
-    return {e["event_id"]: e for e in json.loads(path.read_text())["events"]}
-
-
-def load_event(event_id: int, path: Path = EVENTS_PATH) -> dict | None:
-    """One event from events.json (re-read automatically when the file is rebuilt)."""
-    if not path.exists():
-        return None
-    return _events_by_id(path, path.stat().st_mtime).get(event_id)
