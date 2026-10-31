@@ -61,7 +61,7 @@ Critical recall stays 100%. These are measured counts; analyst time saved is not
   to `tier` on every update, so a demotion always shows as a demotion.
 - **Over-tiered Criticals, by design.** 165 truly-Elevated CDMs (and 8 truly below threshold) are shown
   as Critical because their Pc bound is ≥ 1e-4. We never demote Critical.
-- **63 events with placeholder sigma** (63,781,360 m). These are never demoted and always flagged `no_covariance` + needs review.
+- **63 events with placeholder sigma** (63,781,360 m). These are never demoted and always flagged `no_covariance`; the 61 below Critical are also needs review.
 - **No test CDM within 2 days of TCA** (minimum 2.0002 d), so the 24 h panel is empty and the final window is untested.
 - **The 99% target is not a per-event guarantee.** It holds only for events drawn like the training events.
 
