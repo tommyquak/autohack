@@ -45,6 +45,8 @@ produced. Write 3-5 plain sentences that:
 - describe the trend across updates if one is given;
 - if `demoted` is true, say that the threshold rule gave `baseline_tier` (for the `reasons`) and Second Look
   demoted the event to `tier`; do not describe the event as `tier` "because of" those reasons;
+- if `forecast` is given, say what tier the event is forecast to end at by closest approach (and, if `raised`, that
+  it is forecast to rise from `tier` and the first of its `reasons`); call it a forecast, never a certainty;
 - repeat any caution in `cautions` (close call / needs review, probability dilution, missing uncertainty) in plain
   words; a close call is most likely an over-warning, so do not describe it as the riskiest case.
 Rules: use only numbers that appear in the facts. Never call an event "safe" - the lowest tier
@@ -132,6 +134,12 @@ def facts(event: dict) -> dict:
             "pc_upper_bound": f"{_pc(first['max_risk_estimate_log10'])} -> {_pc(last['max_risk_estimate_log10'])}",
             "closing": last["miss_distance_m"] < first["miss_distance_m"],
         }
+    if fc := event.get("forecast"):  # final-tier forecast from updates 2+ days out (triage.forecast, docs/FORECAST.md)
+        out["forecast"] = {
+            "final_tier": fc["predicted_final_tier_name"],
+            "raised": fc["predicted_final_tier"] > event["tier"],
+            "reasons": fc.get("reasons", [])[:2],  # p_final scores are uncalibrated, so they are left out on purpose
+        }
     return out
 
 
@@ -159,6 +167,14 @@ def template_explanation(f: dict) -> str:
         parts.append(
             f"Over {trend['updates']} updates the miss distance went {trend['miss_distance']} ({direction}) "
             f"and the Pc upper bound went {trend['pc_upper_bound']}."
+        )
+    if fc := f.get("forecast"):
+        final = _tier_in_sentence(fc["final_tier"])
+        parts.append(
+            f"Forecast for closest approach, from updates two or more days out: {final}, raised from "
+            f"{_tier_in_sentence(f['tier'])} ({fc['reasons'][0] if fc['reasons'] else 'model escalation'})."
+            if fc["raised"]
+            else f"Forecast for closest approach, from updates two or more days out: stays {final}."
         )
     parts += [c[0].upper() + c[1:] + "." for c in f["cautions"]]
     return " ".join(parts)
