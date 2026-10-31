@@ -1,0 +1,11 @@
+/* Globe tab (static/js/globe.js). Uses the dashboard tokens from dashboard.css. */
+.globe-key { display: flex; gap: 18px; flex-wrap: wrap; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.globe-key span { display: inline-flex; align-items: center; gap: 7px; }
+.globe-key i { width: 22px; height: 8px; display: inline-block; border-radius: 1px; }
+.k-ev { background: rgba(230, 235, 232, .55); }
+.k-crit { background: var(--crit); }
+.k-sel { background: none; border-top: 2px dashed var(--own); height: 0 !important; }
+#globe-wrap canvas { cursor: grab; touch-action: none; }
+#globe-wrap canvas:active { cursor: grabbing; }
+.globe-read { position: absolute; left: 0; bottom: 0; font: 12px var(--mono); color: var(--muted); background: rgba(8, 10, 11, .8); padding: 4px 8px; border: 1px solid var(--hair); border-radius: 4px; }
+.globe-read b { color: var(--ink); font-weight: 500; }
