@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Second Look · Horizon</title>
-<meta name="description" content="Our satellites on their real-element orbits; each classification case zooms in on the real CDM approach geometry, with its decision and backend trace.">
+<meta name="description" content="Prediction replay: each classification case replays its real CDMs' predicted miss point at closest approach (R/T/N, to scale), then shows the decision and backend trace. Earth and the real-element orbits are calm context.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,18 +12,21 @@
 </head>
 <body>
 <!--
-THESIS: one classification case at a time, told by the data: real orbits, real CDM updates converging, then the
-  decision and its trace, in one docked panel whose text never moves. Refuses the busy multi-panel dashboard.
+THESIS: one classification case at a time, told by the data: each CDM is a fresh prediction of the same moment (closest
+  approach); the replay shows that prediction being revised, then the decision and its trace, in one docked panel whose
+  text never moves. Refuses simulated cruising and the busy multi-panel dashboard.
 OWN-WORLD: Night Instrument. #080a0b ground, a dark 3D Earth with a thin atmosphere and latitude hairlines, blue
   satellites, grey objects, red/amber only for tier, mono labels, hairlines, no cards.
-STORY: our satellites fly; a case approaches; the camera flies in; each real CDM update pings and lands as a dot in
-  R/T/N; the shells take the update's tier; the decision and backend trace appear; the camera pulls back.
+STORY: a still close-up per case (Earth limb and our satellite's real orbit as context); each CDM's predicted miss
+  point eases in from the previous prediction, earlier ones stay faint; the shells take the update's tier; the decision
+  and backend trace appear; a gentle dip to the next case. The camera never flies.
 FIRST VIEWPORT: full-bleed horizon; brand top-left, counter top-centre, Trace + Horizon/Globe top-right; the case
   panel docked right; transport bottom-centre with the honesty lines above it.
 FORM: extension of the established Night Instrument world (brief-pinned); no concept roll, seed n/a.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 -->
-<canvas id="scene" aria-label="Our satellites on their orbits around Earth, with the current classification case"></canvas>
+<canvas id="scene" aria-label="Prediction replay of the current classification case: each CDM's predicted miss point at closest approach, in our satellite's R/T/N frame"></canvas>
+<p id="replay-cap" class="replay-cap"><b>Prediction replay</b> · where each CDM predicts the object will be at closest approach</p>
 
 <header class="hz-top">
   <div class="brand"><span class="mark" aria-hidden="true"></span>SECOND LOOK <span class="sep">·</span> HORIZON</div>
@@ -49,28 +52,31 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <section id="b-trace" class="blk"></section>
 </aside>
 
-<svg id="leader" class="leader" aria-hidden="true"><line x1="0" y1="0" x2="0" y2="0"/></svg>
 <div id="labels" aria-hidden="true"></div>
 <div id="tip" class="tip" hidden></div>
 <p id="manoeuvre" class="manoeuvre" hidden>Illustrative avoidance manoeuvre, operator-approved. Second Look never commands one; no manoeuvre data in the dataset.</p>
 
 <footer class="hz-bottom">
-  <p class="honesty"><strong>Orbit size, shape and tilt from each CDM's orbital elements;</strong> orientation around Earth (RAAN, longitude) is not in the data and is set so both objects meet at the real conjunction latitude.
-    <span class="l2">Close-up: real CDM relative positions (R/T/N, to scale, km); CDM timeline compressed. Manoeuvres are illustrative.</span></p>
+  <p class="honesty"><strong>Close-up: each CDM's predicted miss point at closest approach (R/T/N, to scale), replayed in the order received.</strong>
+    <span class="l2">Orbits: real size, shape and tilt; orientation around Earth not in the data. Manoeuvre illustrative.</span></p>
   <div class="bar">
     <ul class="legend" aria-label="Legend">
       <li><span class="ring crit" aria-hidden="true"></span>Critical</li>
       <li><span class="ring elev" aria-hidden="true"></span>Elevated</li>
-      <li><span class="dot own" aria-hidden="true"></span>Our satellites</li>
-      <li class="muted">Below threshold: dim specks</li>
+      <li><span class="dot own" aria-hidden="true"></span>Our satellite</li>
+      <li class="muted">Faint dots: earlier predictions</li>
     </ul>
     <div class="transport">
-      <button type="button" id="play" class="play" aria-label="Pause replay" aria-pressed="true">
+      <button type="button" id="upd-prev" class="step" aria-label="Previous CDM update"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5"/></svg></button>
+      <button type="button" id="play" class="play" aria-label="Pause" aria-pressed="true">
         <svg viewBox="0 0 12 12" aria-hidden="true"><path class="i-pause" d="M3 2h2v8H3zM7 2h2v8H7z"/><path class="i-play" d="M3 1.5v9l7.5-4.5z"/></svg>
       </button>
-      <div class="track">
-        <input id="time" type="range" min="0" max="1" step="1" value="0" aria-label="Replay time (simulated)">
-        <div id="ticks" class="ticks" aria-hidden="true"></div>
+      <button type="button" id="upd-next" class="step" aria-label="Next CDM update"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg></button>
+      <div class="track" role="group" aria-label="CDM updates, placed by when each was received (real time to TCA)">
+        <div class="rail" aria-hidden="true"></div>
+        <div id="phead" class="phead" aria-hidden="true"></div>
+        <div id="ticks" class="ticks"></div>
+        <span id="axis-l" class="axis-l" aria-hidden="true"></span><span class="axis-r" aria-hidden="true">TCA</span>
       </div>
       <span id="readout" class="readout num"></span>
     </div>

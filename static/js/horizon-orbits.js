@@ -1,18 +1,15 @@
-// Horizon view: Keplerian orbits from each CDM's real orbital elements, plus the replay timeline of the classification
-// cases. Pure functions, no three.js.
+// Horizon view: Keplerian orbits from each CDM's real orbital elements and the classification cases. Pure functions,
+// no three.js. The orbits are static context; the motion on the page is the real CDM updates (horizon.js).
 //
-// Units: lengths in Earth radii (R_E = 6371 km = 1), angles in radians, `tau` = simulated seconds.
+// Units: lengths in Earth radii (R_E = 6371 km = 1), angles in radians, `tau` = seconds (used only to place each case's
+// conjunction point on our satellite's orbit; nothing moves along the orbits).
 // World axes follow three.js: +Y is the north pole. From the data (latest CDM, display-only columns): semi-major axis,
 // eccentricity and inclination of both objects, the conjunction latitude, relative speed, mission, and every CDM update.
 // NOT in the data: RAAN, argument of perigee, longitude. They are set so both objects meet at the real latitude.
 
 export const GM = 398600.4418; // km^3/s^2
 export const R_E = 6371; // km
-export const SPEED = 200; // simulated seconds per replay second while cruising
-export const CASE_SPEED = 40; // ... and inside a case window (one factor for everything at any instant)
-// Case window around each closest approach (simulated seconds relative to TCA)
-export const CASE = { flyIn: -640, held: -520, cdmFirst: -500, cdmLast: -140, out: 70, end: 170 };
-const MIN_GAP_TAU = 1500; // simulated seconds between closest approaches (room for a case window + cruise)
+const MIN_GAP_TAU = 1500; // seconds between conjunction points (spreads the cases around the orbit)
 const FIRST_TCA_TAU = 1500;
 const deg = Math.PI / 180;
 
@@ -154,10 +151,9 @@ export function pickCases(events) {
 }
 
 /**
- * Plan the replay: a satellite per mission on its real-element orbit; each case's satellite flies on until it next
- * reaches the case's real latitude (after the previous case, so cases keep the real time-to-TCA order); the other
- * object's real-element orbit is oriented to meet it there at that moment. Each CDM update gets a replay time inside
- * the case window, in real time-to-TCA order and proportion (the timeline is compressed, and the page says so).
+ * Place the cases: a satellite per mission on its real-element orbit; each case's conjunction point is where that orbit
+ * reaches the case's real latitude; the other object's real-element orbit is oriented to pass through it. Each case's
+ * CDM updates (history) are sorted earliest first: they are the motion the page animates.
  */
 export function plan(cases, allEvents) {
   const missionIds = [...new Set(cases.map((c) => c.event.latest.mission_id))];
@@ -183,45 +179,16 @@ export function plan(cases, allEvents) {
     const e = c.event, tau = t0 - offset;
     const X = sat.orbit.pos(tau);
     const { orbit, vrelKms } = chaserFor(e, X, tau, sat.orbit);
-    // CDM updates (history) mapped into the case window by their real time to TCA (earliest -> cdmFirst).
-    const hist = (e.history || []).slice().sort((p, q) => q.time_to_tca_days - p.time_to_tca_days);
-    const tMax = hist.length ? hist[0].time_to_tca_days : 7, tMin = hist.length ? hist[hist.length - 1].time_to_tca_days : 2;
-    const span = Math.max(1e-6, tMax - tMin);
-    const cdms = hist.map((h, i) => ({
-      ...h, n: i + 1, N: hist.length,
-      tau: tau + CASE.cdmFirst + ((tMax - h.time_to_tca_days) / span) * (CASE.cdmLast - CASE.cdmFirst),
-    }));
-    if (cdms.length === 1) cdms[0].tau = tau + CASE.cdmLast;
+    const hist = (e.history || []).filter((h) => Array.isArray(h.relative_position_rtn_m))
+      .sort((p, q) => q.time_to_tca_days - p.time_to_tca_days);
+    const cdms = hist.map((h, i) => ({ ...h, n: i + 1, N: hist.length }));
     return {
-      id: e.event_id, event: e, kind: c.kind, sat, tau, latDeg, latClamped, orbit, vrelKms, cdms,
+      id: e.event_id, event: e, kind: c.kind, sat, tau, X, latDeg, latClamped, orbit, vrelKms, cdms,
       type: ({ DEBRIS: "debris", PAYLOAD: "payload", "ROCKET BODY": "rocket_body" })[e.latest.object_type] || "unknown",
       pcBacked: pcBacked(e),
     };
   });
-  const endTau = encounters[encounters.length - 1].tau + 1200;
-  return { sats, encounters, endTau };
-}
-
-/** Replay speed at tau: SPEED, eased down to CASE_SPEED inside each case window. */
-export function speedAt(P, tau) {
-  let k = 0;
-  for (const e of P.encounters) {
-    const t = tau - e.tau;
-    k = Math.max(k, smooth((t - (CASE.flyIn - 260)) / 240) * (1 - smooth((t - CASE.end) / 240)));
-  }
-  return SPEED + (CASE_SPEED - SPEED) * k;
-}
-
-/** Close-up weight (0 = horizon, 1 = zoomed on the encounter) at tau. */
-export function caseWeight(enc, tau) {
-  const t = tau - enc.tau;
-  return smooth((t - CASE.flyIn) / (CASE.held - CASE.flyIn)) * (1 - smooth((t - CASE.out) / (CASE.end - CASE.out)));
-}
-
-/** Visibility of the other object around its encounter (fraction of its period; hides antipodal re-meetings). */
-export function visibility(enc, tau) {
-  const f = (tau - enc.tau) / Math.min(enc.orbit.period, enc.sat.orbit.period);
-  return Math.max(0, Math.min(smooth((f + 0.4) / 0.05), 1 - smooth((f - 0.2) / 0.05)));
+  return { sats, encounters };
 }
 
 /** Basis label. Critical: "Pc-backed" or "distance only". Elevated: "Pc band", "distance", or both. */
