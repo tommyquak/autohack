@@ -72,8 +72,9 @@ async def test_template_explains_a_demotion():
     f = explain.facts(e)
     assert f["baseline_tier"] == "Elevated" and f["demoted"]
     text = explain.template_explanation(f)
-    assert "The conservative baseline rule gives Elevated; the model demoted it to below threshold" in text
-    assert "(confidence 0.93)" in text
+    assert text.startswith("The rule gave Elevated (")
+    assert "Second Look demoted it to below threshold." in text
+    assert "Event 7 is" not in text and "confidence" not in text and "0.93" not in text
     assert "demoted" not in explain.template_explanation(explain.facts(_event()))
 
 

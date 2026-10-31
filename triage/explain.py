@@ -43,8 +43,8 @@ produced. Write 3-5 plain sentences that:
 - state the tier and the main reason it was assigned;
 - give the time to closest approach and the miss distance;
 - describe the trend across updates if one is given;
-- if `demoted` is true, say that the conservative baseline rule gives `baseline_tier` and the model
-  demoted the event to `tier` (with its `confidence`);
+- if `demoted` is true, say that the threshold rule gave `baseline_tier` (for the `reasons`) and Second Look
+  demoted the event to `tier`; do not describe the event as `tier` "because of" those reasons;
 - repeat any caution in `cautions` (close call / needs review, probability dilution, missing uncertainty) in plain
   words; a close call is most likely an over-warning, so do not describe it as the riskiest case.
 Rules: use only numbers that appear in the facts. Never call an event "safe" - the lowest tier
@@ -112,7 +112,6 @@ def facts(event: dict) -> dict:
         "baseline_tier": TIER_NAMES.get(baseline, str(baseline)),
         "demoted": baseline > event["tier"],
         "reasons": event["reasons"],
-        "confidence": round(event["confidence"], 2),
         "time_to_tca": f"{latest['time_to_tca_days']:.1f} days",
         "miss_distance": _dist(miss),
         "relative_speed": f"{latest['relative_speed_ms'] / 1000:.1f} km/s",
@@ -137,17 +136,23 @@ def facts(event: dict) -> dict:
 
 def template_explanation(f: dict) -> str:
     """Deterministic fallback text built from `facts()`."""
+    why = "; ".join(f["reasons"])
+    if f.get("demoted"):
+        why = why.replace(
+            "in [1e-6, 1e-4) (elevated band)", "in the elevated band"
+        )  # the reasons are why the RULE fired, not why the event is at its (lower) tier
+        first = (
+            f"The rule gave {_tier_in_sentence(f['baseline_tier'])} ({why}); "
+            f"Second Look demoted it to {_tier_in_sentence(f['tier'])}."
+        )
+    else:
+        first = f"Event {f['event_id']} is {f['tier']} ({why})."
     parts = [
-        f"Event {f['event_id']} is {f['tier']} ({'; '.join(f['reasons'])}).",
+        first,
         f"Closest approach in {f['time_to_tca']} with a {f['object_type']} object: "
         f"predicted miss distance {f['miss_distance']} at {f['relative_speed']}, "
         f"Pc upper bound {f['pc_upper_bound']}.",
     ]
-    if f.get("demoted"):
-        parts.append(
-            f"The conservative baseline rule gives {_tier_in_sentence(f['baseline_tier'])}; the model demoted it to "
-            f"{_tier_in_sentence(f['tier'])} (confidence {f['confidence']:.2f})."
-        )
     if trend := f.get("trend"):
         direction = "closing" if trend["closing"] else "opening"
         parts.append(
