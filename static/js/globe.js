@@ -1,6 +1,8 @@
 // Globe tab: where encounters happen, by REAL conjunction-point latitude, in front of an illustrative sky.
 //
-// What is data:   each event's LATITUDE (CDM geocentric_latitude). Every event is a dot coloured by its tier.
+// What is data:   each event's LATITUDE (CDM geocentric_latitude) and the ALTITUDE of its target's orbit (the mean of
+//                 target_altitude_km, perigee to apogee). Every event is a dot coloured by its tier and drawn at that
+//                 height above the globe, to scale with the globe.
 //                 The CDM files have no longitude, so a dot's east-west position is arbitrary: a fixed spread from the
 //                 event id (golden angle), so dots are stable between loads. The key and hint say so.
 //                 Click a dot to select the event, or a band for its counts.
@@ -70,7 +72,7 @@ export function initGlobe() {
         <p class="globe-head" id="globe-head"></p>
         <button type="button" class="globe-pause" id="globe-pause"></button>
         <div class="globe-key" id="globe-key"></div>
-        <p class="globe-hint" id="globe-hint">Each dot is one event at its real latitude. The data has no longitude, so a dot's east-west position is arbitrary. Click a dot or a band for detail.</p>
+        <p class="globe-hint" id="globe-hint">Each dot is one event, floating at its target's orbit height above its real latitude. The data has no longitude, so a dot's east-west position is arbitrary. Click a dot or a band for detail.</p>
         <div class="globe-tip" id="globe-tip" hidden></div>
         <section class="globe-card" id="globe-card" hidden aria-live="polite"></section>
         <button type="button" class="rail-toggle left" id="rail-l" aria-expanded="true" aria-label="Collapse the events panel" title="Collapse the events panel">${CHEV}</button>
@@ -135,7 +137,12 @@ export function initGlobe() {
 
 // One dot per event: real latitude, arbitrary but fixed longitude (golden-angle spread by event id).
 function buildDots() {
-  return state.events.filter((e) => lat(e) != null).map((e) => ({ e, lat: lat(e), lon: ((e.event_id * 137.50776405) % 360) - 180 }));
+  const fallback = 1 + 700 / 6371;
+  return state.events.filter((e) => lat(e) != null).map((e) => {
+    const a = e.latest.target_altitude_km;
+    const r = a && a[0] != null ? 1 + (a[0] + a[1]) / 2 / 6371 : fallback; // orbit altitude as a multiple of the Earth's radius
+    return { e, lat: lat(e), lon: ((e.event_id * 137.50776405) % 360) - 180, r };
+  });
 }
 
 function computeBands() {
@@ -193,7 +200,7 @@ function paintHead() {
 
 function paintKey() {
   document.getElementById("globe-key").innerHTML = `
-    <div class="gk-title">Events, at their real latitude</div>
+    <div class="gk-title">Events, at real latitude and orbit height</div>
     ${[2, 1, 0].map((t) => `<div class="gk-row"><i style="background:${TIERS[t].color}"></i>${esc(TIERS[t].name)}</div>`).join("")}
     <div class="gk-note">Longitude is not in the data, so east-west position is arbitrary.</div>
     <div class="gk-title gk-sep">Illustrative traffic, not data</div>
@@ -457,40 +464,61 @@ function draw() {
   shade.addColorStop(0, "rgba(0,0,0,0)"); shade.addColorStop(1, "rgba(2,6,14,.62)");
   ctx.fillStyle = shade; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
 
-  drawDots(path);
   ctx.restore();
 
   ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = "rgba(140,200,255,.35)"; ctx.lineWidth = 1; ctx.stroke();
 
   drawRing(false, cx, cy, R);
   drawDebris(false, cx, cy, R);
+  drawDots(proj, cx, cy);
 }
 
 // Events as dots, tier-coloured; Critical drawn last so it stays on top. Filters dim the dots they exclude.
+// A dot sits at its target's orbit height above the surface point at its latitude. An orthographic view is linear in the
+// radius, so lifting a point to r x the Earth's radius just scales its offset from the globe's centre by r.
 const DOT = [2, 2.9, 3.8]; // radius by tier
-function drawDots(path) {
+function lifted(proj, cx, cy, d) {
+  const p = proj([d.lon, d.lat]);
+  return p ? { surface: p, up: [cx + (p[0] - cx) * d.r, cy + (p[1] - cy) * d.r] } : null; // null = far side of the globe
+}
+
+function drawDots(proj, cx, cy) {
   for (let tier = 0; tier <= 2; tier++) {
     ctx.fillStyle = TIERS[tier].color;
     ctx.strokeStyle = "rgba(4,10,18,.85)";
     ctx.lineWidth = 0.8;
-    path.pointRadius(DOT[tier]);
     for (const d of dots) {
       if (d.e.tier !== tier || remaining(d.e) <= 0) continue;
+      const q = lifted(proj, cx, cy, d);
+      if (!q) continue;
       ctx.globalAlpha = passesFilters(d.e) ? 0.95 : 0.1;
       ctx.beginPath();
-      path({ type: "Point", coordinates: [d.lon, d.lat] });
+      ctx.arc(q.up[0], q.up[1], DOT[tier], 0, 6.2832);
       ctx.fill();
       ctx.stroke();
     }
   }
   ctx.globalAlpha = 1;
-  const sel = dots.find((d) => d.e.event_id === state.selectedId);
-  if (sel && remaining(sel.e) > 0) {
-    ctx.strokeStyle = OWN;
+  // the selected or hovered dot gets a ring and a thin line down to the surface point it floats above
+  for (const [d, color] of [[dots.find((x) => x.e.event_id === state.selectedId), OWN], [hoverDot, "#e6ebe8"]]) {
+    if (!d || remaining(d.e) <= 0) continue;
+    const q = lifted(proj, cx, cy, d);
+    if (!q) continue;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(q.surface[0], q.surface[1]);
+    ctx.lineTo(q.up[0], q.up[1]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(q.surface[0], q.surface[1], 1.8, 0, 6.2832);
+    ctx.fillStyle = color;
+    ctx.fill();
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    path.pointRadius(8);
-    path({ type: "Point", coordinates: [sel.lon, sel.lat] });
+    ctx.arc(q.up[0], q.up[1], 8, 0, 6.2832);
     ctx.stroke();
   }
 }
@@ -498,13 +526,13 @@ function drawDots(path) {
 // Nearest visible dot within 9 px of the pointer, or null.
 function dotAt(ev) {
   const r = canvas.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
-  const proj = projection();
+  const proj = projection(), [cx, cy] = proj.translate();
   let best = null, bd = 81;
   for (const d of dots) {
     if (remaining(d.e) <= 0 || !passesFilters(d.e)) continue;
-    const p = proj([d.lon, d.lat]);
-    if (!p) continue; // far side of the globe
-    const dist = (p[0] - x) ** 2 + (p[1] - y) ** 2;
+    const q = lifted(proj, cx, cy, d);
+    if (!q) continue;
+    const dist = (q.up[0] - x) ** 2 + (q.up[1] - y) ** 2;
     if (dist < bd) { bd = dist; best = d; }
   }
   return best;
