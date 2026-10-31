@@ -275,3 +275,198 @@ def test_assured_code_never_reads_the_label():
     for path in (root / "triage" / "certify.py", root / "server.py"):
         src = path.read_text()
         assert '"risk"' not in src and "'risk'" not in src and '"true_tier"' not in src and "LABEL" not in src
+
+
+# ---------- hardening: gaps found by adversarial review of the audit and the live endpoint ----------
+
+
+def _failed(out: dict) -> set[str]:
+    return {c["name"] for c in out["checks"] if not c["passed"]}
+
+
+@pytest.fixture
+def demo_doc(demo_text):
+    return json.loads(demo_text)
+
+
+def test_demo_audit_passes_with_and_without_the_artifact(demo_doc):
+    stored = demo_doc["model_evidence"]["threshold"]
+    assert certify.audit(demo_doc)["status"] == "PASS"
+    out = certify.audit(demo_doc, {"threshold": stored})
+    assert out["status"] == "PASS" and out["cv_evidence"]["threshold_matches_loaded_model"] is True
+    check = next(c for c in out["checks"] if c["name"] == "threshold_matches_model")
+    assert check["count"] == sum(e["certificate"]["threshold"] is not None for e in demo_doc["events"]) > 0
+
+
+def test_threshold_mismatch_fails(demo_doc):
+    stored = demo_doc["model_evidence"]["threshold"]
+    # 1. the served model is not the one events.json was built with
+    out = certify.audit(demo_doc, {"threshold": stored * 1.01})
+    assert out["status"] == "FAIL" and _failed(out) == {"threshold_matches_model"}
+    assert out["cv_evidence"]["threshold_matches_loaded_model"] is False
+    # 2. one certificate claims a different threshold (its score still sits below its own claim)
+    e = next(e for e in demo_doc["events"] if e["certificate"]["decision"] == "demoted")
+    e["certificate"]["threshold"] = 0.9
+    assert "threshold_matches_model" in _failed(certify.audit(demo_doc))
+
+
+def test_cv_evidence_says_where_it_was_read_from(demo_doc):
+    cv = certify.audit(demo_doc)["cv_evidence"]
+    assert cv["source"] == "read from events.json (copied from the artifact at build time)"
+    assert cv["threshold_matches_loaded_model"] is None  # no artifact passed: not claimed either way
+    demo_doc["model_evidence"] = None
+    assert certify.audit(demo_doc)["cv_evidence"]["available"] is False
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        lambda e: e["latest"].update(miss_distance_m=e["latest"]["miss_distance_m"] + 1.0),
+        lambda e: e["latest"].update(max_risk_estimate_log10=e["latest"]["max_risk_estimate_log10"] - 0.01),
+        lambda e: e["latest"]["sigma_r_m"].update(chaser=e["latest"]["sigma_r_m"]["chaser"] * 2),
+        lambda e: e["history"][-1].pop("sigma_r_m"),
+        lambda e: e.update(history=[]),
+    ],
+    ids=["miss", "pc", "sigma", "history-without-sigma", "no-history"],
+)
+def test_latest_must_equal_last_history_cdm(demo_doc, tamper):
+    e = next(e for e in demo_doc["events"] if e["tier"] == Tier.SAFE and e["latest"]["miss_distance_m"] > 9_000)
+    tamper(e)
+    out = certify.audit(demo_doc)
+    assert out["status"] == "FAIL" and "latest_matches_history" in _failed(out)
+
+
+def test_deleted_event_and_empty_files_fail(client, monkeypatch, tmp_path, demo_doc):
+    del demo_doc["events"][0]  # every remaining event is internally consistent
+    out = certify.audit(demo_doc)
+    assert out["status"] == "FAIL" and _failed(out) == {"events_complete"}
+    for i, empty in enumerate(({}, {"summary": {"n_events": 0, "by_tier": {}}, "events": []}, {"events": "nope"})):
+        folder = tmp_path / str(i)  # a fresh path per file, so the audit cache cannot answer for an earlier one
+        folder.mkdir()
+        (folder / "events.json").write_text(json.dumps(empty))
+        serve(monkeypatch, folder)
+        body = client.get("/api/audit").json()
+        assert body["status"] == "FAIL" and "events_complete" in _failed(body), empty
+
+
+def test_summary_must_match_recounted_tiers(demo_doc):
+    demo_doc["summary"]["by_tier"]["Critical"] += 1
+    assert _failed(certify.audit(demo_doc)) == {"events_complete"}
+
+
+@pytest.mark.parametrize("bad_tier", [2.5, 2.0, "2", True, None, 3, -1])
+def test_tiers_must_be_ints_0_1_2(demo_doc, bad_tier):
+    e = next(e for e in demo_doc["events"] if e["tier"] == Tier.CRITICAL)
+    e["tier"] = bad_tier
+    out = certify.audit(demo_doc)
+    assert out["status"] == "FAIL" and "tiers_well_formed" in _failed(out)
+
+
+def test_history_tier_must_be_an_int(demo_doc):
+    demo_doc["events"][0]["history"][0]["pred_tier"] = 1.5
+    assert "tiers_well_formed" in _failed(certify.audit(demo_doc))
+
+
+def test_certificate_must_say_holds(demo_doc):
+    demo_doc["events"][0]["certificate"]["holds"] = False  # every invariant still reads true
+    assert _failed(certify.audit(demo_doc)) == {"certificates_consistent"}
+
+
+@pytest.mark.parametrize("col", ["max_risk_estimate_log10", "miss_distance_m"])
+def test_history_cdm_with_missing_input_needs_elevated(demo_doc, col):
+    e = next(e for e in demo_doc["events"] if len(e["history"]) > 1 and e["history"][0]["pred_tier"] == Tier.SAFE)
+    e["history"][0][col] = None
+    out = certify.audit(demo_doc)
+    assert out["status"] == "FAIL" and _failed(out) == {"every_cdm_respects_rule_floor"}
+    e["history"][0]["pred_tier"] = int(Tier.ELEVATED)
+    assert certify.audit(demo_doc)["status"] == "PASS"
+
+
+def _post_raw(client, text: str):
+    return client.post("/api/triage", content=text, headers={"content-type": "application/json"})
+
+
+NON_FINITE_COLS = ("miss_distance", "max_risk_estimate", "c_sigma_r", "time_to_tca")
+
+
+@pytest.mark.parametrize("token", ["Infinity", "-Infinity", "NaN"])
+def test_triage_non_finite_numbers_are_missing_escalated_and_flagged(client, token):
+    far = _one(miss_distance=20_000.0, max_risk_estimate=-8.0)  # Below threshold by every rule
+    text = json.dumps({"cdms": [far | {c: "__X__"} for c in NON_FINITE_COLS]}).replace('"__X__"', token)
+    r = _post_raw(client, text)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["non_finite_as_missing"] == [f"cdms[{i}].{c}" for i, c in enumerate(NON_FINITE_COLS)]
+    for res, col in zip(body["results"], NON_FINITE_COLS, strict=True):
+        assert res["needs_review"] and f"{col} missing" in res["certificate"]["input_flags"], col
+        assert res["certificate"]["holds"] and res["certificate"]["decision"] == "not eligible"
+    assert body["results"][0]["tier"] >= Tier.ELEVATED and body["results"][1]["tier"] >= Tier.ELEVATED
+
+
+@pytest.mark.parametrize("token", ["inf", "-inf", "Infinity"])
+def test_predict_file_reads_csv_inf_as_missing(cdm_csv, tmp_path, token):
+    raw = pd.read_csv(cdm_csv)
+    raw["miss_distance"] = raw["miss_distance"].astype(object)
+    raw.loc[raw["event_id"] == 1, "miss_distance"] = token  # event 1 is otherwise far below threshold
+    path = tmp_path / "inf.csv"
+    raw.to_csv(path, index=False)
+    out = predict_file(path)
+    hit = out[(raw["event_id"] == 1).to_numpy()]
+    assert (hit["pred_tier"] >= Tier.ELEVATED).all() and hit["needs_review"].all()
+    assert (hit["baseline_tier"] >= Tier.ELEVATED).all()
+
+
+@pytest.mark.parametrize(
+    ("body", "status", "fragment"),
+    [
+        ({"cdms": [_one(event_id=-1)]}, 422, "event_id must be an integer from 0"),
+        ({"cdms": [_one(event_id=2**64)]}, 422, "event_id must be an integer from 0"),
+        ({"cdms": [_one(), 7]}, 422, "cdms[1] must be an object"),
+        ({"cdms": [_one(note="x" * 1_000_001)]}, 413, "request body over"),
+    ],
+)
+def test_triage_rejects_negative_ids_and_oversized_bodies(client, body, status, fragment):
+    r = client.post("/api/triage", json=body)
+    assert r.status_code == status and fragment in r.json()["detail"]
+
+
+def test_triage_rejects_non_json_body(client):
+    r = _post_raw(client, "not json")
+    assert r.status_code == 422 and "body must be JSON" in r.json()["detail"]
+
+
+def test_triage_row_cap_is_checked_before_rows_are_validated(client, monkeypatch):
+    calls = []
+    monkeypatch.setattr(server, "_rows_frame", lambda *a: calls.append(a))
+    r = client.post("/api/triage", json={"cdms": [{"anything": 1}] * (server.MAX_TRIAGE_ROWS + 1)})
+    assert r.status_code == 422 and "1-500" in r.json()["detail"] and not calls
+
+
+INVALID_INPUTS = [
+    ("c_sigma_r", 0.0, "c_sigma_r <= 0"),
+    ("t_sigma_r", -3.0, "t_sigma_r <= 0"),
+    ("time_to_tca", -0.5, "time_to_tca < 0 (after TCA)"),
+    ("time_to_tca", None, "time_to_tca missing"),
+    ("relative_speed", None, "relative_speed missing"),
+    ("relative_position_n", None, "relative_position_n missing"),
+]
+
+
+@pytest.mark.parametrize(("col", "value", "flag"), INVALID_INPUTS)
+def test_invalid_inputs_are_flagged_and_never_demoted(cdms, col, value, flag):
+    df = cdms.copy()
+    target = (df["event_id"] == 2).to_numpy()  # Elevated purely by the Pc upper bound, miss > 5 km
+    assert (model.predict(df, demote_all(df)).loc[target, "pred_tier"] == Tier.SAFE).all()  # demoted when valid...
+    df.loc[target, col] = np.nan if value is None else value
+    out = model.predict_with_certificates(df, demote_all(df))
+    hit = out[target]
+    assert (hit["pred_tier"] >= Tier.ELEVATED).all() and hit["needs_review"].all()  # ...never with this input
+    for c in hit["certificate"]:
+        assert flag in c["input_flags"] and c["decision"] == "not eligible" and c["holds"]
+
+
+@pytest.mark.parametrize(("col", "value", "flag"), INVALID_INPUTS)
+def test_triage_flags_invalid_inputs(client, col, value, flag):
+    row = _one(miss_distance=20_000.0, max_risk_estimate=-5.0) | {col: value}
+    r = client.post("/api/triage", json={"cdms": [row]}).json()["results"][0]
+    assert r["tier"] == Tier.ELEVATED and r["needs_review"] and flag in r["certificate"]["input_flags"]

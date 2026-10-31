@@ -23,13 +23,13 @@ import math
 import uuid
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 import fallback
 from agent import MODEL, run_agent
@@ -104,7 +104,9 @@ async def api_explain(event_id: int, llm: bool = True):
 
 @lru_cache(maxsize=2)
 def _audit(path: Path, mtime: float) -> dict:
-    return certify.audit(reports._parse(path, mtime))  # keyed like the report cache: recomputed on rebuild only
+    # Keyed like the report cache: recomputed on rebuild only. The loaded model (reports/model.joblib, cached for the
+    # process) must carry the same threshold as the served events.json.
+    return certify.audit(reports._parse(path, mtime), model.load_artifact())
 
 
 @app.get("/api/audit")
@@ -115,21 +117,54 @@ def api_audit():
 
 
 MAX_TRIAGE_ROWS = 500
-
-
-class TriageRequest(BaseModel):
-    cdms: list[dict[str, Any]]  # length checked in api_triage, so a too-long body is not echoed back in the 422
+MAX_TRIAGE_BYTES = 1_000_000  # about 2 KB per row at the row cap; a 500-row body of the allowed columns is ~170 KB
+MAX_EVENT_ID = 2**63 - 1
 
 
 def _bad(msg: str):
     raise HTTPException(422, msg)
 
 
-def _rows_frame(cdms: list[dict]) -> tuple[pd.DataFrame, list, list[str]]:
+async def _read_body(request: Request) -> bytes:
+    """The request body, refused with 413 once it passes MAX_TRIAGE_BYTES (checked while streaming, not after)."""
+    too_big = f"request body over {MAX_TRIAGE_BYTES:,} bytes; send at most {MAX_TRIAGE_ROWS} CDM rows per request"
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_TRIAGE_BYTES:
+        raise HTTPException(413, too_big)
+    body = bytearray()
+    async for chunk in request.stream():
+        body += chunk
+        if len(body) > MAX_TRIAGE_BYTES:
+            raise HTTPException(413, too_big)
+    return bytes(body)
+
+
+def _parse_cdms(body: bytes) -> list[dict]:
+    """{"cdms": [...]} -> the row list, with the 1-500 row cap checked before any row is validated or framed."""
+    try:
+        data = json.loads(body)
+    except ValueError:
+        _bad('body must be JSON: {"cdms": [<CDM row>, ...]}')
+    if not isinstance(data, dict) or "cdms" not in data:
+        _bad('body must be a JSON object {"cdms": [<CDM row>, ...]}; field cdms is required')
+    cdms = data["cdms"]
+    if not isinstance(cdms, list):
+        _bad(f"cdms must be a list of CDM rows, got {type(cdms).__name__}")
+    if not 1 <= len(cdms) <= MAX_TRIAGE_ROWS:
+        _bad(f"cdms must hold 1-{MAX_TRIAGE_ROWS} CDM rows, got {len(cdms)}")
+    for i, r in enumerate(cdms):
+        if not isinstance(r, dict):
+            _bad(f"cdms[{i}] must be an object of column: value")
+    return cdms
+
+
+def _rows_frame(cdms: list[dict]) -> tuple[pd.DataFrame, list, list[str], list[str]]:
     """Validate JSON CDM rows into a frame like read_cdm_csv's. Keys absent -> 422; null -> missing value (escalated,
-    never demoted). Columns other than event_id and the allowed inputs (including `risk`) are dropped unread."""
+    never demoted). A non-finite number (Infinity, -Infinity, NaN) is not a measurement: it is treated exactly like
+    null and listed in the returned `non_finite`. Columns other than event_id and the allowed inputs (including
+    `risk`) are dropped unread."""
     ignored = sorted({k for r in cdms for k in r} - {EVENT, *FEATURES})
-    given_ids = []
+    given_ids, non_finite = [], []
     for i, r in enumerate(cdms):
         absent = [c for c in FEATURES if c not in r]
         if absent:
@@ -141,11 +176,13 @@ def _rows_frame(cdms: list[dict]) -> tuple[pd.DataFrame, list, list[str]]:
                     _bad(f"cdms[{i}].{c} must be a string or null, got {v!r}")
             elif v is not None and (isinstance(v, bool) or not isinstance(v, int | float)):
                 _bad(f"cdms[{i}].{c} must be a number or null, got {v!r}")
+            elif isinstance(v, float) and not math.isfinite(v):
+                non_finite.append(f"cdms[{i}].{c}")  # validate_cdms turns it into NaN: missing, escalated, flagged
         eid = r.get(EVENT)
-        if eid is not None and (isinstance(eid, bool) or not isinstance(eid, int)):
-            _bad(f"cdms[{i}].event_id must be an integer or absent, got {eid!r}")
+        if eid is not None and (isinstance(eid, bool) or not isinstance(eid, int) or not 0 <= eid <= MAX_EVENT_ID):
+            _bad(f"cdms[{i}].event_id must be an integer from 0 to 2^63-1, or absent; got {eid!r}")
         given_ids.append(eid)
-    # A row without event_id is its own one-CDM event (negative ids never clash with real ones).
+    # A row without event_id is its own one-CDM event: the synthetic ids are negative, and a sent id may not be.
     ids = [eid if eid is not None else -(i + 1) for i, eid in enumerate(given_ids)]
     frame = pd.DataFrame([{c: r[c] for c in FEATURES} for r in cdms]).assign(**{EVENT: ids})
     for c in FEATURES:
@@ -155,7 +192,7 @@ def _rows_frame(cdms: list[dict]) -> tuple[pd.DataFrame, list, list[str]]:
         frame = validate_cdms(frame, "cdms")
     except ValueError as e:
         _bad(str(e))
-    return frame, given_ids, ignored
+    return frame, given_ids, ignored, non_finite
 
 
 def _json_safe(x):
@@ -169,11 +206,16 @@ def _json_safe(x):
 
 
 @app.post("/api/triage")
-def api_triage(req: TriageRequest):
-    """Tier CDM rows sent as JSON with the same pipeline as `python -m triage.predict`; works without labels."""
-    if not 1 <= len(req.cdms) <= MAX_TRIAGE_ROWS:
-        _bad(f"cdms must hold 1-{MAX_TRIAGE_ROWS} CDM rows, got {len(req.cdms)}")
-    frame, given_ids, ignored = _rows_frame(req.cdms)
+async def api_triage(request: Request):
+    """Tier CDM rows sent as JSON ({"cdms": [...]}, 1-500 rows, at most MAX_TRIAGE_BYTES) with the same pipeline as
+    `python -m triage.predict`; works without labels. The body is read by hand so the size and row caps apply
+    before any row is validated, and a too-long body is never echoed back in the 422."""
+    cdms = _parse_cdms(await _read_body(request))
+    return await run_in_threadpool(_triage, cdms)
+
+
+def _triage(cdms: list[dict]) -> dict:
+    frame, given_ids, ignored, non_finite = _rows_frame(cdms)
     out = predict_frame(frame, with_certificates=True)
     rows = frame.to_dict("records")
     results = []
@@ -200,6 +242,7 @@ def api_triage(req: TriageRequest):
             "model": "trained" if artifact else "rules only",
             "all_invariants_hold": all(r["certificate"]["holds"] for r in results),
             "ignored_columns": ignored,
+            "non_finite_as_missing": non_finite,
             "results": results,
         }
     )
