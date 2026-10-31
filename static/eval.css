@@ -46,3 +46,44 @@
   .lt-row .lt-name { grid-column: 1 / -1; }
   .lt-row .lt-rec { grid-column: 1 / -1; text-align: left; }
 }
+
+/* ---- Official task panel (top of the tab, above the funnel) ---- */
+.evo-top { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s3); max-width: 980px; }
+.evo { display: grid; gap: var(--s3); padding: var(--s1) 0 var(--s5); border-bottom: 1px solid var(--hair); margin-bottom: var(--s2); }
+.evo p, .evo figure { margin: 0; }
+.evo-part { margin: 0; font: 500 18px/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--ink); }
+.evo-sub { font: 13px/1.45 var(--sans); color: var(--muted); margin-top: -6px !important; }
+.evo-bar { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; }
+.evo-note { font: 12px var(--sans); color: var(--muted); }
+/* own class, not .seg: funnel.js toggles every .seg button on the page */
+.evo-seg { display: inline-flex; border: 1px solid var(--hair2); border-radius: 4px; overflow: hidden; }
+.evo-seg button { background: none; border: 0; padding: 6px 12px; cursor: pointer; color: var(--muted); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.evo-seg button + button { border-left: 1px solid var(--hair2); }
+.evo-seg button:hover { color: var(--ink); }
+.evo-seg button[aria-pressed="true"] { background: #131c19; color: var(--ink); }
+.evo-table { table-layout: auto; }
+.evo-table thead th:first-child { width: 30%; }
+.evo-table td { white-space: nowrap; padding: 9px 8px; vertical-align: top; }
+.evo-table thead th { padding-left: 8px; padding-right: 8px; }
+.evo-table tbody th { padding-top: 9px; padding-bottom: 9px; }
+.evo-table td small { display: block; font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+
+.evo-split { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s6); align-items: start; margin-top: var(--s2); }
+.evo-cm figcaption { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--s2); }
+.evo-grid { display: grid; grid-template-columns: auto auto; gap: var(--s2); align-items: center; }
+.evo-ax-y { writing-mode: vertical-rl; transform: rotate(180deg); font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.evo-ax-x { display: block; text-align: right; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.evo-matrix { border-collapse: collapse; font: 13px var(--sans); }
+.evo-matrix th { font: 500 11px var(--mono); letter-spacing: .04em; padding: 4px 10px; white-space: nowrap; text-align: right; }
+.evo-matrix tbody th { text-align: left; padding-left: 0; }
+/* neutral ramp: ink at an opacity that follows the count (sqrt), never a tier or "good" colour */
+.evo-matrix tbody td { min-width: 84px; padding: 7px 12px; text-align: right; border: 1px solid var(--hair2); background: color-mix(in srgb, var(--ink) var(--a), transparent); }
+.evo-matrix td b { display: block; font-weight: 500; font-size: 14px; color: var(--ink); }
+.evo-matrix td small { font-size: 10px; color: var(--ink); opacity: .6; }
+.evo-matrix td.diag b { font-weight: 700; }
+.evo-read { display: grid; gap: var(--s3); align-content: start; padding-top: 26px; max-width: 46ch; }
+.evo-honest { font: 15px/1.5 var(--sans); color: var(--ink); }
+.evo-read sub { font-size: 9px; }
+
+@media (max-width: 1100px) { .evo-split { grid-template-columns: 1fr; gap: var(--s4); } .evo-read { padding-top: 0; } }
+@media (max-width: 760px) { .evo-table { display: block; overflow-x: auto; } }
