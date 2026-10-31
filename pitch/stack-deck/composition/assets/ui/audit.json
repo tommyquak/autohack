@@ -1,0 +1,68 @@
+{
+ "status": "PASS",
+ "counts": {
+  "events": 2167,
+  "cdm_decisions": 24484,
+  "kept": 153,
+  "demoted": 288,
+  "not_eligible": 1726,
+  "missing": 0
+ },
+ "checks": [
+  {
+   "name": "events_complete",
+   "passed": true,
+   "count": 2167
+  },
+  {
+   "name": "tiers_well_formed",
+   "passed": true,
+   "count": 2167
+  },
+  {
+   "name": "critical_by_rule_stays_critical",
+   "passed": true,
+   "count": 196
+  },
+  {
+   "name": "not_below_miss_rule",
+   "passed": true,
+   "count": 2167
+  },
+  {
+   "name": "unusable_uncertainty_not_demoted",
+   "passed": true,
+   "count": 63
+  },
+  {
+   "name": "demotions_below_threshold",
+   "passed": true,
+   "count": 288
+  },
+  {
+   "name": "threshold_matches_model",
+   "passed": true,
+   "count": 441
+  },
+  {
+   "name": "model_only_demotes",
+   "passed": true,
+   "count": 2167
+  },
+  {
+   "name": "certificates_consistent",
+   "passed": true,
+   "count": 2167
+  },
+  {
+   "name": "latest_matches_history",
+   "passed": true,
+   "count": 2167
+  },
+  {
+   "name": "every_cdm_respects_rule_floor",
+   "passed": true,
+   "count": 24484
+  }
+ ]
+}
