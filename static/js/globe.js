@@ -1,33 +1,57 @@
-// Globe tab: where encounters happen, by REAL conjunction-point latitude.
+// Globe tab: where encounters happen, by REAL conjunction-point latitude, in front of an illustrative sky.
 //
-// Data honesty: the CDM files carry `geocentric_latitude` per event and NO longitude (train/test CSV and the .xlsx all have
-// the same 103 columns), so nothing is pinned to a map point. The default view is deliberately quiet: one density shade per
-// 10-degree latitude band and one headline. The numbers (tiers, critical share) open when a band is clicked.
+// What is data:   the latitude bands. Brightness = encounters in the band; colour runs cool -> hot with the band's
+//                 Critical share. Click a band for the counts. (The CDM files have latitude but NO longitude, so nothing
+//                 is pinned to a map point.)
+// What is not:    the stars, the orbiting debris and the continents' lighting. The debris positions are made up for the
+//                 picture; only its colour mix follows the real chaser types in the events. The key says so.
+// Also real:      the blue ring sits at the median target altitude (events' `target_altitude_km`) on a near-polar orbit,
+//                 which is what the targets fly (inclination 87-99 deg in the CDMs); its longitude is arbitrary.
 //
 // d3 and topojson load the first time the tab opens; offline, the globe still draws without land outlines.
-import { LAT_BAND, TIERS, esc, latBand } from "./fmt.js";
+import { LAT_BAND, TIERS, esc, hexToRgb, latBand } from "./fmt.js";
 import { state, subscribe, touchFilters } from "./state.js";
 
 const D3 = "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js";
 const TOPO = "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js";
 const LAND = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json";
 const N = 180 / LAT_BAND;
-const SHADE = "230,235,232", OWN = "#5ea9ff";
+const OWN = "#5ea9ff";
+const COOL = hexToRgb("#4fc3f7"), WARM = hexToRgb("#ffb347"), HOT = hexToRgb("#ff4a3d");
+// Chaser types and their dot colours; the particle mix is sampled from the real counts.
+const KINDS = [
+  { type: "DEBRIS", label: "Debris", color: "#ff9d3d", size: 1.6 },
+  { type: "PAYLOAD", label: "Payload", color: "#f2f6f4", size: 2 },
+  { type: "ROCKET BODY", label: "Rocket body", color: "#a596ff", size: 2.2 },
+  { type: "UNKNOWN", label: "Unidentified", color: "#8a9490", size: 1.6 },
+];
+const PARTICLES = 2400;
 
 let canvas, ctx, wrap, card, head, hint, pauseBtn, d3, land = null;
 let w = 0, h = 0, dpr = 1;
-let rot = 20, tilt = 24; // longitude spin and tilt toward the viewer
+let rot = 20, tilt = 24; // spin and tilt toward the viewer, degrees
 let auto = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let bands = [];
 let hover = -1, picked = -1;
 let drag = null;
-let raf = 0, last = 0, ready = false;
+let raf = 0, last = 0, clock = 0, ready = false;
+let stars = [], parts = null, orbitR = 1.08;
 
 const panel = () => document.getElementById("panel-globe");
 const isOpen = () => panel() && !panel().hidden;
 const lat = (e) => e.latest.geocentric_latitude_deg;
 const edge = (v) => `${Math.abs(v)}°${v < 0 ? " S" : v > 0 ? " N" : ""}`;
 const bandName = (i) => `${edge(i * LAT_BAND - 90)} to ${edge(i * LAT_BAND - 90 + LAT_BAND)}`;
+const rad = (d) => (d * Math.PI) / 180;
+
+function prng(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 export function initGlobe() {
   const css = document.createElement("link");
@@ -42,7 +66,8 @@ export function initGlobe() {
         <canvas id="globe" tabindex="0" aria-label="Globe of encounters by latitude band. Arrow up and down move between bands, Enter opens one."></canvas>
         <p class="globe-head" id="globe-head"></p>
         <button type="button" class="globe-pause" id="globe-pause"></button>
-        <p class="globe-hint" id="globe-hint">Brighter means more encounters. Click a band for detail. Latitude only: the data has no longitude.</p>
+        <div class="globe-key" id="globe-key"></div>
+        <p class="globe-hint" id="globe-hint">Click a band for detail. Latitude only: the data has no longitude.</p>
         <section class="globe-card" id="globe-card" hidden aria-live="polite"></section>
       </div>
     </div>`,
@@ -73,10 +98,15 @@ export function initGlobe() {
   canvas.addEventListener("keydown", onKey);
   card.addEventListener("click", onCard);
 
-  const rebuild = () => ((bands = computeBands()), paintHead(), isOpen() && redraw());
+  const rebuild = () => {
+    bands = computeBands();
+    buildSky();
+    paintHead();
+    paintKey();
+    if (isOpen()) redraw();
+  };
   subscribe(["events"], rebuild);
-  subscribe(["selectedId"], () => (paintCard(), redraw()));
-  subscribe(["filters"], () => (paintCard(), redraw()));
+  subscribe(["selectedId", "filters"], () => (paintCard(), redraw()));
   rebuild();
   paintPause();
 }
@@ -94,6 +124,38 @@ function computeBands() {
   return out;
 }
 
+// Stars, debris and the target ring. Seeded, so the sky is the same on every load.
+function buildSky() {
+  const rnd = prng(7);
+  stars = Array.from({ length: 460 }, () => ({ x: rnd(), y: rnd(), r: 0.3 + rnd() ** 3 * 1.3, a: 0.22 + rnd() * 0.6, p: rnd() * 6.28, s: 0.5 + rnd() * 1.6, warm: rnd() < 0.2 }));
+
+  // particle colour mix follows the events' real chaser types
+  const counts = KINDS.map((k) => state.events.filter((e) => (k.type === "UNKNOWN" ? e.latest.object_type === "UNKNOWN" || e.latest.object_type === "TBA" : e.latest.object_type === k.type)).length);
+  const total = counts.reduce((a, b) => a + b, 0) || 1;
+  const weights = counts.some(Boolean) ? counts.map((c) => c / total) : [0.58, 0.1, 0.02, 0.3];
+  const pick = () => {
+    let u = rnd(), i = 0;
+    while (i < weights.length - 1 && u > weights[i]) u -= weights[i++];
+    return i;
+  };
+  const list = Array.from({ length: PARTICLES }, () => {
+    const rr = 1.07 + rnd() ** 1.7 * 0.95; // dense near the surface, thinning outward
+    const polar = rnd() < 0.6;
+    return {
+      rr,
+      inc: rad(polar ? 82 + rnd() * 20 : rnd() * 180),
+      node: rnd() * 6.2832,
+      phase: rnd() * 6.2832,
+      omega: 0.16 * (1.1 / rr) ** 1.5 * (rnd() < 0.5 ? 1 : -1),
+      kind: pick(),
+    };
+  }).sort((a, b) => a.kind - b.kind);
+  parts = { list, pos: new Float32Array(PARTICLES * 3) };
+
+  const alts = state.events.map((e) => e.latest.target_altitude_km).filter((a) => a && a[0] != null).map((a) => (a[0] + a[1]) / 2).sort((a, b) => a - b);
+  orbitR = 1 + (alts.length ? alts[Math.floor(alts.length / 2)] : 700) / 6371;
+}
+
 // One sentence, computed from the data: the point of the picture.
 function paintHead() {
   const total = bands.reduce((s, b) => s + b.total, 0);
@@ -102,8 +164,20 @@ function paintHead() {
   head.textContent = `${Math.round((polar / total) * 100)}% of encounters happen above 60° latitude, where near-polar orbits cross.`;
 }
 
+function paintKey() {
+  const shares = bands.filter((b) => b.total).map((b) => b.critical / b.total);
+  const hi = shares.length ? Math.round(Math.max(...shares) * 100) : 0;
+  document.getElementById("globe-key").innerHTML = `
+    <div class="gk-title">Band colour: Critical share</div>
+    <div class="gk-ramp" aria-hidden="true"></div>
+    <div class="gk-scale"><span>0%</span><span>${hi}%</span></div>
+    <div class="gk-title gk-sep">Illustrative traffic, not data</div>
+    ${KINDS.map((k) => `<div class="gk-row"><i style="background:${k.color}"></i>${esc(k.label)}</div>`).join("")}
+    <div class="gk-row"><i class="gk-ring"></i>Typical target orbit</div>`;
+}
+
 function paintPause() {
-  pauseBtn.textContent = auto ? "Pause rotation" : "Rotate";
+  pauseBtn.textContent = auto ? "Pause motion" : "Play motion";
 }
 
 function paintCard() {
@@ -140,8 +214,6 @@ function onCard(ev) {
 function pick(i) {
   picked = i;
   paintCard();
-  if (i >= 0) stop(); // hold still while a band is open
-  else kick();
   redraw();
 }
 
@@ -198,7 +270,7 @@ function stop() {
 function kick() {
   if (!isOpen() || !d3) return;
   draw();
-  if (auto && picked < 0 && !raf) {
+  if (auto && !raf) {
     last = performance.now();
     raf = requestAnimationFrame(loop);
   }
@@ -207,9 +279,11 @@ function kick() {
 
 function loop(now) {
   raf = 0;
-  if (!isOpen() || !auto || picked >= 0) return;
-  if (!drag) rot = (rot + ((now - last) / 1000) * 6) % 360;
+  if (!isOpen() || !auto) return;
+  const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  clock += dt;
+  if (picked < 0 && !drag) rot = (rot + dt * 6) % 360; // the globe holds still while a band is open; the sky keeps drifting
   draw();
   raf = requestAnimationFrame(loop);
 }
@@ -227,50 +301,158 @@ function resize() {
   if (d3 && isOpen()) draw();
 }
 
-const projection = () => d3.geoOrthographic().fitExtent([[56, 64], [w - 56, h - 56]], { type: "Sphere" }).rotate([rot, -tilt]).clipAngle(90);
+// Leave room around the sphere for the debris shells.
+const projection = () => {
+  const pad = Math.max(28, Math.min(w, h) * 0.1);
+  return d3.geoOrthographic().fitExtent([[pad, pad + 24], [w - pad, h - pad]], { type: "Sphere" }).rotate([rot, -tilt]).clipAngle(90);
+};
 const parallel = (deg) => ({ type: "LineString", coordinates: d3.range(-180, 181, 3).map((l) => [l, deg]) });
+
+function bandRgb(t) {
+  const [a, b, u] = t < 0.5 ? [COOL, WARM, t * 2] : [WARM, HOT, (t - 0.5) * 2];
+  return a.map((v, i) => Math.round(v + (b[i] - v) * u));
+}
+
+// 3D helpers shared by debris and the target ring: orbit-frame point -> view (x right, y up, z toward viewer).
+function view(x, y, z) {
+  const yaw = rad(rot), c = Math.cos(yaw), s = Math.sin(yaw);
+  const x2 = x * c - y * s, y2 = x * s + y * c;
+  const p = rad(tilt), cp = Math.cos(p), sp = Math.sin(p);
+  const toward = -y2;
+  return [x2, z * cp - toward * sp, z * sp + toward * cp];
+}
+function onOrbit(rr, inc, node, theta) {
+  const x = rr * Math.cos(theta), y0 = rr * Math.sin(theta);
+  const y = y0 * Math.cos(inc), z = y0 * Math.sin(inc);
+  return [x * Math.cos(node) - y * Math.sin(node), x * Math.sin(node) + y * Math.cos(node), z];
+}
+
+function drawStars() {
+  for (const warm of [false, true]) {
+    ctx.fillStyle = warm ? "#ffe2b8" : "#cfe2ff";
+    for (const s of stars) {
+      if (s.warm !== warm) continue;
+      ctx.globalAlpha = s.a * (0.78 + 0.22 * Math.sin(clock * s.s + s.p));
+      const r = s.r * 1.6;
+      ctx.fillRect(s.x * w, s.y * h, r, r);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// back = pass behind the globe (drawn first, hidden where the disc covers it); otherwise in front.
+function drawDebris(back, cx, cy, R) {
+  const { list, pos } = parts;
+  let kind = -1;
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i];
+    const o = onOrbit(p.rr, p.inc, p.node, p.phase + p.omega * clock);
+    const [vx, vy, vz] = view(o[0], o[1], o[2]);
+    pos[i * 3] = vx; pos[i * 3 + 1] = vy; pos[i * 3 + 2] = vz;
+    const behind = vz < 0;
+    if (behind !== back) continue;
+    if (behind && vx * vx + vy * vy < 1) continue; // hidden by the planet
+    if (p.kind !== kind) { kind = p.kind; ctx.fillStyle = KINDS[kind].color; }
+    ctx.globalAlpha = back ? 0.5 : 0.9;
+    const s = KINDS[kind].size;
+    ctx.fillRect(cx + vx * R - s / 2, cy - vy * R - s / 2, s, s);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawRing(back, cx, cy, R) {
+  const inc = rad(98), node = rad(40), n = 160;
+  ctx.lineWidth = back ? 1 : 1.5;
+  ctx.strokeStyle = back ? "rgba(150,205,255,.28)" : "rgba(150,205,255,.85)";
+  ctx.beginPath();
+  let pen = false;
+  for (let i = 0; i <= n; i++) {
+    const o = onOrbit(orbitR, inc, node, (i / n) * 6.2832);
+    const [vx, vy, vz] = view(o[0], o[1], o[2]);
+    const behind = vz < 0, hidden = behind && vx * vx + vy * vy < 1;
+    if (behind !== back || hidden) { pen = false; continue; }
+    const x = cx + vx * R, y = cy - vy * R;
+    pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    pen = true;
+  }
+  ctx.stroke();
+  if (!back) {
+    const o = onOrbit(orbitR, inc, node, clock * 0.5);
+    const [vx, vy, vz] = view(o[0], o[1], o[2]);
+    if (vz >= 0 || vx * vx + vy * vy >= 1) {
+      ctx.fillStyle = "#cfe8ff";
+      ctx.beginPath(); ctx.arc(cx + vx * R, cy - vy * R, 2.6, 0, 6.2832); ctx.fill();
+    }
+  }
+}
 
 function draw() {
   if (!d3 || !w) return;
   ctx.clearRect(0, 0, w, h);
+  drawStars();
+
   const proj = projection(), path = d3.geoPath(proj, ctx);
   const [cx, cy] = proj.translate(), R = proj.scale();
 
+  drawDebris(true, cx, cy, R);
+  drawRing(true, cx, cy, R);
+
+  // atmosphere: a soft blue rim just outside the limb
+  const atm = ctx.createRadialGradient(cx, cy, R * 0.97, cx, cy, R * 1.16);
+  atm.addColorStop(0, "rgba(96,176,255,.42)"); atm.addColorStop(0.35, "rgba(70,140,230,.14)"); atm.addColorStop(1, "rgba(60,120,220,0)");
+  ctx.fillStyle = atm;
+  ctx.beginPath(); ctx.arc(cx, cy, R * 1.16, 0, 6.2832); ctx.fill();
+
+  // ocean, lit from the upper left
   ctx.beginPath(); path({ type: "Sphere" });
-  const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
-  g.addColorStop(0, "#0f1815"); g.addColorStop(1, "#080b0a");
-  ctx.fillStyle = g; ctx.fill();
+  const sea = ctx.createRadialGradient(cx - R * 0.4, cy - R * 0.45, R * 0.08, cx, cy, R * 1.02);
+  sea.addColorStop(0, "#2a6aa3"); sea.addColorStop(0.55, "#12395f"); sea.addColorStop(1, "#071a2e");
+  ctx.fillStyle = sea; ctx.fill();
 
   ctx.save();
   ctx.beginPath(); path({ type: "Sphere" }); ctx.clip();
 
-  // density: one neutral shade per band, brighter = more encounters. Each band is a true area (d3's own latitude-band
-  // outline), so it curves with the sphere instead of clipping into wedges at the limb.
+  if (land) {
+    ctx.beginPath(); path(land);
+    ctx.fillStyle = "rgba(46,124,98,.62)"; ctx.fill();
+  }
+
+  // encounter bands: area = true latitude band; alpha = how many encounters; colour = Critical share
   const max = Math.max(1, ...bands.map((b) => b.total));
+  const maxShare = Math.max(0.0001, ...bands.filter((b) => b.total).map((b) => b.critical / b.total));
   bands.forEach((b, i) => {
     if (!b.total && hover !== i && picked !== i) return;
     const lo = i * LAT_BAND - 90, hi = lo + LAT_BAND;
-    const a = 0.05 + 0.5 * Math.sqrt(b.total / max) + (hover === i ? 0.1 : 0) + (picked === i ? 0.14 : 0);
+    const [r, g, bl] = bandRgb(b.total ? b.critical / b.total / maxShare : 0);
+    const a = 0.14 + 0.6 * Math.sqrt(b.total / max) + (hover === i ? 0.1 : 0) + (picked === i ? 0.16 : 0);
     ctx.beginPath();
     path(d3.geoGraticule().extentMajor([[-180, lo], [180, hi]]).outline());
-    ctx.fillStyle = `rgba(${SHADE},${a.toFixed(3)})`;
+    ctx.fillStyle = `rgba(${r},${g},${bl},${Math.min(a, 0.92).toFixed(3)})`;
     ctx.fill();
   });
 
   if (land) {
     ctx.beginPath(); path(land);
-    ctx.strokeStyle = "rgba(230,235,232,.30)"; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.strokeStyle = "rgba(200,245,225,.6)"; ctx.lineWidth = 0.8; ctx.stroke();
   }
 
-  // the selected event's own latitude: a single thin line, no label (the band card names it)
+  // night-side shading for depth
+  const shade = ctx.createRadialGradient(cx - R * 0.45, cy - R * 0.5, R * 0.3, cx, cy, R * 1.05);
+  shade.addColorStop(0, "rgba(0,0,0,0)"); shade.addColorStop(1, "rgba(2,6,14,.62)");
+  ctx.fillStyle = shade; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+
+  // the selected event's own latitude: a single thin line
   const sel = state.events.find((e) => e.event_id === state.selectedId);
   if (sel && lat(sel) != null) {
     ctx.beginPath(); path(parallel(lat(sel)));
-    ctx.lineWidth = 1.2; ctx.strokeStyle = OWN; ctx.globalAlpha = 0.9; ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.3; ctx.strokeStyle = OWN; ctx.globalAlpha = 0.95; ctx.stroke(); ctx.globalAlpha = 1;
   }
   ctx.restore();
 
-  ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = "#2a3532"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = "rgba(140,200,255,.35)"; ctx.lineWidth = 1; ctx.stroke();
+
+  drawRing(false, cx, cy, R);
+  drawDebris(false, cx, cy, R);
 }
 
 // Band index under the pointer, or -1 off the sphere.
