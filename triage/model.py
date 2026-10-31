@@ -8,6 +8,8 @@
 Uses the trained artifact (reports/model.joblib, from `python -m triage.train`) when present,
 otherwise the conservative upper-bound baseline. Either way the deterministic rules hold:
 Critical from the upper bound or miss < 1 km can never be removed by the model.
+Rows with missing or unknown inputs (input_flags) are never demoted and always flagged for review;
+a missing Pc upper bound or miss distance is never below Elevated.
 """
 
 from functools import cache
@@ -29,12 +31,20 @@ def load_artifact(path: Path = ARTIFACT):
     return joblib.load(path) if path.exists() else None
 
 
+def input_flags(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    """(missing_rule_input, untrusted): NaN Pc upper bound / miss distance; plus NaN sigma or unknown object type."""
+    missing = df[["max_risk_estimate", "miss_distance"]].isna().any(axis=1).to_numpy()
+    untrusted = missing | df[["c_sigma_r", "t_sigma_r"]].isna().any(axis=1).to_numpy() | df["c_object_type"].isna()
+    return missing, np.asarray(untrusted)
+
+
 def predict_baseline(df: pd.DataFrame) -> pd.DataFrame:
     upper = df["max_risk_estimate"].to_numpy(dtype=float)
     tier = np.maximum(pc_tier(upper), miss_tier(df["miss_distance"]))
     near = np.minimum(np.abs(upper - RISK_CRITICAL), np.abs(upper - RISK_ELEVATED)) < REVIEW_MARGIN
+    review = (near | dilution_flag(df)) & (tier < Tier.CRITICAL)  # same dilution rule as the trained path
     return pd.DataFrame(
-        {"pred_tier": tier, "confidence": np.where(near, 0.5, 0.8), "needs_review": near}, index=df.index
+        {"pred_tier": tier, "confidence": np.where(near, 0.5, 0.8), "needs_review": review}, index=df.index
     )
 
 
@@ -68,4 +78,13 @@ def predict_with(artifact: dict, df: pd.DataFrame) -> pd.DataFrame:
 def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
     artifact = artifact if artifact is not None else load_artifact()
     out = predict_with(artifact, df) if artifact else predict_baseline(df)
-    return out[["pred_tier", "confidence", "needs_review"]]
+    out = out[["pred_tier", "confidence", "needs_review"]].copy()
+    # Unknown input means "unknown", not "below threshold": keep at least the rule tier, escalate, flag.
+    missing, untrusted = input_flags(df)
+    if untrusted.any():
+        floor = np.maximum(predict_baseline(df)["pred_tier"].to_numpy(), np.where(missing, Tier.ELEVATED, Tier.SAFE))
+        tier = out["pred_tier"].to_numpy()
+        out["pred_tier"] = np.where(untrusted, np.maximum(tier, floor), tier).astype(int)
+        out["confidence"] = np.where(untrusted, 0.5, out["confidence"])
+        out["needs_review"] = out["needs_review"].to_numpy() | untrusted
+    return out
