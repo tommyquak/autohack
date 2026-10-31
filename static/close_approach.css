@@ -1,17 +1,27 @@
 /* Styles for static/close_approach.js. Uses the starter's colour tokens with fallbacks. */
 .ca-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; color: var(--text, #e6e8ee); }
 .ca-muted { color: var(--muted, #8a90a0); }
-.ca-tier { border: 1px solid; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
-.ca-caution { border: 1px solid #fab219; border-radius: 4px; padding: 1px 6px; color: var(--text, #e6e8ee); white-space: nowrap; }
+.ca-tier { border: 1px solid; padding: 1px 6px; white-space: nowrap; }
+.ca-caution { border: 1px solid #fab219; padding: 1px 6px; color: var(--text, #e6e8ee); white-space: nowrap; }
 .ca-note { color: var(--muted, #8a90a0); font-size: 12px; margin: 4px 0; }
 .ca-table { border-collapse: collapse; width: 100%; font-size: 13px; color: var(--text, #e6e8ee); margin-top: 8px; }
 .ca-table th { text-align: left; color: var(--muted, #8a90a0); font-weight: 500; border-bottom: 1px solid #2a2f3a; padding: 4px 6px; }
 .ca-table td { border-bottom: 1px solid #2a2f3a; padding: 4px 6px; }
-.ca-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.ca-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: middle; }
 /* Dashboard tabs (static/js/encounter.js) */
 .enc-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-start; min-height: 28px; }
 .enc-view { flex: 1; min-height: 0; overflow: auto; }
-.chip-x { background: none; border: 1px solid var(--hair2, #2a3532); border-radius: 4px; padding: 2px 8px; cursor: pointer; font-family: var(--mono, monospace); }
+.chip-x { background: none; border: 1px solid var(--hair2, #2a3532); padding: 2px 8px; cursor: pointer; font-family: var(--mono, monospace); }
 .chip-x:hover { border-color: var(--muted, #7d8a85); }
 /* Plotly draws its legend as <g class="legend">; keep host-page .legend rules (uppercase, letter-spacing) off it. */
 .js-plotly-plot .legend { text-transform: none; letter-spacing: normal; font-family: inherit; font-size: inherit; }
+/* Readable header: one plain sentence, then big tabular readings (SDTH "Night Instrument"). */
+.ca-sentence { margin: 4px 0 10px; font-size: 15px; line-height: 1.45; color: var(--ink, #e6ebe8); max-width: 75ch; }
+.ca-sentence b { font-family: var(--mono, ui-monospace, monospace); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ca-readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); border-top: 1px solid var(--hair2, #2a3532); border-bottom: 1px solid var(--hair2, #2a3532); margin-bottom: 6px; }
+.ca-reading { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px 8px 0; }
+.ca-reading + .ca-reading { border-left: 1px solid var(--hair, #1b2220); padding-left: 12px; }
+.ca-label { font: 500 11px/1.3 var(--mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #7d8a85); }
+.ca-value { font: 600 22px/1.15 var(--mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; color: var(--ink, #e6ebe8); }
+.ca-sub { font-size: 11px; color: var(--muted, #7d8a85); }
+.ca-unknown { color: var(--muted, #7d8a85); border-bottom: 1px dotted currentColor; }
