@@ -91,6 +91,8 @@ function render(e) {
       <dt>Object</dt><dd>${esc(L.object_type.toLowerCase())}</dd>
       <dt>Confidence</dt><dd>${pct(e.confidence)}</dd>
       <dt>Rule said</dt><dd>${TIERS[e.baseline_tier].name}${demoted ? ` <span class="muted">→ model demoted</span>` : ""}</dd>
+      ${L.geocentric_latitude_deg != null ? `<dt title="Conjunction-point latitude; display only, not a model input">Latitude</dt><dd>${Math.abs(L.geocentric_latitude_deg).toFixed(1)}° ${L.geocentric_latitude_deg >= 0 ? "N" : "S"}</dd>` : ""}
+      ${L.target_altitude_km?.[0] != null ? `<dt title="Our satellite's perigee–apogee altitude; display only">Altitude</dt><dd>${Math.round(L.target_altitude_km[0])}–${Math.round(L.target_altitude_km[1])} km</dd>` : ""}
       <dt>Radial σ</dt><dd>${sentinel ? "unavailable" : fmtDist(Math.hypot(L.sigma_r_m.chaser, L.sigma_r_m.target))}</dd>
     </dl>
     ${cautions.length ? `<div class="cautions">${cautions.map((c) => `<span class="caution">⚠ ${esc(CAUTIONS[c] || c)}</span>`).join("")}</div>` : ""}

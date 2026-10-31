@@ -146,3 +146,14 @@ select { background: var(--bg); border: 1px solid var(--hair2); border-radius: 4
   .clock input[type=range] { width: 120px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* 05 Where encounters happen (latitude bands) */
+.latitude { display: grid; gap: 5px; }
+.lat-row { display: grid; grid-template-columns: 74px 1fr 44px; align-items: center; gap: 8px; font: 11px var(--mono); }
+.lat-name { color: var(--muted); }
+.lat-n { text-align: right; color: var(--ink); }
+.lat-bar { position: relative; height: 8px; background: var(--hair); border-radius: 2px; overflow: hidden; }
+.lat-bar i, .lat-bar b { position: absolute; left: 0; top: 0; bottom: 0; }
+.lat-bar i { background: var(--muted); opacity: .55; }
+.lat-insight { margin: 8px 0 0; font-size: 13px; color: var(--ink); }
+.lat-note { margin: 4px 0 0; font: 11px var(--mono); }
