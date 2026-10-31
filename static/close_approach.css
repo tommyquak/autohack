@@ -1,0 +1,10 @@
+/* Styles for static/close_approach.js. Uses the starter's colour tokens with fallbacks. */
+.ca-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; color: var(--text, #e6e8ee); }
+.ca-muted { color: var(--muted, #8a90a0); }
+.ca-tier { border: 1px solid; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.ca-caution { border: 1px solid #fab219; border-radius: 4px; padding: 1px 6px; color: var(--text, #e6e8ee); white-space: nowrap; }
+.ca-note { color: var(--muted, #8a90a0); font-size: 12px; margin: 4px 0; }
+.ca-table { border-collapse: collapse; width: 100%; font-size: 13px; color: var(--text, #e6e8ee); margin-top: 8px; }
+.ca-table th { text-align: left; color: var(--muted, #8a90a0); font-weight: 500; border-bottom: 1px solid #2a2f3a; padding: 4px 6px; }
+.ca-table td { border-bottom: 1px solid #2a2f3a; padding: 4px 6px; }
+.ca-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }

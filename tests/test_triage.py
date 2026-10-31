@@ -70,4 +70,6 @@ def test_events_contract(cdms):
     e = out["events"][0]
     assert {"event_id", "tier", "tier_name", "reasons", "latest", "history", "needs_review"} <= set(e)
     assert len(e["latest"]["relative_position_rtn_m"]) == 3
+    assert all(set(ev["cautions"]) <= {"needs_review", "no_covariance", "pc_diluted"} for ev in out["events"])
+    assert set(out["summary"]["cautions"]) == {"needs_review", "no_covariance", "pc_diluted"}
     assert "Safe" not in {ev["tier_name"] for ev in out["events"]}  # we never say "safe"
