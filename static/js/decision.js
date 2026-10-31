@@ -8,7 +8,7 @@ import { TIERS, clamp, esc, fmtDays, fmtDist, fmtPc } from "./fmt.js";
 
 const DECISION = 2; // days: the official task predicts from messages at least this far out
 const X_MAX = 7;
-const TOP_N = 150;
+const SAMPLE = { 2: 15, 1: 15, 0: 10 }; // default tracks per current tier, most urgent first, plus every escalation
 const Y_MIN = -2, Y_MAX = 2; // log10 km: 10 m .. 100 km
 const ZONES = [ // forecast tier zones on the right, bounded by the 1 km / 5 km thresholds
   { tier: 2, lo: 0.01, hi: 1, label: ["CRITICAL"] },
@@ -32,7 +32,8 @@ const rank = new Map(); // event_id -> urgency index
 const hist = new Map(); // event_id -> [{t, km}] sorted far -> near
 const marks = new Map(); // event_id -> {x, y, r}
 let anyForecast = false;
-let show = "top";
+let show = "sample";
+let sample = [];
 let selected = null, hover = null;
 let w = 0, h = 0, pitch = 6;
 let dirty = true;
@@ -65,7 +66,9 @@ async function init() {
   events = res.events;
   events.forEach((e, i) => (byId.set(e.event_id, e), rank.set(e.event_id, i)));
   anyForecast = events.some((e) => forecast(e).real);
+  buildSample();
   $("show-all").textContent = `All ${n(events.length)}`;
+  $("show-sample").textContent = `Sample of ${n(sample.length)}`;
   renderCounts();
   renderHeads();
 
@@ -87,7 +90,18 @@ async function init() {
 
 // ---------- data ----------
 
-const shownEvents = () => (show === "all" ? events : events.slice(0, TOP_N));
+const shownEvents = () => (show === "all" ? events : sample);
+
+// The default left side: a mixed sample instead of every track. Every escalation (once a forecast exists), then
+// the most urgent Critical, Elevated and below-threshold events. Events are already in urgency order.
+function buildSample() {
+  const left = { ...SAMPLE };
+  const picked = new Set(events.filter(escalates).map((e) => e.event_id));
+  for (const e of events) {
+    if (left[e.tier] > 0 && !picked.has(e.event_id)) (picked.add(e.event_id), left[e.tier]--);
+  }
+  sample = events.filter((e) => picked.has(e.event_id));
+}
 
 async function loadTracks(ids) {
   const todo = ids.filter((id) => !hist.has(id));
@@ -163,7 +177,9 @@ function renderCounts() {
 
 function renderHeads() {
   $("hd-left-note").textContent =
-    `One line per event, coloured by current tier · ${show === "all" ? `all ${n(events.length)} events` : `top ${TOP_N} by urgency`}`;
+    show === "all"
+      ? `One line per event, coloured by current tier · all ${n(events.length)} events`
+      : `A mixed sample, coloured by current tier: the ${SAMPLE[2]} most urgent Critical, ${SAMPLE[1]} Elevated, ${SAMPLE[0]} below threshold${anyForecast ? ", plus every escalation" : ""}`;
   const note = $("hd-right-note");
   note.textContent = anyForecast
     ? "One mark per event, in the zone of its forecast final tier"
@@ -323,8 +339,8 @@ function line(ax, ay, bx, by) {
 }
 
 function trackAlpha(tier) {
-  const all = show === "all";
-  return tier === 2 ? (all ? 0.5 : 0.6) : tier === 1 ? (all ? 0.35 : 0.55) : all ? 0.16 : 0.32;
+  if (show !== "all") return 0.35; // the sample; the hovered or selected track is redrawn at full opacity
+  return tier === 2 ? 0.5 : tier === 1 ? 0.35 : 0.16;
 }
 
 function drawTracks() {
@@ -523,21 +539,29 @@ function rtnSection(e, pts) {
   const rows = pts.map((p) => ({ t: p.t, v: rtnOf(p.u) })).filter((r) => r.v);
   const L = e.latest.relative_position_rtn_m;
   const latest = Array.isArray(L) ? ` Latest update only: R ${fmtDist(L[0])} · T ${fmtDist(L[1])} · N ${fmtDist(L[2])}.` : "";
-  if (rows.length < 2) {
+  if (!rows.length) {
     return `<p class="dp-missing">Missing field: <code>history[]</code> has no <code>relative_position_r/t/n</code> per update, so there is nothing to plot over time.${latest.replaceAll("-", "−")}</p>`;
   }
-  const W = 288, H = 96, pad = { l: 4, r: 24, t: 6, b: 14 };
+  if (rows.length === 1) return `<p class="dp-missing">One CDM update only, so no line to draw.${latest.replaceAll("-", "−")}</p>`;
+  const W = 288, H = 110, pad = { l: 4, r: 24, t: 14, b: 26 };
   const t0 = rows[0].t, t1 = rows[rows.length - 1].t;
   const vmax = Math.max(1, ...rows.flatMap((r) => r.v.map(Math.abs)));
   const sx = (t) => pad.l + (t0 === t1 ? 0.5 : (t0 - t) / (t0 - t1)) * (W - pad.l - pad.r);
   const sy = (v) => pad.t + (1 - (v + vmax) / (2 * vmax)) * (H - pad.t - pad.b);
-  const series = [["R", C.ink], ["T", C.own], ["N", C.muted]].map(([name, col], k) => {
+  const SER = [["R", C.ink], ["T", C.own], ["N", C.muted]];
+  // end labels, pushed apart so close lines keep readable names
+  const last = rows[rows.length - 1];
+  const ly = SER.map((_, k) => ({ k, y: sy(last.v[k]) + 3 })).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ly.length; i++) ly[i].y = Math.max(ly[i].y, ly[i - 1].y + 10);
+  const labelY = Object.fromEntries(ly.map((o) => [o.k, o.y]));
+  const series = SER.map(([name, col], k) => {
     const d = rows.map((r, i) => `${i ? "L" : "M"}${sx(r.t).toFixed(1)},${sy(r.v[k]).toFixed(1)}`).join("");
-    const last = rows[rows.length - 1];
-    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.25"/><text x="${W - pad.r + 4}" y="${sy(last.v[k]) + 3}" fill="${col}">${name}</text>`;
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.25"/><text x="${W - pad.r + 4}" y="${labelY[k]}" fill="${col}">${name}</text>`;
   });
   return `<svg class="dp-rtn" viewBox="0 0 ${W} ${H}" role="img" aria-label="R, T and N relative position against time to TCA" font-family="Spline Sans Mono, monospace" font-size="10">` +
     `<line x1="${pad.l}" x2="${W - pad.r}" y1="${sy(0)}" y2="${sy(0)}" stroke="${C.hair2}"/>${series.join("")}` +
+    `<text x="${pad.l}" y="${pad.t - 5}" fill="${C.muted}">+${fmtDist(vmax)}</text>` +
+    `<text x="${pad.l}" y="${H - pad.b + 11}" fill="${C.muted}">−${fmtDist(vmax)}</text>` +
     `<text x="${pad.l}" y="${H - 2}" fill="${C.muted}">${fmtDays(t0)}</text><text x="${W - pad.r}" y="${H - 2}" fill="${C.muted}" text-anchor="end">${fmtDays(t1)}</text></svg>`;
 }
 
