@@ -142,9 +142,14 @@ export function visibility(enc, tau) {
 }
 const smooth = (x) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
 
-/** Pc-backed: the Pc upper bound on its own reaches the event's tier (>= 1e-4 Critical, >= 1e-6 Elevated). */
+/** What drives the tier (thresholds as in triage/tiers.py).
+ *  Critical: "Pc-backed" (Pc bound >= 1e-4) or "distance only" (miss < 1 km alone).
+ *  Elevated: "Pc band" (Pc bound in [1e-6, 1e-4)) and/or "distance" (miss 1-5 km). */
 export function basis(e) {
   const pc = e.latest.max_risk_estimate_log10;
-  const bar = e.tier >= 2 ? -4 : -6;
-  return pc != null && pc >= bar ? "Pc-backed" : "distance only";
+  const miss = e.latest.miss_distance_m;
+  if (e.tier >= 2) return pc != null && pc >= -4 ? "Pc-backed" : "distance only";
+  const byPc = pc != null && pc >= -6;
+  const byMiss = miss != null && miss <= 5000;
+  return byPc && byMiss ? "Pc band + distance" : byPc ? "Pc band" : "distance";
 }
