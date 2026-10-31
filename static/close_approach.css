@@ -8,3 +8,10 @@
 .ca-table th { text-align: left; color: var(--muted, #8a90a0); font-weight: 500; border-bottom: 1px solid #2a2f3a; padding: 4px 6px; }
 .ca-table td { border-bottom: 1px solid #2a2f3a; padding: 4px 6px; }
 .ca-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+/* Dashboard tabs (static/js/encounter.js) */
+.enc-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-start; min-height: 28px; }
+.enc-view { flex: 1; min-height: 0; overflow: auto; }
+.chip-x { background: none; border: 1px solid var(--hair2, #2a3532); border-radius: 4px; padding: 2px 8px; cursor: pointer; font-family: var(--mono, monospace); }
+.chip-x:hover { border-color: var(--muted, #7d8a85); }
+/* Plotly draws its legend as <g class="legend">; keep host-page .legend rules (uppercase, letter-spacing) off it. */
+.js-plotly-plot .legend { text-transform: none; letter-spacing: normal; font-family: inherit; font-size: inherit; }
