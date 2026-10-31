@@ -1,0 +1,10 @@
+SECOND LOOK: one-liner
+Second Look takes the first pass through satellite collision warnings: it cuts the review queue by about a quarter, shows a decision record for every downgrade, and by design can never downgrade a rule-defined Critical.
+
+SUMMARY
+For Airbus Challenge #1, we built Second Look, a triage layer for satellite conjunction warnings (CDMs). It works with the agency tier rules rather than replacing them. A gradient-boosted model may demote only low-information "Elevated" alerts (miss distance over 5 km, flagged by probability alone), at an out-of-fold 99% recall target. It is architecturally forbidden from lowering any rule-defined Critical. Every decision carries a certificate, and a live audit (GET /api/audit, 11 checks over 2,167 test events and 24,484 decisions) confirms each one. For the organisers' official task, a final-tier forecaster uses only CDMs 2 or more days before closest approach to predict each event's final tier. It is bounded the same way: the rule tier is a floor and the model can only escalate. Under 5-fold event-grouped cross-validation on 11,942 training events, at a 90% Critical recall target it reaches 91.1% Critical recall against 86.5% for "keep today's tier" (Critical F2 0.875 vs 0.863) and catches 79 of 270 late escalations that persistence misses entirely. It pays for this with lower precision and accuracy, and a single distance rule does about as well on Critical. We report all of this openly, alongside a confusion matrix and the simpler baselines. Analysts see it all in one dashboard:
+- risk and miss distance as closest approach nears, with relative position (R/T/N) over each update;
+- the Decision point chart and an operator review page;
+- an Evaluation tab with the official results;
+- a 3D Horizon view that replays each CDM's predicted miss point to scale.
+Stated limits: no orbits, clock times or debris IDs exist in the data, so orbit orientation and manoeuvres are illustrative, scores are not calibrated probabilities, and tier 0 is "below threshold", never "safe".
