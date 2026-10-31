@@ -1,6 +1,6 @@
 // Left rail: tier/review/type filters, a sort control and the ranked queue (windowed, so 2k rows stay cheap).
 import { CAUTIONS, TIERS, esc, fmtDays, fmtDist } from "./fmt.js";
-import { remaining, set, state, subscribe, touchFilters, visible } from "./state.js";
+import { remaining, set, state, subscribe, tierOf, touchFilters, visible } from "./state.js";
 
 const ROW = 52;
 const SHORT = { needs_review: "review", pc_diluted: "diluted", no_covariance: "no σ" };
@@ -81,7 +81,7 @@ export function initQueue() {
     set({ selectedId: next.event_id });
   });
   new ResizeObserver(paint).observe(queueEl);
-  subscribe(["events", "filters", "sort"], rebuild);
+  subscribe(["events", "filters", "sort", "horizon"], rebuild);
   // The replay clock changes TCA text on every frame; repaint at a calmer rate.
   let last = 0;
   subscribe(["elapsed"], () => {
@@ -115,14 +115,16 @@ function paint() {
   const last = Math.min(list.length, Math.ceil((top + queueEl.clientHeight) / ROW) + 3);
   const rows = [];
   for (let i = first; i < last; i++) {
-    const e = list[i], t = TIERS[e.tier], L = e.latest;
+    const e = list[i], t = TIERS[tierOf(e)], L = e.latest;
     const caution = (e.cautions && e.cautions[0]) || (e.needs_review ? "needs_review" : "");
     const flag = caution ? ` <span class="flag" title="${esc(CAUTIONS[caution] || caution)}">⚠ ${esc(SHORT[caution] || caution)}</span>` : "";
+    // Forecast differs from the latest message: say so, so an escalation never looks like the current state.
+    const now = tierOf(e) !== e.tier ? ` <span class="muted" title="Tier of the latest message">· now ${esc(TIERS[e.tier].name)}</span>` : "";
     rows.push(`<button type="button" class="row" role="option" data-id="${e.event_id}" aria-selected="${e.event_id === state.selectedId}" style="top:${i * ROW}px">
       <span class="ic" style="color:${t.color}" title="${t.name}">${t.icon}</span>
       <span class="id">EVT ${esc(e.event_id)} <span class="muted">${esc(L.object_type.toLowerCase())}</span></span>
       <span class="right">${fmtDays(remaining(e))}</span>
-      <span class="meta">${t.name}${flag}</span>
+      <span class="meta">${t.name}${now}${flag}</span>
       <span class="right">${fmtDist(L.miss_distance_m)}</span>
     </button>`);
   }

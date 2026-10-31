@@ -1,7 +1,8 @@
 // Triage funnel: every event as a dot, x = days to closest approach (shrinks as the replay clock runs), y = miss distance.
-// Colour is the tier. The baseline/model toggle fades the dots the model demotes, so the workload drop is visible.
+// Colour is the tier shown (state.horizon). Now: the baseline/model toggle fades the dots the model demotes, so the
+// workload drop is visible. Final tier: the same toggle grows the dots the forecaster escalates above their rule floor.
 import { MAX_DAYS, TIERS, clamp, esc, fmtDays, fmtDist, fmtPc, lerp, mix, pct } from "./fmt.js";
-import { passesFilters, remaining, set, state, subscribe } from "./state.js";
+import { baseOf, passesFilters, remaining, set, state, subscribe, tierOf } from "./state.js";
 
 const canvas = document.getElementById("funnel");
 const wrap = document.getElementById("funnel-wrap");
@@ -29,18 +30,25 @@ export function initFunnel() {
   new ResizeObserver(resize).observe(wrap);
   resize();
 
-  document.querySelectorAll(".seg button").forEach((b) =>
+  const segs = document.querySelectorAll(".seg button[data-mode]");
+  segs.forEach((b) =>
     b.addEventListener("click", () => {
       set({ mode: b.dataset.mode });
-      document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      segs.forEach((x) => x.setAttribute("aria-pressed", x === b));
     }),
   );
   subscribe(["mode"], () => {
     target = state.mode === "model" ? 1 : 0;
     dirty = true;
   });
-  subscribe(["elapsed", "filters", "selectedId"], () => (dirty = true));
-  subscribe(["elapsed", "events"], updateWorkload);
+  const label = () => {
+    const [base, model] = state.horizon === "final" ? ["Rule floor", "Forecast"] : ["Baseline rule", "Model"];
+    segs.forEach((b) => (b.textContent = b.dataset.mode === "model" ? model : base));
+  };
+  subscribe(["horizon"], label);
+  label();
+  subscribe(["elapsed", "filters", "selectedId", "horizon"], () => (dirty = true));
+  subscribe(["elapsed", "events", "horizon"], updateWorkload);
   updateWorkload();
 
   canvas.addEventListener("mousemove", onMove);
@@ -75,7 +83,8 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-const shownTier = (e) => (progress >= 0.5 ? e.tier : e.baseline_tier);
+const shownTier = (e) => (progress >= 0.5 ? tierOf(e) : baseOf(e));
+const DOT = (tier) => (tier === 2 ? 3.8 : 2.6);
 
 function draw() {
   ctx.clearRect(0, 0, w, h);
@@ -145,10 +154,11 @@ function draw() {
       const e = p.e, r = remaining(e);
       if (r <= 0 || shownTier(e) !== tier) continue;
       const on = passesFilters(e);
-      const demoted = e.baseline_tier !== e.tier;
-      // Fade a demoted dot from its baseline colour to its model colour as `progress` goes 0 -> 1.
-      const color = demoted ? mix(TIERS[e.baseline_tier].color, TIERS[e.tier].color, progress) : TIERS[e.tier].color;
-      const size = demoted ? lerp(3.4, 2.2, progress) : tier === 2 ? 3.8 : 2.6;
+      const to = tierOf(e), from = baseOf(e);
+      // Fade a changed dot from its base colour to its shown colour as `progress` goes 0 -> 1: a demotion (now)
+      // shrinks, an escalation (final tier) grows to the size of its new tier.
+      const color = from !== to ? mix(TIERS[from].color, TIERS[to].color, progress) : TIERS[to].color;
+      const size = from > to ? lerp(3.4, 2.2, progress) : from < to ? lerp(DOT(from), DOT(to) + 0.6, progress) : DOT(to);
       ctx.globalAlpha = on ? (tier === 0 ? 0.55 : 0.92) : 0.08;
       ctx.fillStyle = color;
       const x = X(r), y = Y(p.km);
@@ -187,7 +197,10 @@ function onMove(ev) {
   const e = best.e, L = e.latest, t = TIERS[shownTier(e)];
   tip.innerHTML = `<b style="color:${t.color}">${t.icon} ${t.name}</b> · EVT ${esc(e.event_id)}<br>` +
     `${fmtDist(L.miss_distance_m)} · TCA in ${fmtDays(remaining(e))}<br>Pc ≤ ${fmtPc(L.max_risk_estimate_log10)} · ${esc(L.object_type.toLowerCase())}` +
-    (e.baseline_tier !== e.tier ? `<br><span style="color:#7d8a85">rule: ${TIERS[e.baseline_tier].name} → model: ${TIERS[e.tier].name}</span>` : "");
+    (baseOf(e) !== tierOf(e)
+      ? `<br><span style="color:#7d8a85">${state.horizon === "final" ? "rule floor" : "rule"}: ${TIERS[baseOf(e)].name} → ${state.horizon === "final" ? "forecast" : "model"}: ${TIERS[tierOf(e)].name}</span>`
+      : "") +
+    (state.horizon === "final" && e.tier !== tierOf(e) ? `<br><span style="color:#7d8a85">now: ${TIERS[e.tier].name}</span>` : "");
   tip.hidden = false;
   const tw = tip.offsetWidth;
   tip.style.left = `${Math.min(mx + 14, w - tw - 4)}px`;
@@ -197,22 +210,33 @@ function onMove(ev) {
 // Event-level counts for the events still upcoming, tweened with the toggle.
 function updateWorkload() {
   const up = state.events.filter((e) => remaining(e) > 0);
-  const flag = (key) => up.filter((e) => e[key] > 0).length;
-  const base = flag("baseline_tier"), model = flag("tier");
-  const crit = up.filter((e) => e.tier === 2).length;
+  const final = state.horizon === "final";
+  const base = up.filter((e) => baseOf(e) > 0).length, model = up.filter((e) => tierOf(e) > 0).length;
+  const crit = up.filter((e) => tierOf(e) === 2).length;
   const shown = Math.round(lerp(base, model, progress));
-  const m = state.metrics?.results?.model;
   const el = document.getElementById("workload");
-  // The drop only reads once the toggle has crossed to the model; on the rule side it is the rule's own count.
-  const delta = progress >= 0.5 && model < base ? `<span class="down">−${(base - model).toLocaleString("en")} vs rule</span>` : `<span class="muted">${progress >= 0.5 ? "model" : "rule alone"}</span>`;
+  // The change only reads once the toggle has crossed over; on the rule side it is the rule's own count.
+  const delta =
+    progress >= 0.5 && model < base
+      ? `<span class="down">−${(base - model).toLocaleString("en")} vs rule</span>`
+      : progress >= 0.5 && model > base
+        ? `<span class="muted">+${(model - base).toLocaleString("en")} vs rule floor</span>`
+        : `<span class="muted">${progress >= 0.5 ? (final ? "forecast" : "model") : final ? "rule floor" : "rule alone"}</span>`;
+  // Recall shown must match the tier shown: forecast = 5-fold CV on train events (final tier); now = per test message.
+  const fc = state.metrics?.forecast?.cv_5fold?.summary?.second_look_forecast, m = state.metrics?.results?.model;
+  const recall = final
+    ? fc && `<b class="num">${pct(fc.critical_recall.mean)}</b><span class="muted">final tier, 5-fold CV, ${state.metrics.forecast.cohort.n_events.toLocaleString("en")} train events</span>`
+    : m && `<b class="num">${pct(m.critical_recall)}</b><span class="muted">${m.n.toLocaleString("en")} test CDMs, per message</span>`;
   el.innerHTML =
-    `<div class="wl main"><span class="wl-k">Flagged for review</span><span class="wl-v"><b class="num">${shown.toLocaleString("en")}</b>${delta}</span></div>` +
-    `<div class="wl"><span class="wl-k">Critical kept</span><span class="wl-v"><b class="num">${crit.toLocaleString("en")}</b></span></div>` +
-    (m ? `<div class="wl"><span class="wl-k">Critical recall</span><span class="wl-v"><b class="num">${pct(m.critical_recall)}</b><span class="muted">${m.n.toLocaleString("en")} test CDMs, per message</span></span></div>` : "");
+    `<div class="wl main"><span class="wl-k">${final ? "Forecast to need review" : "Flagged for review"}</span><span class="wl-v"><b class="num">${shown.toLocaleString("en")}</b>${delta}</span></div>` +
+    `<div class="wl"><span class="wl-k">${final ? "Forecast Critical" : "Critical kept"}</span><span class="wl-v"><b class="num">${crit.toLocaleString("en")}</b></span></div>` +
+    (recall ? `<div class="wl"><span class="wl-k">Critical recall</span><span class="wl-v">${recall}</span></div>` : "");
   const empty = document.getElementById("funnel-empty");
   empty.hidden = up.length > 0;
   empty.textContent = "Every event has passed closest approach. Press Reset on the replay clock.";
   document.getElementById("funnel-note").textContent =
     (state.elapsed > 0 ? "REPLAY: each event's latest prediction carried forward in time; no new CDMs arrive. " : "") +
-    "Position shows distance only: Pc also sets the tier, so a dot above 5 km can still be Critical.";
+    (final
+      ? "Colour is the forecast final tier at closest approach; position is the latest miss distance, so a dot above 1 km can be forecast Critical."
+      : "Position shows distance only: Pc also sets the tier, so a dot above 5 km can still be Critical.");
 }
