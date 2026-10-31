@@ -33,8 +33,6 @@ let drag = null;
 let raf = 0, last = 0, clock = 0, ready = false;
 let stars = [];
 
-// One drawn chevron (points left); the right-hand handle is the same shape flipped by CSS.
-const CHEV = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg>`;
 const panel = () => document.getElementById("panel-globe");
 const isOpen = () => panel() && !panel().hidden;
 const lat = (e) => e.latest.geocentric_latitude_deg;
@@ -74,8 +72,6 @@ export function initGlobe() {
         <section class="globe-24" id="globe-24" aria-label="Next 24 hours"></section>
         <div class="globe-tip" id="globe-tip" hidden></div>
         <section class="globe-card" id="globe-card" hidden aria-live="polite"></section>
-        <button type="button" class="rail-toggle left" id="rail-l" aria-expanded="false" aria-label="Show the queue" title="Show the queue">${CHEV}</button>
-        <button type="button" class="rail-toggle right" id="rail-r" aria-expanded="false" aria-label="Show the full event panel" title="Show the full event panel">${CHEV}</button>
       </div>
     </div>`,
   );
@@ -86,11 +82,8 @@ export function initGlobe() {
   head = document.getElementById("globe-head");
 
   // Tab switching itself is the generic data-tab handler in encounter.js; here we only start and stop drawing.
-  // The side panels only collapse while the globe is showing (layout[data-view="globe"] in dashboard.css), so the other
-  // tabs always keep them. On the globe they start collapsed: the card is the detail, the queue is one click away.
-  const layout = document.querySelector(".layout");
-  layout.classList.add("hide-left", "hide-right");
-  const setView = (v) => (layout.dataset.view = document.body.dataset.view = v);
+  // The side panels collapse on every tab (rails.js); on the globe they start collapsed.
+  const setView = (v) => (document.body.dataset.view = v);
   setView(document.querySelector('#tabs [aria-selected="true"]')?.dataset.tab || "");
   document.getElementById("tabs").addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-tab]");
@@ -101,15 +94,6 @@ export function initGlobe() {
     }
     else stop();
   });
-  for (const [id, cls, name] of [["rail-l", "hide-left", "queue"], ["rail-r", "hide-right", "full event panel"]]) {
-    const b = document.getElementById(id);
-    b.addEventListener("click", () => {
-      const hidden = layout.classList.toggle(cls);
-      b.setAttribute("aria-expanded", String(!hidden));
-      b.setAttribute("aria-label", `${hidden ? "Show" : "Hide"} the ${name}`);
-      b.title = b.getAttribute("aria-label");
-    });
-  }
   fetch("/static/review.html", { method: "HEAD" })
     .then((r) => ((reviewPage = r.ok), cardOpen && paintCard()))
     .catch(() => {});

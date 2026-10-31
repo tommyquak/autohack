@@ -74,27 +74,16 @@ body[data-view="globe"] .top-review { display: block; justify-self: end; font-si
 .gc-close { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
 .gc-close:hover { color: var(--ink); }
 
-/* collapse handles: a thin tab on the globe's left edge brings the queue back; the card replaces the right rail */
-.rail-toggle { position: absolute; top: 50%; transform: translateY(-50%); width: 22px; height: 52px; display: grid; place-items: center; padding: 0; cursor: pointer;
-  background: rgba(8, 14, 24, .7); border: 1px solid var(--hair2); color: var(--muted); z-index: 3; }
-.rail-toggle:hover { color: var(--ink); border-color: var(--muted); }
-.rail-toggle.left { left: calc(-1 * var(--s5)); border-radius: 0 8px 8px 0; border-left: 0; }
-.rail-toggle.right { display: none; }
-.layout.hide-left .rail-toggle.left svg { transform: scaleX(-1); }
 
 .globe-tip { position: absolute; z-index: 3; pointer-events: none; padding: 6px 9px; font: 12px/1.45 var(--mono); white-space: nowrap;
   background: rgba(6, 12, 22, .95); border: 1px solid var(--hair2); border-radius: 4px; }
 .globe-tip[hidden] { display: none; }
 
-@media (max-width: 1360px) {
-  .rail-toggle.left { left: calc(-1 * var(--s4)); }
-}
 @media (max-width: 1180px) {
   body[data-view="globe"] .top { grid-template-columns: 1fr auto; }
   body[data-view="globe"] .top-tiers { grid-column: 1 / -1; order: 3; justify-content: flex-start; flex-wrap: wrap; gap: var(--s3) var(--s4); }
   #panel-globe .canvas-wrap { min-height: 640px; }
   .globe-24, .globe-card { position: absolute; }
-  .rail-toggle.left { display: none; }
 }
 @media (max-width: 720px) {
   .globe-key { display: none; }

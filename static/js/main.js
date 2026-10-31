@@ -10,6 +10,7 @@ import { initFunnel } from "./funnel.js";
 import { initGlobe } from "./globe.js";
 import { initLatitude } from "./latitude.js";
 import { initFilters, initQueue } from "./queue.js";
+import { initRails } from "./rails.js";
 import { set, state } from "./state.js";
 import { initStrip } from "./strip.js";
 
@@ -37,6 +38,7 @@ async function main() {
   initEncounter();
   initEval();
   initAsk();
+  initRails();
   // The globe is the landing view unless a deep link (/#encounter, /#compare=…) already picked a tab.
   if (!location.hash) document.querySelector('#tabs [data-tab="globe"]')?.click();
   // Open on the most urgent event so the right rail isn't empty.
