@@ -46,8 +46,16 @@ async function open(url, sel, ms = 2500) {
   return page;
 }
 
-// Dashboard: model tiers (default), then the baseline rule.
-let p = await open(`${BASE}/`, "#queue .row");
+// Dashboard, "Final tier" (default since #67): the forecast final tier for the 2,167 test events.
+let p = await open(`${BASE}/`, "#queue .row", 3500);
+await shot(p, "dash-final");
+await rects_(p, { dfWorkload: "#workload", dfSwitch: "#horizon", dfStamp: "#stamp", dfQueue: "#queue", dfDetail: "#detail" });
+await p.close();
+
+// Dashboard, "Now" (per-message tiers): model tiers, then the baseline rule.
+p = await open(`${BASE}/`, "#queue .row");
+await p.evaluate(() => document.querySelector('#horizon [data-horizon="now"]').click());
+await wait(2500);
 await shot(p, "dash-model");
 await rects_(p, { workload: "#workload", seg: ".stage-bar .seg", queue: "#queue", row1: "#queue .row", detail: "#detail", hero: "#detail .hero", why: "#detail .why" });
 await p.evaluate(() => document.querySelector('[data-mode="baseline"]').click());

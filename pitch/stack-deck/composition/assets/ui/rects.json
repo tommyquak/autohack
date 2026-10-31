@@ -1,4 +1,39 @@
 {
+ "dfWorkload": {
+  "x": 0,
+  "y": 0,
+  "w": 0,
+  "h": 0,
+  "text": "Forecast to need review842+40 vs rule floorForecast Critical477Critical recall95.0%final tier, 5-fold CV, 11,942 train events"
+ },
+ "dfSwitch": {
+  "x": 0,
+  "y": 466,
+  "w": 119,
+  "h": 49,
+  "text": ""
+ },
+ "dfStamp": {
+  "x": 0,
+  "y": 193,
+  "w": 0,
+  "h": 261,
+  "text": ""
+ },
+ "dfQueue": {
+  "x": -8,
+  "y": 649,
+  "w": 16,
+  "h": 415,
+  "text": ""
+ },
+ "dfDetail": {
+  "x": 1937,
+  "y": 94,
+  "w": 0,
+  "h": 1880,
+  "text": ""
+ },
  "workload": {
   "x": 0,
   "y": 0,
@@ -15,14 +50,14 @@
  },
  "queue": {
   "x": -8,
-  "y": 588,
+  "y": 649,
   "w": 16,
-  "h": 476,
+  "h": 415,
   "text": ""
  },
  "row1": {
   "x": 0,
-  "y": 588,
+  "y": 649,
   "w": 16,
   "h": 52,
   "text": ""
@@ -31,7 +66,7 @@
   "x": 1937,
   "y": 94,
   "w": 0,
-  "h": 1041,
+  "h": 1006,
   "text": ""
  },
  "hero": {
@@ -45,7 +80,7 @@
   "x": 1937,
   "y": 431,
   "w": 0,
-  "h": 378,
+  "h": 343,
   "text": ""
  },
  "workloadBaseline": {
@@ -53,7 +88,7 @@
   "y": 0,
   "w": 0,
   "h": 0,
-  "text": "Flagged for review1,010rule aloneCritical kept196Critical recall100%24,484 test CDMs, per message"
+  "text": "Flagged for review1,021rule aloneCritical kept196Critical recall100%24,484 test CDMs, per message"
  },
  "evLead": {
   "x": 328,
