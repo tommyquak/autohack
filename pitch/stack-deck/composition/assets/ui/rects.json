@@ -1,0 +1,170 @@
+{
+ "workload": {
+  "x": 542,
+  "y": 97,
+  "w": 515,
+  "h": 49,
+  "text": "FLAGGED FOR REVIEW\n802\n−288 vs rule\nCRITICAL KEPT\n196\nCRITICAL RECALL\n100%\n24,484 test CDMs"
+ },
+ "seg": {
+  "x": 324,
+  "y": 113,
+  "w": 194,
+  "h": 33,
+  "text": "BASELINE RULE\nMODEL"
+ },
+ "queue": {
+  "x": 16,
+  "y": 245,
+  "w": 267,
+  "h": 819,
+  "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m\n■\nEVT 1158 debris\n2.00 d\nCritical\n223 m\n■\nEVT 805 debris\n2.00 d\nCritical\n"
+ },
+ "row1": {
+  "x": 24,
+  "y": 245,
+  "w": 251,
+  "h": 52,
+  "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m"
+ },
+ "stamp": {
+  "x": 24,
+  "y": 109,
+  "w": 251,
+  "h": 35,
+  "text": "2,167 events · test-set predictions · TCA 2.0–6.9 d out"
+ },
+ "hero": {
+  "x": 1605,
+  "y": 84,
+  "w": 291,
+  "h": 56,
+  "text": "■\nCritical\n\nEVT 482 · payload · TCA in 2.00 d"
+ },
+ "why": {
+  "x": 1605,
+  "y": 285,
+  "w": 291,
+  "h": 108,
+  "text": "WHY\n⚠ No usable position uncertainty\nPc 10^-4.38 in [1e-6, 1e-4) (elevated band)\nmiss distance 601 m < 1 km"
+ },
+ "explain": {
+  "x": 1605,
+  "y": 409,
+  "w": 291,
+  "h": 274,
+  "text": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0"
+ },
+ "funnel": {
+  "x": 324,
+  "y": 158,
+  "w": 1232,
+  "h": 769,
+  "text": ""
+ },
+ "tabs": {
+  "x": 300,
+  "y": 39,
+  "w": 1280,
+  "h": 42,
+  "text": "TRIAGE FUNNEL\nGLOBE\nENCOUNTER (3D)\nCOMPARE\nEVALUATION"
+ },
+ "ask": {
+  "x": 324,
+  "y": 988,
+  "w": 1232,
+  "h": 80,
+  "text": "SUMMARY\nCRITICAL EVENTS\nNEEDS REVIEW\nMODEL PERFORMANCE\nEXPLAIN SELECTED EVENT\nAsk a question about these events\nASK\nNEW\n"
+ },
+ "detail": {
+  "x": 1605,
+  "y": 84,
+  "w": 291,
+  "h": 645,
+  "text": "■\nCritical\n\nEVT 482 · payload · TCA in 2.00 d\n\nPC UPPER BOUND\n1e-4.4\n1e-6\n1e-4\nMISS DISTANCE\n601 m\n1 km\n5 km\nWHY\n⚠ No us"
+ },
+ "window": {
+  "x": 1605,
+  "y": 744,
+  "w": 291,
+  "h": 43,
+  "text": "NEXT 24 HOURS\nnone yet"
+ },
+ "workloadBaseline": {
+  "x": 542,
+  "y": 97,
+  "w": 535,
+  "h": 49,
+  "text": "FLAGGED FOR REVIEW\n1,090\nrule alone\nCRITICAL KEPT\n196\nCRITICAL RECALL\n100%\n24,484 test CDMs"
+ },
+ "askCard": {
+  "x": 324,
+  "y": 714,
+  "w": 1232,
+  "h": 268,
+  "text": "Answered by the local fallback, no language model · Which events are Critical?\n×\n\n196 events match (Critical). Showing t"
+ },
+ "encView": {
+  "x": 324,
+  "y": 137,
+  "w": 1232,
+  "h": 840,
+  "text": "■ Critical\nEvent 482\n⚠ No usable position uncertainty\n\nA payload passes 601 m from our satellite in 2.0 days, inside the"
+ },
+ "evLead": {
+  "x": 328,
+  "y": 103,
+  "w": 711,
+  "h": 56,
+  "text": "The model misses 0 of 2,227 Critical CDMs and flags 44.7% of them for review, against 54.2% for the Pc upper-bound rule,"
+ },
+ "evNote": {
+  "x": 328,
+  "y": 185,
+  "w": 561,
+  "h": 42,
+  "text": "Where it loses: the miss-distance rule has the higher macro F1 (0.952 against 0.910), but it misses 91 Critical CDMs. Mi"
+ },
+ "evTable": {
+  "x": 328,
+  "y": 277,
+  "w": 972,
+  "h": 229,
+  "text": "METHOD\tCRITICAL MISSED\tCRITICAL RECALL\tFLAGGED\tFALSE ELEVATED\tUNDER-TIERED\tMACRO F1\nMajority class\nalways below threshol"
+ },
+ "evMissRow": {
+  "x": 328,
+  "y": 349,
+  "w": 972,
+  "h": 52,
+  "text": "Miss-distance rule\nflags by distance only\n\t91\t95.9%\t31.4%\t0\t1,116\t0.952"
+ },
+ "evModelRow": {
+  "x": 328,
+  "y": 453,
+  "w": 972,
+  "h": 52,
+  "text": "Model\nrules plus a demotion classifier\n\t0\t100%\t44.7%\t2,206\t1\t0.910"
+ },
+ "evMatrix": {
+  "x": 328,
+  "y": 827,
+  "w": 469,
+  "h": 127,
+  "text": "\t○ Below threshold\t▲ Elevated\t■ Critical\n○ Below threshold\t13,542\t2,206\t8\n▲ Elevated\t1\t6,335\t165\n■ Critical\t0\t0\t2,227"
+ },
+ "evFailure": {
+  "x": 328,
+  "y": 989,
+  "w": 513,
+  "h": 62,
+  "text": "WHERE IT IS WRONG\n\n1 CDM was rated lower than the truth (amber cell). The metrics file does not name the event, so there"
+ },
+ "chatLog": {
+  "x": 510,
+  "y": 48,
+  "w": 900,
+  "h": 951,
+  "text": "Which Critical events close in under 3 days?\n⚙ local fallback answer (no API credentials configured)\n→ list_events({\"tie"
+ }
+}

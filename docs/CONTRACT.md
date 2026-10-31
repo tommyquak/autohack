@@ -9,7 +9,7 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 |---|---|---|
 | `pred_tier` | int | 0 below threshold · 1 Elevated · 2 Critical |
 | `confidence` | float 0–1 | model confidence in `pred_tier` |
-| `needs_review` | bool | uncertain → shown as "needs review"; uncertainty only ever escalates. Also set for missing/unknown input (NaN Pc upper bound, miss or sigma; unknown `c_object_type`): never demoted, and NaN Pc/miss is at least Elevated. Malformed files raise `ValueError` (see docs/robustness.md) |
+| `needs_review` | bool | uncertain → shown as "needs review"; uncertainty only ever escalates. On a kept demotion candidate it marks a **close call** just above the demotion bar: mostly over-warnings (2.0% truly Elevated on train CV, vs 32.1% for other kept candidates), not the riskiest rows, so it is shown as "close call: near the demotion bar, likely over-warning; analyst can clear". Also set for missing/unknown input (NaN Pc upper bound, miss or sigma; unknown `c_object_type`): never demoted, and NaN Pc/miss is at least Elevated. Malformed files raise `ValueError` (see docs/robustness.md) |
 
 ## 2. `reports/events.json` (producer: `triage.build_events`, consumer: API + dashboard)
 ```json
@@ -43,7 +43,8 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 - `summary.critical_drivers` = `{miss_only, pc_only, both}`: which rule makes each Critical event Critical at its latest CDM (miss < 1 km, Pc upper bound >= 1e-4, or both). Sums to `by_tier.Critical`.
 - `baseline_tier` = the conservative rule (worse of the `max_risk_estimate` tier and the miss tier) the model improves on; `summary.by_baseline_tier` counts it. The model only ever demotes, so `tier <= baseline_tier`.
 - `true_tier` / `risk_log10` are `null` when the file has no labels (live use). Show them only in the evaluation view.
-- `cautions` (from `triage.explain.cautions`, latest CDM): `needs_review` (as above) · `no_covariance` (a sigma is the
+- `cautions` (from `triage.explain.cautions`, latest CDM): `needs_review` (as above; `triage.explain.review_kind` says
+  whether it is a `close_call` or an unusable `input`) · `no_covariance` (a sigma is the
   dataset's 63,781 km placeholder, so Pc can't be trusted alone) · `pc_diluted` (combined radial sigma > miss/√2 while
   Pc < 1e-4: a low Pc may reflect poor tracking, not separation). Show them as badges; never color alone.
 - `action` (from `triage.actions.action`, reads only the fields above, never `true_tier` / `risk_log10`): which queue

@@ -16,13 +16,13 @@
  },
  "health_before": {
   "llm": "fallback",
-  "reports": "demo",
+  "reports": "reports",
   "model": "claude-opus-5-5",
   "last_answer": null
  },
  "health_after": {
   "llm": "fallback",
-  "reports": "demo",
+  "reports": "reports",
   "model": "claude-opus-5-5",
   "last_answer": "fallback"
  },
@@ -37,7 +37,7 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "The current report (demo copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
+   "answer": "The current report (reports copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
    "tool_calls": [
     {
      "name": "get_summary",
@@ -45,7 +45,7 @@
     }
    ],
    "tool_outputs": [
-    "{\"report_source\": \"demo\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
+    "{\"report_source\": \"reports\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"by_latitude_band\": [{\"lat_deg\": [-90, -60], \"events\": 782, \"critical\": 67}, {\"lat_deg\": [-60, -30], \"events\": 183, \"critical\": 20}, {\"lat_deg\": [-30, 0], \"events\": 119, \"critical\": 14}, {\"lat_deg\": [0, 30], \"events\": 121, \"critical\": 12}, {\"lat_deg\": [30, 60], \"events\": 191, \"critical\": 25}, {\"lat_deg\": [60, 90], \"events\": 771, \"critical\": 58}], \"critical_drivers\": {\"miss_only\": 135, \"pc_only\": 17, \"both\": 44}, \"by_action\": {\"MANEUVER PLANNING\": 196, \"ANALYST REVIEW\": 738, \"MONITOR\": 1233}, \"escalation_watch\": 114, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
    ],
    "seconds": 0.03,
    "grounded": true,
@@ -232,7 +232,7 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "The current report (demo copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
+   "answer": "The current report (reports copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
    "tool_calls": [
     {
      "name": "get_summary",
@@ -240,7 +240,7 @@
     }
    ],
    "tool_outputs": [
-    "{\"report_source\": \"demo\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
+    "{\"report_source\": \"reports\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"by_latitude_band\": [{\"lat_deg\": [-90, -60], \"events\": 782, \"critical\": 67}, {\"lat_deg\": [-60, -30], \"events\": 183, \"critical\": 20}, {\"lat_deg\": [-30, 0], \"events\": 119, \"critical\": 14}, {\"lat_deg\": [0, 30], \"events\": 121, \"critical\": 12}, {\"lat_deg\": [30, 60], \"events\": 191, \"critical\": 25}, {\"lat_deg\": [60, 90], \"events\": 771, \"critical\": 58}], \"critical_drivers\": {\"miss_only\": 135, \"pc_only\": 17, \"both\": 44}, \"by_action\": {\"MANEUVER PLANNING\": 196, \"ANALYST REVIEW\": 738, \"MONITOR\": 1233}, \"escalation_watch\": 114, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
    ],
    "seconds": 0.0,
    "grounded": true,
@@ -354,7 +354,7 @@
     }
    ],
    "tool_outputs": [
-    "{\"report_source\": \"demo\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
+    "{\"report_source\": \"reports\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"by_latitude_band\": [{\"lat_deg\": [-90, -60], \"events\": 782, \"critical\": 67}, {\"lat_deg\": [-60, -30], \"events\": 183, \"critical\": 20}, {\"lat_deg\": [-30, 0], \"events\": 119, \"critical\": 14}, {\"lat_deg\": [0, 30], \"events\": 121, \"critical\": 12}, {\"lat_deg\": [30, 60], \"events\": 191, \"critical\": 25}, {\"lat_deg\": [60, 90], \"events\": 771, \"critical\": 58}], \"critical_drivers\": {\"miss_only\": 135, \"pc_only\": 17, \"both\": 44}, \"by_action\": {\"MANEUVER PLANNING\": 196, \"ANALYST REVIEW\": 738, \"MONITOR\": 1233}, \"escalation_watch\": 114, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
    ],
    "seconds": 0.0,
    "grounded": true,
@@ -711,7 +711,7 @@
     }
    ],
    "tool_outputs": [
-    "ValueError: event 102166 is not in events.json (demo copy)"
+    "ValueError: event 102166 is not in events.json (reports copy)"
    ],
    "seconds": 0.0,
    "grounded": true,
@@ -1523,11 +1523,11 @@
  ],
  "claude_probe": {
   "usable": false,
-  "why": "explain._has_credentials() is false"
+  "why": "not requested"
  },
  "health_check": {
   "health_llm": "fallback",
   "claude_usable": false,
-  "truthful": true
+  "truthful": null
  }
 }

@@ -32,6 +32,7 @@ Critical in the prediction set or p_critical >= `forecast_p_maneuver` -> MANEUVE
 p_elevated + p_critical >= `forecast_p_review` -> at least ANALYST REVIEW.
 """
 
+from triage.explain import REVIEW_TEXT, review_kind
 from triage.tiers import MISS_CRITICAL_M, MISS_ELEVATED_M, RISK_CRITICAL, Tier
 
 MANEUVER = "MANEUVER PLANNING"
@@ -124,6 +125,11 @@ def _forecast(event: dict, p: dict) -> tuple[str | None, str | None]:
     return None, None
 
 
+def _review_reason(event: dict, codes: set[str]) -> str:
+    text = REVIEW_TEXT[review_kind(event, codes) or "input"]
+    return text[0].upper() + text[1:]
+
+
 def action(event: dict, params: dict | None = None) -> dict:
     """Queue, plain-English reasons and escalation_watch for one events.json event."""
     p = {**DEFAULTS, **(params or {})}
@@ -151,7 +157,7 @@ def action(event: dict, params: dict | None = None) -> dict:
             reasons.append("Elevated tier: an analyst should review the event")
         if "needs_review" in codes:
             queue = REVIEW
-            reasons.append("Needs review: the pipeline is not confident in this tier")
+            reasons.append(_review_reason(event, codes))
         if "no_covariance" in codes:
             queue = REVIEW
             reasons.append("No usable position uncertainty: the Pc estimate cannot be relied on by itself")
