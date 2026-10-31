@@ -1,48 +1,93 @@
-/* Globe tab (static/js/globe.js). The stage's space ground shows through; overlays stay small. Tokens: dashboard.css. */
+/* Globe tab (static/js/globe.js): the demo view. The globe is the picture; four quiet overlays sit in its corners
+   (insight top left, key top right, next 24 h bottom left, event card bottom right). Tokens: dashboard.css. */
 #panel-globe .canvas-wrap { min-height: 360px; }
 #globe-wrap canvas { cursor: grab; touch-action: none; }
 #globe-wrap canvas:active { cursor: grabbing; }
+/* a faint deep-space ground behind the sky, scoped to this tab so the other views keep the plain dark ground */
+#globe-wrap { background: radial-gradient(70% 70% at 50% 50%, #0a1422 0%, transparent 78%); }
 
-.globe-head { position: absolute; top: 4px; left: 0; margin: 0; max-width: 34ch; font: 500 17px/1.35 var(--sans); letter-spacing: -.005em; text-wrap: balance; color: var(--ink); }
-.globe-hint { position: absolute; left: 0; bottom: 0; margin: 0; max-width: 46ch; font: 12px/1.45 var(--sans); color: var(--muted); }
+/* ---- the globe view hides what the picture doesn't need: the copilot bar, the replay clock, the tab chrome ---- */
+body[data-view="globe"] .ask,
+body[data-view="globe"] .top .clock,
+body[data-view="globe"] .top .top-l { display: none; }
+body[data-view="globe"] .stage { padding-bottom: var(--s4); }
+body[data-view="globe"] .tabs { margin-bottom: var(--s2); border-bottom-color: transparent; }
+body[data-view="globe"] .tabs button { padding: 10px 12px 8px; font-size: 10px; }
+body[data-view="globe"] .tabs button:not([aria-selected="true"]) { color: #5d6965; }
+body[data-view="globe"] .tabs button:not([aria-selected="true"]):hover { color: var(--ink); }
+
+/* header: brand | tier counts | workload. Shown only on the globe; the clock owns this row elsewhere. */
+.top-tiers, .top-review { display: none; }
+body[data-view="globe"] .top { grid-template-columns: auto 1fr auto; padding-top: var(--s3); padding-bottom: var(--s3); }
+body[data-view="globe"] .top .spacey { text-align: left; }
+body[data-view="globe"] .top-tiers { display: flex; justify-content: center; align-items: center; gap: var(--s5); font-size: 12px; color: var(--muted); }
+body[data-view="globe"] .top-review { display: block; justify-self: end; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.top-review b, .tt b { color: var(--ink); font-weight: 600; font-size: 15px; margin-right: 2px; }
+.tt { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.tt i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.tt-btn { background: none; border: 0; padding: 4px 6px; margin: -4px -6px; border-radius: 4px; cursor: pointer; color: inherit; font: inherit; }
+.tt-btn:hover { background: var(--hover); }
+.tt-btn:hover b { color: var(--crit); }
+
+/* ---- overlays ---- */
+.globe-head { position: absolute; top: 0; left: 0; margin: 0; max-width: 30ch; font: 500 16px/1.4 var(--sans); letter-spacing: -.005em; text-wrap: balance; color: var(--ink); pointer-events: none; }
 .globe-hint[hidden] { display: none; }
-.globe-pause { position: absolute; top: 0; right: 0; background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 5px 10px; cursor: pointer; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.globe-pause:hover { border-color: var(--muted); color: var(--ink); }
 
-/* key, top right under the pause button */
-.globe-key { position: absolute; top: 40px; right: 0; width: 176px; font: 11px/1.4 var(--mono); color: var(--muted); }
-.gk-title { text-transform: uppercase; letter-spacing: .08em; font-size: 10px; margin-bottom: 4px; }
-.gk-sep { margin-top: 12px; }
-.gk-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; color: var(--ink); text-transform: none; }
+.globe-key { position: absolute; top: 40px; right: 0; width: 200px; font: 11px/1.4 var(--mono); color: var(--muted); pointer-events: none; }
+.gk-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; color: var(--ink); }
 .gk-row i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
-.gk-row .gk-ring { width: 14px; height: 0; border-radius: 0; border-top: 1.5px solid rgba(150, 205, 255, .85); }
+.gk-note { margin: 8px 0 0; font: 11px/1.45 var(--sans); color: var(--muted); }
 
-.globe-card { position: absolute; left: 0; bottom: 0; width: min(300px, 100%); padding: 14px 16px 14px; background: rgba(6, 12, 22, .94); border: 1px solid var(--hair2); border-radius: 4px; }
+/* next 24 h: one number, one honest sentence, the same count for each later 24 h window */
+.globe-24 { position: absolute; left: 0; bottom: 0; width: 260px; }
+.g24-k { margin: 0 0 2px; }
+.g24-v { margin: 0; font-size: 13px; color: var(--muted); }
+.g24-v b { font: 600 30px/1.1 var(--mono); color: var(--ink); margin-right: 6px; }
+.g24-note { margin: 4px 0 var(--s2); font: 12px/1.45 var(--sans); color: var(--muted); }
+.g24-cap { margin: 0 0 4px; padding-top: var(--s2); border-top: 1px solid var(--hair); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.g24-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.g24-days li { display: flex; flex-direction: column; gap: 1px; font: 10px var(--mono); color: #5d6965; white-space: nowrap; }
+.g24-days li b { font-size: 12px; font-weight: 500; }
+.g24-days li.on { color: var(--muted); }
+.g24-days li.on b { color: var(--ink); }
+
+/* the event card: one compact decision readout, tier colour on its top edge */
+.globe-card { position: absolute; right: 0; bottom: 0; width: min(320px, 100%); padding: var(--s4) var(--s4) var(--s3); background: rgba(6, 11, 20, .94); border: 1px solid var(--hair2); border-top: 2px solid var(--tier, var(--hair2)); border-radius: 4px; }
 .globe-card[hidden] { display: none; }
-.globe-card h3 { margin: 0 24px 2px 0; font: 600 18px/1.25 var(--sans); }
-.gc-sub { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
-.gc-row { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline; padding: 4px 0; border-top: 1px solid var(--hair); font: 13px var(--sans); }
-.gc-row .num { font-size: 13px; }
-.gc-sel { margin: 8px 0 0; font-size: 12px; color: var(--own); }
-.gc-filter { margin-top: 12px; width: 100%; background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 7px 10px; cursor: pointer; font: 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
-.gc-filter:hover { border-color: var(--own); color: var(--own); }
-.gc-close { position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.globe-card h3 { margin: 0 28px 2px 0; font: 600 17px/1.25 var(--sans); letter-spacing: -.005em; }
+.gc-sub { margin: 0 0 var(--s3); font-size: 11px; color: var(--muted); }
+.gc-rows { margin: 0; }
+.gc-rows > div { display: grid; grid-template-columns: 112px 1fr; align-items: baseline; gap: 2px var(--s3); padding: 6px 0; border-top: 1px solid var(--hair); }
+.gc-rows dt { font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.gc-rows dd { margin: 0; font-size: 13px; color: var(--ink); }
+.gc-rows dd .muted { font-size: 11px; margin-left: 4px; }
+.gc-rows > div.grey dd { color: var(--muted); }
+.gc-scale { grid-column: 2; width: 132px; height: 26px; overflow: visible; font: 9px var(--mono); fill: var(--muted); margin-top: 2px; }
+.gc-basis { font: 11px var(--mono); padding: 1px 7px; border-radius: 3px; border: 1px solid var(--hair2); }
+.gc-basis.pc { border-color: color-mix(in srgb, var(--own) 60%, transparent); color: #a9cfff; }
+.gc-basis.dist { border-color: color-mix(in srgb, var(--elev) 55%, transparent); color: #f1c37e; }
+.gc-cautions { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--s2) 0 0; }
+.gc-line { margin: var(--s2) 0 0; font: 12px/1.45 var(--sans); color: var(--muted); }
+.gc-line b { font-weight: 600; }
+.gc-open { display: inline-block; margin-top: var(--s3); font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--own); text-decoration: none; }
+.gc-open:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.gc-close { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
 .gc-close:hover { color: var(--ink); }
 
-/* a faint deep-space ground behind the sky, scoped to this tab so the other views keep the plain dark ground */
-#globe-wrap { background: radial-gradient(70% 70% at 50% 46%, #0b1626 0%, transparent 78%); }
 
-/* collapse handles: thin tabs on the globe's left and right edges */
-.rail-toggle { position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 56px; display: grid; place-items: center; padding: 0; cursor: pointer;
-  background: rgba(8, 14, 24, .7); border: 1px solid var(--hair2); color: var(--muted); z-index: 3; }
-.rail-toggle:hover { color: var(--ink); border-color: var(--muted); }
-.rail-toggle.left { left: 0; border-radius: 0 8px 8px 0; border-left: 0; }
-.rail-toggle.right { right: 0; border-radius: 8px 0 0 8px; border-right: 0; }
-.rail-toggle.right svg { transform: scaleX(-1); }
-.layout.hide-left .rail-toggle.left svg { transform: scaleX(-1); }
-.layout.hide-right .rail-toggle.right svg { transform: none; }
-
-.gk-note { margin: 6px 0 0; font: 11px/1.4 var(--sans); color: var(--muted); }
 .globe-tip { position: absolute; z-index: 3; pointer-events: none; padding: 6px 9px; font: 12px/1.45 var(--mono); white-space: nowrap;
   background: rgba(6, 12, 22, .95); border: 1px solid var(--hair2); border-radius: 4px; }
 .globe-tip[hidden] { display: none; }
+
+@media (max-width: 1180px) {
+  body[data-view="globe"] .top { grid-template-columns: 1fr auto; }
+  body[data-view="globe"] .top-tiers { grid-column: 1 / -1; order: 3; justify-content: flex-start; flex-wrap: wrap; gap: var(--s3) var(--s4); }
+  #panel-globe .canvas-wrap { min-height: 640px; }
+  .globe-24, .globe-card { position: absolute; }
+}
+@media (max-width: 720px) {
+  .globe-key { display: none; }
+  .globe-head { max-width: 100%; }
+  .globe-card { width: 100%; }
+  .globe-24 { bottom: auto; top: 64px; }
+}

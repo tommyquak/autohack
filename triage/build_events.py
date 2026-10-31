@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from triage import actions, explain, model
+from triage import actions, certify, explain, model
 from triage.data import EVENT, RAW_DIR, find_csv, load_cdms
 from triage.tiers import MISS_CRITICAL_M, TIER_NAMES, Tier, miss_tier, pc_tier, reasons
 
@@ -51,13 +51,16 @@ def critical_drivers(events: list[dict]) -> dict:
 
 def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
     """events.json content for df. `artifact` overrides the saved nowcast model (used by out-of-fold evaluation)."""
-    df = df.join(model.predict(df, artifact))
+    artifact = artifact if artifact is not None else model.load_artifact()
+    df = df.join(model.predict_detailed(df, artifact))
     # The conservative rule the model improves on: worse of the Pc upper bound and miss distance.
     df["baseline_tier"] = np.maximum(pc_tier(df["max_risk_estimate"]), miss_tier(df["miss_distance"]))
     events = []
     for event_id, g in df.groupby(EVENT, sort=False):
         g = g.sort_values("time_to_tca", ascending=False)
         last = g.iloc[-1]
+        # Why this tier holds at the latest CDM (rules fired, model eligibility, score vs threshold, invariants)
+        cert = certify.certify(last.to_dict(), last.to_dict(), artifact)
         events.append(
             {
                 "event_id": int(event_id),
@@ -82,11 +85,14 @@ def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
                     else None,
                 },
                 "true_tier": int(last["true_tier"]) if "true_tier" in g else None,
+                "certificate": cert,
                 "history": [
                     {
                         "time_to_tca_days": float(r.time_to_tca),
                         "miss_distance_m": float(r.miss_distance),
                         "max_risk_estimate_log10": float(r.max_risk_estimate),
+                        "relative_position_rtn_m": [float(getattr(r, f"relative_position_{a}")) for a in "rtn"],
+                        "sigma_r_m": {"chaser": float(r.c_sigma_r), "target": float(r.t_sigma_r)},
                         "risk_log10": float(r.risk) if "risk" in g else None,
                         "pred_tier": int(r.pred_tier),
                         "baseline_tier": int(r.baseline_tier),
@@ -118,7 +124,7 @@ def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
             "critical_in_window": sum(e["tier"] == Tier.CRITICAL for e in window),
         },
     }
-    return {"summary": summary, "events": events}
+    return {"summary": summary, "events": events, "model_evidence": certify.model_evidence(artifact)}
 
 
 def main():

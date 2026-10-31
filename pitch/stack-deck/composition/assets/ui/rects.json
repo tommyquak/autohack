@@ -1,6 +1,6 @@
 {
  "workload": {
-  "x": 542,
+  "x": 1041,
   "y": 97,
   "w": 515,
   "h": 49,
@@ -8,7 +8,7 @@
  },
  "seg": {
   "x": 324,
-  "y": 113,
+  "y": 105,
   "w": 194,
   "h": 33,
   "text": "BASELINE RULE\nMODEL"
@@ -18,7 +18,7 @@
   "y": 245,
   "w": 267,
   "h": 819,
-  "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m\n■\nEVT 1158 debris\n2.00 d\nCritical\n223 m\n■\nEVT 805 debris\n2.00 d\nCritical\n"
+  "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m\n■\nEVT 1158 debris\n2.00 d\nCritical\n223 m\n■\nEVT 805 debris\n2.00 d\nCritical\n900 m\n■\nEVT 1719 debris\n2.00 d\nCritical\n"
  },
  "row1": {
   "x": 24,
@@ -27,144 +27,444 @@
   "h": 52,
   "text": "■\nEVT 482 payload\n2.00 d\nCritical ⚠ no σ\n601 m"
  },
- "stamp": {
-  "x": 24,
-  "y": 109,
-  "w": 251,
-  "h": 35,
-  "text": "2,167 events · test-set predictions · TCA 2.0–6.9 d out"
+ "detail": {
+  "x": 1597,
+  "y": 85,
+  "w": 290,
+  "h": 526,
+  "text": "EVT 482\npayload · TCA in 2.00 d\n■\nCritical\nPC UPPER BOUND\n4.2e-5\n1e-6\n1e-4\nMISS DISTANCE\n601 m\n1 km\n5 km\nWHY\n⚠ No usable position uncertainty\nPc 10^-4.38 in [1e"
  },
  "hero": {
-  "x": 1605,
-  "y": 84,
-  "w": 291,
-  "h": 56,
-  "text": "■\nCritical\n\nEVT 482 · payload · TCA in 2.00 d"
+  "x": 1597,
+  "y": 85,
+  "w": 290,
+  "h": 79,
+  "text": "EVT 482\npayload · TCA in 2.00 d\n■\nCritical"
  },
  "why": {
-  "x": 1605,
-  "y": 285,
-  "w": 291,
+  "x": 1597,
+  "y": 306,
+  "w": 290,
   "h": 108,
   "text": "WHY\n⚠ No usable position uncertainty\nPc 10^-4.38 in [1e-6, 1e-4) (elevated band)\nmiss distance 601 m < 1 km"
  },
- "explain": {
-  "x": 1605,
-  "y": 409,
-  "w": 291,
-  "h": 274,
-  "text": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0"
- },
- "funnel": {
-  "x": 324,
-  "y": 158,
-  "w": 1232,
-  "h": 769,
-  "text": ""
- },
- "tabs": {
-  "x": 300,
-  "y": 39,
-  "w": 1280,
-  "h": 42,
-  "text": "TRIAGE FUNNEL\nGLOBE\nENCOUNTER (3D)\nCOMPARE\nEVALUATION"
- },
- "ask": {
-  "x": 324,
-  "y": 988,
-  "w": 1232,
-  "h": 80,
-  "text": "SUMMARY\nCRITICAL EVENTS\nNEEDS REVIEW\nMODEL PERFORMANCE\nEXPLAIN SELECTED EVENT\nAsk a question about these events\nASK\nNEW\n"
- },
- "detail": {
-  "x": 1605,
-  "y": 84,
-  "w": 291,
-  "h": 645,
-  "text": "■\nCritical\n\nEVT 482 · payload · TCA in 2.00 d\n\nPC UPPER BOUND\n1e-4.4\n1e-6\n1e-4\nMISS DISTANCE\n601 m\n1 km\n5 km\nWHY\n⚠ No us"
- },
- "window": {
-  "x": 1605,
-  "y": 744,
-  "w": 291,
-  "h": 43,
-  "text": "NEXT 24 HOURS\nnone yet"
- },
  "workloadBaseline": {
-  "x": 542,
+  "x": 1021,
   "y": 97,
   "w": 535,
   "h": 49,
   "text": "FLAGGED FOR REVIEW\n1,090\nrule alone\nCRITICAL KEPT\n196\nCRITICAL RECALL\n100%\n24,484 test CDMs"
  },
- "askCard": {
-  "x": 324,
-  "y": 714,
-  "w": 1232,
-  "h": 268,
-  "text": "Answered by the local fallback, no language model · Which events are Critical?\n×\n\n196 events match (Critical). Showing t"
- },
- "encView": {
-  "x": 324,
-  "y": 137,
-  "w": 1232,
-  "h": 840,
-  "text": "■ Critical\nEvent 482\n⚠ No usable position uncertainty\n\nA payload passes 601 m from our satellite in 2.0 days, inside the"
- },
  "evLead": {
   "x": 328,
-  "y": 103,
+  "y": 660,
   "w": 711,
   "h": 56,
-  "text": "The model misses 0 of 2,227 Critical CDMs and flags 44.7% of them for review, against 54.2% for the Pc upper-bound rule,"
- },
- "evNote": {
-  "x": 328,
-  "y": 185,
-  "w": 561,
-  "h": 42,
-  "text": "Where it loses: the miss-distance rule has the higher macro F1 (0.952 against 0.910), but it misses 91 Critical CDMs. Mi"
+  "text": "The model misses 0 of 2,227 Critical CDMs and flags 44.7% of them for review, against 54.2% for the Pc upper-bound rule, which misses 0."
  },
  "evTable": {
   "x": 328,
-  "y": 277,
+  "y": 834,
   "w": 972,
   "h": 229,
-  "text": "METHOD\tCRITICAL MISSED\tCRITICAL RECALL\tFLAGGED\tFALSE ELEVATED\tUNDER-TIERED\tMACRO F1\nMajority class\nalways below threshol"
- },
- "evMissRow": {
-  "x": 328,
-  "y": 349,
-  "w": 972,
-  "h": 52,
-  "text": "Miss-distance rule\nflags by distance only\n\t91\t95.9%\t31.4%\t0\t1,116\t0.952"
- },
- "evModelRow": {
-  "x": 328,
-  "y": 453,
-  "w": 972,
-  "h": 52,
-  "text": "Model\nrules plus a demotion classifier\n\t0\t100%\t44.7%\t2,206\t1\t0.910"
+  "text": "METHOD\tCRITICAL MISSED\tCRITICAL RECALL\tFLAGGED\tFALSE ELEVATED\tUNDER-TIERED\tMACRO F1\nMajority class\nalways below threshold\n\t2,227\t0%\t0%\t0\t8,728\t0.261\nMiss-distan"
  },
  "evMatrix": {
   "x": 328,
-  "y": 827,
+  "y": 1385,
   "w": 469,
   "h": 127,
   "text": "\t○ Below threshold\t▲ Elevated\t■ Critical\n○ Below threshold\t13,542\t2,206\t8\n▲ Elevated\t1\t6,335\t165\n■ Critical\t0\t0\t2,227"
  },
  "evFailure": {
   "x": 328,
-  "y": 989,
+  "y": 1547,
   "w": 513,
   "h": 62,
-  "text": "WHERE IT IS WRONG\n\n1 CDM was rated lower than the truth (amber cell). The metrics file does not name the event, so there"
+  "text": "WHERE IT IS WRONG\n\n1 CDM was rated lower than the truth (amber cell). The metrics file does not name the event, so there is nothing to link to yet."
  },
- "chatLog": {
-  "x": 510,
-  "y": 48,
-  "w": 900,
-  "h": 951,
-  "text": "Which Critical events close in under 3 days?\n⚙ local fallback answer (no API credentials configured)\n→ list_events({\"tie"
- }
+ "evRows": [
+  {
+   "x": 328,
+   "y": 855,
+   "w": 972,
+   "h": 52,
+   "text": "Majority class\nalways below threshold\n\t2,227\t0%\t0%\t0\t8,728\t0.261"
+  },
+  {
+   "x": 328,
+   "y": 907,
+   "w": 972,
+   "h": 52,
+   "text": "Miss-distance rule\nflags by distance only\n\t91\t95.9%\t31.4%\t0\t1,116\t0.952"
+  },
+  {
+   "x": 328,
+   "y": 959,
+   "w": 972,
+   "h": 52,
+   "text": "Pc upper-bound rule\nthe baseline the model improves on\n\t0\t100%\t54.2%\t4,526\t0\t0.841"
+  },
+  {
+   "x": 328,
+   "y": 1011,
+   "w": 972,
+   "h": 52,
+   "text": "Model\nrules plus a demotion classifier\n\t0\t100%\t44.7%\t2,206\t1\t0.910"
+  }
+ ],
+ "hz-t00-callout": {
+  "x": 1327,
+  "y": 183,
+  "w": 420,
+  "h": 196,
+  "text": "EVT 1515 · unknown · 3,996 m · TCA 2.00 d\nElevated (Analyst Review) · Pc band + distance\nOPEN DECISION RECORD\nBACKEND TRACE\n1\nRule fired\nPc 10^-4.92 (elevated b"
+ },
+ "hz-t00-honesty": {
+  "x": 702,
+  "y": 951,
+  "w": 515,
+  "h": 56,
+  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ },
+ "hz-t00-counts": {
+  "x": 756,
+  "y": 21,
+  "w": 401,
+  "h": 17,
+  "text": "Passing now: 0 Critical · 2 Elevated · 40 below threshold"
+ },
+ "hz-t00-next": {
+  "x": 32,
+  "y": 56,
+  "w": 236,
+  "h": 104,
+  "text": "NEXT PASSES\nEVT 1515\nElevated · in 3 min\nEVT 1634\nElevated · in 18 min\nEVT 311\nElevated · in 57 min"
+ },
+ "hz-t00-log": {
+  "x": 32,
+  "y": 882,
+  "w": 236,
+  "h": 49,
+  "text": "FLAG LOG\nEVT 1515\nElevated · 3,996 m"
+ },
+ "hz-t30-callout": null,
+ "hz-t30-honesty": {
+  "x": 702,
+  "y": 951,
+  "w": 515,
+  "h": 56,
+  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ },
+ "hz-t30-counts": {
+  "x": 756,
+  "y": 21,
+  "w": 401,
+  "h": 17,
+  "text": "Passing now: 1 Critical · 2 Elevated · 40 below threshold"
+ },
+ "hz-t30-next": {
+  "x": 32,
+  "y": 56,
+  "w": 236,
+  "h": 104,
+  "text": "NEXT PASSES\nEVT 1630\nElevated · in 9 min\nEVT 482\nCritical · in 36 min\nEVT 1499\nElevated · in 98 min"
+ },
+ "hz-t30-log": {
+  "x": 32,
+  "y": 827,
+  "w": 236,
+  "h": 104,
+  "text": "FLAG LOG\nEVT 311\nElevated · 2,112 m\nEVT 1634\nElevated · 3,417 m\nEVT 1515\nElevated · 3,996 m"
+ },
+ "hz-t60-callout": null,
+ "hz-t60-honesty": {
+  "x": 702,
+  "y": 951,
+  "w": 515,
+  "h": 56,
+  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ },
+ "hz-t60-counts": {
+  "x": 756,
+  "y": 21,
+  "w": 401,
+  "h": 17,
+  "text": "Passing now: 0 Critical · 1 Elevated · 40 below threshold"
+ },
+ "hz-t60-next": {
+  "x": 32,
+  "y": 56,
+  "w": 236,
+  "h": 104,
+  "text": "NEXT PASSES\nEVT 1499\nElevated · in 38 min\nEVT 578\nElevated · in 58 min\nEVT 2135\nElevated · in 71 min"
+ },
+ "hz-t60-log": {
+  "x": 32,
+  "y": 827,
+  "w": 236,
+  "h": 104,
+  "text": "FLAG LOG\nEVT 482\nCritical · 601 m\nEVT 1630\nElevated · 1,924 m\nEVT 311\nElevated · 2,112 m"
+ },
+ "hz-482-callout": {
+  "x": 1102,
+  "y": 114,
+  "w": 420,
+  "h": 196,
+  "text": "EVT 482 · payload · 601 m · TCA 2.00 d\nCritical (Maneuver Planning) · distance only\nOPEN DECISION RECORD\nBACKEND TRACE\n1\nRule fired\nPc 10^-4.38 (elevated band) "
+ },
+ "hz-482-honesty": {
+  "x": 702,
+  "y": 951,
+  "w": 515,
+  "h": 56,
+  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ },
+ "hz-482-counts": {
+  "x": 756,
+  "y": 21,
+  "w": 401,
+  "h": 17,
+  "text": "Passing now: 1 Critical · 0 Elevated · 40 below threshold"
+ },
+ "hz-482-next": {
+  "x": 32,
+  "y": 56,
+  "w": 236,
+  "h": 104,
+  "text": "NEXT PASSES\nEVT 482\nCritical · in 2 min\nEVT 1499\nElevated · in 64 min\nEVT 578\nElevated · in 84 min"
+ },
+ "hz-482-log": {
+  "x": 32,
+  "y": 827,
+  "w": 236,
+  "h": 104,
+  "text": "FLAG LOG\nEVT 482\nCritical · 601 m\nEVT 1630\nElevated · 1,924 m\nEVT 311\nElevated · 2,112 m"
+ },
+ "hz-globe-callout": {
+  "x": 1219,
+  "y": 548,
+  "w": 420,
+  "h": 196,
+  "text": "EVT 482 · payload · 601 m · TCA 2.00 d\nCritical (Maneuver Planning) · distance only\nOPEN DECISION RECORD\nBACKEND TRACE\n1\nRule fired\nPc 10^-4.38 (elevated band) "
+ },
+ "hz-globe-honesty": {
+  "x": 702,
+  "y": 951,
+  "w": 515,
+  "h": 56,
+  "text": "Simulated orbits for illustration, not from the data. Real: each event's crossing latitude, relative speed and miss distance; passes follow the real time-to-TCA"
+ },
+ "hz-globe-counts": {
+  "x": 756,
+  "y": 21,
+  "w": 401,
+  "h": 17,
+  "text": "Passing now: 1 Critical · 0 Elevated · 40 below threshold"
+ },
+ "hz-globe-next": {
+  "x": 32,
+  "y": 56,
+  "w": 236,
+  "h": 104,
+  "text": "NEXT PASSES\nEVT 482\nCritical · in 2 min\nEVT 1499\nElevated · in 64 min\nEVT 578\nElevated · in 84 min"
+ },
+ "hz-globe-log": {
+  "x": 32,
+  "y": 827,
+  "w": 236,
+  "h": 104,
+  "text": "FLAG LOG\nEVT 482\nCritical · 601 m\nEVT 1630\nElevated · 1,924 m\nEVT 311\nElevated · 2,112 m"
+ },
+ "dpChip": {
+  "x": 1204,
+  "y": 136,
+  "w": 188,
+  "h": 18,
+  "text": "DECISION POINT · 2 DAYS"
+ },
+ "dpLeft": {
+  "x": 662,
+  "y": 136,
+  "w": 530,
+  "h": 35,
+  "text": "REAL CDM UPDATES\nA mixed sample, coloured by current tier: the 15 most urgent Critical, 15 Elevated, 10 below threshold"
+ },
+ "dpRight": {
+  "x": 1404,
+  "y": 136,
+  "w": 484,
+  "h": 35,
+  "text": "FORECAST FINAL TIER\nForecast arrives with the final-tier forecaster; showing the current tier"
+ },
+ "dpCounts": {
+  "x": 24,
+  "y": 91,
+  "w": 979,
+  "h": 26,
+  "text": "NOW 196 Critical · 606 Elevated\n→\nFORECAST FINAL pending the final-tier forecaster\nNEXT 24 H 0 none within 1 d of TCA at its latest update (soonest 2.00 d)"
+ },
+ "dpChart": {
+  "x": 24,
+  "y": 132,
+  "w": 1872,
+  "h": 909,
+  "text": "REAL CDM UPDATES\nA mixed sample, coloured by current tier: the 15 most urgent Critical, 15 Elevated, 10 below threshold\nDECISION POINT · 2 DAYS\nFORECAST FINAL T"
+ },
+ "dpCard": {
+  "x": 1576,
+  "y": 132,
+  "w": 320,
+  "h": 909,
+  "text": "EVT 482\n×\nNOW\n■ Critical\nCritical: miss distance 601 m is under 1 km\nFORECAST FINAL TIER\nForecast arrives with the final-tier forecaster; showing the current ti"
+ },
+ "dpChip482": {
+  "x": 964,
+  "y": 136,
+  "w": 188,
+  "h": 18,
+  "text": "DECISION POINT · 2 DAYS"
+ },
+ "rv482List": {
+  "x": 0,
+  "y": 41,
+  "w": 420,
+  "h": 1039,
+  "text": "✓\nEVENT\nREASON\nMISS\nTCA IN\nMANEUVER PLANNING\n196\n482\ndistance only\n601 m\n2.00 d\n1158\ndistance only\n223 m\n2.00 d\n805\nPc-backed\n900 m\n2.00 d\n1719\nPc-backed\n2,557 "
+ },
+ "rv482Detail": {
+  "x": 420,
+  "y": 41,
+  "w": 1500,
+  "h": 1039,
+  "text": "Event 482 · payload · 6 updates · No usable position uncertainty\n\nEvent 482\n\nCritical (Maneuver Required) ANALYST DECIDES · distance only\n\nQueue: Maneuver plann"
+ },
+ "rv482Status": {
+  "x": 313,
+  "y": 12,
+  "w": 1336,
+  "h": 16,
+  "text": "Flagged 802 (−288 vs rule)\nIn queues 934\nNext 24 h: 0 within 1 km\n135 of 196 Critical are distance-only\n114 on escalation watch\nGuardrails PASS 7/7"
+ },
+ "rv482Parts": [
+  {
+   "tag": "SECTION.s-sum",
+   "x": 468,
+   "y": 65,
+   "w": 920,
+   "h": 229,
+   "text": "Event 482 · payload · 6 updates · No usable position uncertainty\n\nEvent 482\n\nCritical (Man"
+  },
+  {
+   "tag": "SECTION.",
+   "x": 468,
+   "y": 318,
+   "w": 920,
+   "h": 160,
+   "text": "DECISION RECORD\nRULE\nCritical · Pc upper bound in 1e-6 to 1e-4 + miss < 1 km\nELIGIBLE\nNo: "
+  },
+  {
+   "tag": "H2.",
+   "x": 468,
+   "y": 335,
+   "w": 920,
+   "h": 14,
+   "text": "DECISION RECORD"
+  },
+  {
+   "tag": "SECTION.",
+   "x": 468,
+   "y": 502,
+   "w": 920,
+   "h": 450,
+   "text": "APPROACH\nmiss distance per update, by days to TCA\nCritical\nElevated\n10 km\n7 d\n6 d\n5 d\n4 d\n"
+  },
+  {
+   "tag": "H2.",
+   "x": 468,
+   "y": 519,
+   "w": 920,
+   "h": 15,
+   "text": "APPROACH\nmiss distance per update, by days to TCA\nCritical\nElevated"
+  },
+  {
+   "tag": "SECTION.s-expl",
+   "x": 468,
+   "y": 975,
+   "w": 920,
+   "h": 38,
+   "text": "EXPLANATION\n(template)"
+  }
+ ],
+ "rv1071List": {
+  "x": 0,
+  "y": 41,
+  "w": 420,
+  "h": 1039,
+  "text": "✓\nEVENT\nREASON\nMISS\nTCA IN\nMANEUVER PLANNING\n196\nANALYST REVIEW\n738\n2128\ncheck input\n6,424 m\n2.20 d\n2109\nwatch\n5,266 m\n2.20 d\n1872\ncheck input\n28.0 km\n2.20 d\n17"
+ },
+ "rv1071Detail": {
+  "x": 420,
+  "y": 41,
+  "w": 1500,
+  "h": 1039,
+  "text": "Event 1071 · debris · 15 updates\n\nEvent 1071\n\nMonitor · demoted from Elevated\n\nQueue: Monitor · Below threshold with no closing trend or caution: keep monitorin"
+ },
+ "rv1071Status": {
+  "x": 313,
+  "y": 12,
+  "w": 1336,
+  "h": 16,
+  "text": "Flagged 802 (−288 vs rule)\nIn queues 934\nNext 24 h: 0 within 1 km\n135 of 196 Critical are distance-only\n114 on escalation watch\nGuardrails PASS 7/7"
+ },
+ "rv1071Parts": [
+  {
+   "tag": "SECTION.s-sum",
+   "x": 468,
+   "y": 65,
+   "w": 920,
+   "h": 232,
+   "text": "Event 1071 · debris · 15 updates\n\nEvent 1071\n\nMonitor · demoted from Elevated\n\nQueue: Moni"
+  },
+  {
+   "tag": "SECTION.",
+   "x": 468,
+   "y": 321,
+   "w": 920,
+   "h": 161,
+   "text": "DECISION RECORD\nRULE\nElevated · Pc upper bound in 1e-6 to 1e-4\nELIGIBLE\nYes: Elevated by t"
+  },
+  {
+   "tag": "H2.",
+   "x": 468,
+   "y": 338,
+   "w": 920,
+   "h": 14,
+   "text": "DECISION RECORD"
+  },
+  {
+   "tag": "SECTION.",
+   "x": 468,
+   "y": 506,
+   "w": 920,
+   "h": 450,
+   "text": "APPROACH\nmiss distance per update, by days to TCA\nElevated\nBelow threshold\n10 km\n7 d\n6 d\n5"
+  },
+  {
+   "tag": "H2.",
+   "x": 468,
+   "y": 523,
+   "w": 920,
+   "h": 15,
+   "text": "APPROACH\nmiss distance per update, by days to TCA\nElevated\nBelow threshold"
+  },
+  {
+   "tag": "SECTION.s-expl",
+   "x": 468,
+   "y": 979,
+   "w": 920,
+   "h": 38,
+   "text": "EXPLANATION\n(template)"
+  }
+ ]
 }

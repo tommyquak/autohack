@@ -22,10 +22,19 @@ OUT = Path(__file__).resolve().parent.parent / "predictions" / "test_predictions
 
 
 def predict_file(path: Path | str) -> pd.DataFrame:
-    df = read_cdm_csv(path)[[EVENT, *FEATURES]]  # raises ValueError with a clear message on bad input
+    return predict_frame(read_cdm_csv(path))  # raises ValueError with a clear message on bad input
+
+
+def predict_frame(df: pd.DataFrame, with_certificates: bool = False) -> pd.DataFrame:
+    """predict_file for rows already validated by triage.data.validate_cdms (POST /api/triage uses this).
+
+    with_certificates adds a `certificate` column (triage.certify.certify); every other column is unchanged.
+    """
+    df = df[[EVENT, *FEATURES]]
     # History features need each event ordered oldest CDM first; keep the original index to restore row order.
     ordered = df.sort_values([EVENT, "time_to_tca"], ascending=[True, False], kind="stable")
-    pred = model.predict(ordered).sort_index()
+    run = model.predict_with_certificates if with_certificates else model.predict
+    pred = run(ordered).sort_index()
     out = pd.DataFrame({"row": df.index, EVENT: df[EVENT], "time_to_tca": df["time_to_tca"]})
     out["pred_tier"] = pred["pred_tier"].astype(int)
     out["pred_tier_name"] = out["pred_tier"].map(lambda t: TIER_NAMES[Tier(t)])
@@ -34,6 +43,8 @@ def predict_file(path: Path | str) -> pd.DataFrame:
     baseline = np.maximum(pc_tier(df["max_risk_estimate"]), miss_tier(df["miss_distance"]))
     missing, _ = model.input_flags(df)  # the rule cannot clear a CDM whose Pc or miss distance is unknown
     out["baseline_tier"] = np.where(missing, np.maximum(baseline, Tier.ELEVATED), baseline)
+    if with_certificates:
+        out["certificate"] = pred["certificate"]
     return out
 
 

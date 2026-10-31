@@ -1,65 +1,65 @@
-# Speaker notes for Second Look · Conjunction Triage Stack. Text before '--' is spoken (about 20-30 s a slide); after it is presenter-only (sources, cautions, Q&A). Every UI image is a real capture of our dashboard on the frozen data/demo reports with no API key (tools/capture-ui.mjs). Run `python3 tools/build.py` after editing.
+# Speaker notes for Second Look (deck v2). Text before '--' is spoken (about 20-30 s a slide); after it is presenter-only (sources, cautions, Q&A). Every UI image is a real capture of our product on the frozen data/demo reports with no API key (tools/capture-ui.mjs). Run `python3 tools/build.py` after editing. Wording rules: say "preserves every rule-defined Critical", never "never misses a collision"; the 99% is a recall target, not a guarantee; tier 0 is "below threshold", never "safe"; no "only one" claims.
 @cover
-An analyst reads 2,167 close-approach events. One in four flagged events is noise. Second Look clears it, and by design it can never hide a Critical. Along the way it found where the rulebook itself wastes fuel. This deck walks through how it works, one layer at a time, in plain words.
+This is Second Look, conjunction triage with bounded, inspectable demotion. It cuts the analyst's review queue by a quarter, shows a decision record for every downgrade, and it's architecturally forbidden from downgrading a rule-defined Critical. Behind me is our Horizon view: the orbits are simulated, but every flag, and the trace under it, is real.
 --
-Hook on the slide: "Every team here will predict collision risk. Second Look is built so it can never hide a Critical." No uniqueness claims. Background: our Globe tab (latitude bands; the traffic dots are illustrative, the data has no longitude). 2,167 events (events.json summary.n_events). One in four = 288 of 1,090 flagged events removed by the model, all truly below threshold at their latest CDM. The five chips are the five layers we walk through.
+Background: four real captures of /static/horizon.html (#t=0, #t=41, #t=44, #demo=482), cross-faded. The orbits are simulated for illustration; real: each event's crossing latitude, relative speed, miss distance and time-to-TCA order (the page says so). The trace under EVT 482 comes from its certificate in events.json and the live GET /api/audit (11 checks PASS). Quarter = 1,090 → 802 events (README).
 
 @problem
-Our user is the conjunction analyst who looks at every flagged warning. Each warning is a CDM. Today's rule flags a CDM when its Pc upper bound or its miss distance crosses a threshold. The upper bound is deliberately loose, so it flags 54.2 percent of our test CDMs, and 4,526 of those are truly below threshold. On the dashboard, that's 1,090 events in the queue.
+Our user is the conjunction analyst who looks at every flagged warning. Today's rule flags a warning when its Pc upper bound or its miss distance crosses a threshold. The bound is deliberately loose, so the rule flags 54.2 percent of our test CDMs, and 4,534 of those are truly below threshold. That's 1,090 events in the queue.
 --
-54.2% = metrics.json max_risk_estimate_rule.flagged_rate 0.5417 of 24,484 CDMs; 4,526 = confusion[0][1]. 1,090 = events.json summary.by_baseline_tier Elevated 894 + Critical 196 (the dashboard's "FLAGGED FOR REVIEW · rule alone"). Wording: tier 0 is "below threshold", never "safe".
-
-@stack
-Keep this picture in mind for the rest of the deck. Data at the bottom, then the risk pipeline, the report files, the web server, and the dashboard on top. Each layer hands a finished result up. Every tier is decided in layer two and frozen in layer three. Claude sits beside the stack, reached only through the server, and only writes sentences.
---
-Builds bottom-up in data-flow order, then the freeze line, Claude with its dashed link to the server, tooling, and the dashboard thumbnail. Tooling: GitHub PRs, GitHub Actions CI (ruff + pytest, 71 tests), uv. Layers: README.md "How it works"; docs/CONTRACT.md.
-
-@data
-Layer one is the data, the organisers' CSVs. We train on 162,634 CDMs and test on 24,484 we never trained on. The loader keeps only the twelve allowed inputs plus the event id, the moment the file loads. The risk column is the true answer, so we only use it to score ourselves. On screen, the analyst sees the 2,167 test events.
---
-The stack shrinks into the rail: same picture, closer look. Train 162,634 / 13,154 events (docs/algorithm/algorithm.md §1.1). Test 24,484 / 2,167 (metrics.json; events.json). 12 inputs + event_id (triage/data.py FEATURES, EVENT); latitude and altitude are display only (DISPLAY_ONLY). True classes 15,756 / 6,501 / 2,227 (metrics.json class_counts). If asked "the brief says 13 columns": 12 inputs plus event_id, used for grouping only.
-
-@pipeline
-Layer two decides every tier. The NASA and ESA rules from the brief tier each CDM first. Then one model gets one narrow job: take away CDMs that are only Elevated because of the loose Pc bound and are really below threshold. Watch the dashboard: switch from the baseline rule to the model and the queue drops from 1,090 to 802. Critical is never touched.
---
-Rules: triage/tiers.py (Critical Pc ≥ 1e-4 or miss < 1 km; Elevated Pc ≥ 1e-6 or 1-5 km). Model: triage/model.py, gradient-boosted trees with monotonic constraints; demotion cut = 1% quantile of out-of-fold scores on truly Elevated candidates. False Elevated 4,526 → 2,206 (−51%), flagged 54.2% → 44.7% (metrics.json). Critical recall 100% comes from the rules, not the model. Both screenshots are real: the Baseline rule / Model toggle.
-
-@files
-Layer three is the hand-off. Four commands run once, before the demo, and write four files. During the demo nothing recalculates a tier, so the live system can't drift from what we evaluated. Look at event 482: the tier, the reasons and the caution in events.json are exactly what the detail panel shows. The files are the contract.
---
-train → model.joblib, evaluate → metrics.json, build_events → events.json, predict → test_predictions.csv (README.md "Run it"). Frozen copies of events.json and metrics.json live in data/demo/ so teammates without the raw data see real numbers. Event 482 fields are verbatim from data/demo/events.json (first event). Contract: docs/CONTRACT.md.
-
-@live
-Layers four and five are live. A thin FastAPI server reads the report files and hands them to the browser; it has no code that changes a tier. The dashboard calls it: the ranked queue from slash api slash events, the selected event with its gauges and reasons, and the 3D Encounter view, which places both objects to scale.
---
-Routes from server.py: /api/summary, /api/events, /api/events/{id}, /api/metrics, /api/explain/{id}, /chat (GET page, POST copilot), /health, plus /config and /reset (which only clears a chat session). Reads reports/ first, falls back to data/demo/. 3D view: distances to scale, object icons enlarged (its own caption says so). Dashboard: plain JS modules, one per panel (static/js/).
-
-@click
-Here's one click, end to end. The analyst clicks event 482. The browser asks the server for it, the server reads it from events.json, and the detail panel shows Critical, miss distance 601 metres, and a no-covariance caution. Only then, for the explanation, Claude rewords the same facts. With no key, the template writes it, and the tier is identical.
---
-EVT 482: miss 601 m, Pc upper bound 10^-4.38, no_covariance (events.json first event; docs/demo-script.md). The capture had no API key, so the panel says "Template summary of the fields above"; with a key it says "Written by Claude from the fields above". Either way the response records claude or template as its source.
-
-@claude
-Claude is the voice, not the brain. It rewords fixed facts and powers the copilot through read-only tools, so every number it says traces back to a file. It never sets a tier, never invents a number, never recommends a manoeuvre. Here the copilot answered with no key: the fallback called list events, and every number came from that result.
---
-Guardrail: any text containing "safe", "safely" or "safety" is thrown out and replaced by the template (triage/explain.py). Copilot eval (docs/eval_results.md, independent questions, fallback mode, 38 questions): round 2 after the fix round, 38/38 grounded, 38/38 avoid "safe", 38/38 no manoeuvre advice, 38/38 correct facts (round 1 was 35/38 grounded, 32/38 correct). Claude mode not yet evaluated (no credentials during the eval). The 188 in the capture is the fallback's count of Critical events with latest CDM within 3 days.
-
-@proof
-We didn't just build it, we tried to break it. Critical recall is 100 percent, because the rules guarantee it. One CDM is tiered too low: event 1278, 4.6 days out. Where we lose: the miss-distance rule has a better F1 but misses 91 Criticals. And our own gate said no twice, including to a model v2 that looked better.
---
-Critical recall 100% (metrics.json model.critical_recall; by design). 1 under-tiered (confusion[1][0]); event 1278, row 14473, 4.62 d, miss 23,375 m, bound 10^-5.61, true 10^-5.92 (README.md "Where it fails"). Robustness 26/26, up from 20/26 (docs/robustness.md). Miss-distance rule F1 0.952 vs ours 0.910, misses 91 = 8 + 83 (metrics.json). First model flagged 100% of CDMs; v2: false alarms 2,214 → 1,694 (−23%) but 3 under-tiered vs limit 1, rejected (README.md). CI: ruff + 71 pytest tests on every PR.
-
-@progress
-Two pieces are in progress and not on main yet. The action queue sorts each event into maneuver planning, analyst review or monitor. It's rules only and can only raise attention. Kalent's forecast predicts the tier an event will end at. Today the next 24 hours panel is empty, because no test warning is within two days.
---
-Action queue: draft code (triage/actions.py on a worktree branch), not merged; "maneuver planning" means start planning, never a decision. Forecast: design v1.1 in docs/algorithm/algorithm.md, no code or numbers on main; make no forecast claims. Minimum time to TCA in test = 2.0002 d; events_in_window 0 (events.json summary.warnings_24h). Persistence baseline catches 0 of 244 escalations on train events (algorithm.md §2.4), if asked. The placeholder frame is labelled as such: no recording exists.
+54.2% of 24,484 test CDMs; 4,534 false alarms = truly below threshold, flagged at any tier (README "The problem", docs/EVAL.md). README also quotes "false Elevated" 4,526: the difference is 8 CDMs shown Critical by the Pc bound. 1,090 = baseline Elevated 894 + Critical 196 (events.json summary). Tier 0 is "below threshold", never "safe".
 
 @usp
-Every team here will predict collision risk. Second Look is built so it can never hide a Critical. One: it removes noise, never danger. One in four flagged events goes, 1,090 to 802, and Critical recall is 100 percent by construction. Two: 135 of 196 Critical events are Critical on miss distance alone. Three: we rejected our own better model.
+So here's what Second Look does differently. One: it cuts the queue by a quarter, 1,090 to 802 events. Two: every one of the 288 downgrades carries a certificate, so you can inspect why. Three: every rule-defined Critical stays Critical, because the model is never allowed to act on one. That's the claim: bounded, inspectable demotion.
 --
-Beat 1 is an assurance argument, not an accuracy claim: the model may only remove Pc-only over-warnings, so Critical recall is 100% by construction (the rules, not the model). 288 removed events are all truly below threshold at their latest CDM. Beat 2: summary.critical_drivers miss_only 135, both 44, pc_only 17. NASA CA Handbook Rev 2: a miss-distance cutoff "would result in a huge number of unnecessary mitigations" (docs/algorithm/algorithm.md §2.2). We show which manoeuvres are Pc-backed; the analyst decides. Beat 3: v2 cut false alarms a further 23% but tiered 3 CDMs too low against our limit of 1 (v1 has 1), so it didn't ship. Receipts and honest eval are how we prove these claims.
+Event level: all 288 removed events were truly below threshold at their latest update. Message level: 1 genuinely Elevated CDM was demoted (event 1278, scene 9). Critical recall 100% on test comes from the rules, not the model. Do NOT say "never misses a collision" or "the only". Certificate fields: rules_fired, candidate / why_not_candidate, model_score vs threshold, decision, four invariants, holds (docs/CONTRACT.md §6). 196 rule-defined Critical events = audit check critical_by_rule_stays_critical.
+
+@stack
+How it works, in five layers. Data at the bottom, then the risk pipeline, the report files, the web server, and the analyst views on top. Every tier is decided in layer two and frozen in layer three, with its certificate. Claude sits to the side and only writes explanations. It never sets a tier.
+--
+Layers: README "How it works"; docs/CONTRACT.md. Without an API key a template writes the explanation and the tier is identical. The copilot (/chat) still exists but is not featured in this deck. Views: dashboard (/), review page (feat/review-console, PR open), decision point (/static/decision.html), horizon (/static/horizon.html).
+
+@pipeline
+Layer two decides every tier. The NASA and ESA rules from the brief tier each message first. Then the model gets one narrow job: demote a warning that is Elevated only because of the loose Pc bound, and only when its inputs are usable and its score is under the threshold. Switch the dashboard to the model and the queue drops from 1,090 to 802. Critical is never touched.
+--
+Rules: triage/tiers.py (Critical Pc ≥ 1e-4 or miss < 1 km; Elevated Pc ≥ 1e-6 or 1-5 km). Model: gradient-boosted trees with monotonic constraints (triage/model.py). Threshold = 1% quantile of out-of-fold scores on truly-Elevated candidates: a 99% recall target, measured out of fold, not a guarantee. Both screenshots are real: the Baseline rule / Model toggle.
+
+@task
+On 31 October the organisers sharpened the task: predict each event's final tier, with a probability, from the messages received at least two days out, and report Critical recall and a confusion matrix on an 80/20 split by event. This is our Decision point view: real tracks on the left, the forecast on the right. Our forecaster's numbers are still pending.
+--
+Forecast numbers: [pending: final-tier forecaster] (PR "Final-tier forecaster"; docs/FORECAST.md is not on main yet, so we quote no numbers). Until it lands, the right side of /static/decision.html places each event by its current tier and says so on screen. Our current evaluation (later scenes) is per CDM on the organisers' test file, not the 80/20 event split. Every update in the data is ≥ 2 days out (minimum 2.0002 d).
+
+@record
+Every downgrade opens to its decision record. Here's event 1071: Elevated by the Pc bound alone, eligible, a score of 0.00074 under the threshold of 0.0083, so it was demoted, and all invariants hold. Event 482 is a rule-defined Critical, so it isn't eligible and stays Critical. The record shows why. The analyst decides what to do.
+--
+Review page captured from feat/review-console (open PR, not on main yet); its top bar reads "Guardrails PASS 7/7" because that branch predates the 11-check audit on main. Event 1071: demoted Elevated → below threshold, debris, miss 6,388 m, 2.00 d. Event 482: payload, miss 601 m, placeholder sigma (no_covariance), queue MANEUVER PLANNING = start planning; whether to act is the operator's decision.
+
+@live
+And it proves it live. Every decision carries a certificate, and the Horizon trace reads it: rule fired, model not allowed, audit pass. GET slash api slash audit re-checks eleven invariants over all 2,167 events and 24,484 decisions. POST slash api slash triage tiers any CDM you send, with its certificate. Tamper with the file and the audit fails and names the check.
+--
+GET /api/audit on main: status PASS, 11/11 checks (frozen copy in assets/ui/audit.json; README still says 7/7, written before the four newer checks). Counts: 2,167 events, 24,484 CDM decisions, 153 kept, 288 demoted, 1,726 not eligible. All 288 demotions have score < threshold (the audit checks the stored score; it does not re-derive it). POST /api/triage without a model artifact runs "rules only"; the deck example is a sample CDM (data/sample) tiered Elevated with all four invariants true. Tamper test: docs/CONTRACT.md §6.
+
+@eval
+Now the honest part. The strongest simple baseline, the miss rule plus the Pc bound for Critical only, beats us on false alarms: 8 against our 2,214. The price is 1,012 truly Elevated messages shown as below threshold; we show one. Our value is the Pc-Elevated band. And on train cross-validation, the model removes 64.1 percent of false alarms, against 9.7 for a tuned Pc threshold.
+--
+docs/EVAL.md and README "Results". Test table: status quo 100% / 4,534 / 0 under-tiered; miss-distance rule 95.9% (misses 91 Critical CDMs) / 0 / 1,116 (best macro F1 0.952, flattering by construction); miss rule + Pc for Critical only 100% / 8 / 1,012 (workload 31.5% vs our 44.7%); ours 100% / 2,214 / 1. The two untuned rules are fixed from the brief, so scoring them on test is a baseline, not tuning. CV (train only, nested, event-grouped 5-fold, same 99% rule): tuned Pc threshold 9.7% removed, 47 under-tiered; model 64.1%, 39 under-tiered.
+
+@fail
+Here's where it fails. One genuinely Elevated message was shown below threshold: event 1278, 4.62 days out. Its Pc bound was 10 to the minus 5.61; the truth was just over the Elevated line. The analyst would still see it: the updates before and after stayed Elevated. And on 26 junk and edge-case files, every one was rejected or flagged.
+--
+README "Where it fails": test row 14473, miss 23,375 m, true Pc 10^-5.92, shown below threshold with confidence 0.99 and no flag; the 5.12 d update before and the 4.39 d update after (needs review) stayed Elevated; baseline_tier is kept next to tier. Robustness 26/26 (docs/robustness.md): rejected clearly or flagged, never quietly tiered too low. Capture: dashboard Compare tab, #compare=1278.
+
+@gate
+We set our safety gate before testing and stuck to it. Model v2 cut false alarms by a further 23 percent, but it showed three truly Elevated messages as below threshold, against our limit of one. So it didn't ship. And we're honest that the gate is weak: test counts are noisy. The stricter gate is on cross-validation, and that's our next step.
+--
+README "Our eval caught our bug" and docs/EVAL.md "Safety gate". v1's CV rate predicts about 5.9 under-tiered CDMs on a test set this size, so seeing ≤ 1 had about a 2% chance (Poisson). Stricter gate: operator-invisible under-tier on train CV (not needs_review, no later update shown at its true tier): v1 23 CDMs in 10 events. v2@0.995: same workload (+1.1% false alarms), 17 under-tiered, 9 invisible; not shipped, never run on test. First model regressed log Pc and flagged 100% of CDMs.
+
+@next
+What's next. The final-tier forecaster for the official task is in an open pull request, and we won't quote its numbers until they're on main. The review page is also in review. And to be clear about limits: the 99 percent is a recall target, not a guarantee, and we don't yet have calibrated Pc, a live feed, orbit propagation, or test data inside two days.
+--
+Pending: Critical recall and confusion matrix [pending: final-tier forecaster]; use docs/FORECAST.md numbers exactly once it is on main. No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Horizon orbits are simulated. Claude-mode explanations are not evaluated (copilot eval was fallback mode).
 
 @close
-So, Second Look. Rules decide every tier. The model only trims false alarms. Claude only words the explanation. And the analyst always decides. Thank you, we'd love your questions.
+So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.
 --
-Run it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports). Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Judge answers: docs/demo-script.md "If a judge asks".
+Run it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md. Background: Horizon view pulled back to the globe (simulated orbits).

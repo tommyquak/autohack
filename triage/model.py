@@ -5,10 +5,13 @@
         confidence   float in [0, 1]
         needs_review bool (uncertain -> escalated, never down-graded)
 
+    predict_detailed(df)          -> the same plus p_elevated (the model's score; NaN where it does not act)
+    predict_with_certificates(df) -> predict() plus `certificate` (triage/certify.py: why the tier holds)
+
 Uses the trained artifact (reports/model.joblib, from `python -m triage.train`) when present,
 otherwise the conservative upper-bound baseline. Either way the deterministic rules hold:
 Critical from the upper bound or miss < 1 km can never be removed by the model.
-Rows with missing or unknown inputs (input_flags) are never demoted and always flagged for review;
+Rows with missing, unknown or invalid inputs (input_flags) are never demoted and always flagged for review;
 a missing Pc upper bound or miss distance is never below Elevated.
 """
 
@@ -31,10 +34,28 @@ def load_artifact(path: Path = ARTIFACT):
     return joblib.load(path) if path.exists() else None
 
 
+# Inputs a row is never demoted without (missing -> flagged, never below the rule tier). F10 / AP (space weather) are
+# not here: they are often blank in the real data and the model handles a missing value there natively.
+TRUSTED_INPUTS = ["time_to_tca", "relative_speed", "relative_position_r", "relative_position_t", "relative_position_n"]
+
+
 def input_flags(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
-    """(missing_rule_input, untrusted): NaN Pc upper bound / miss distance; plus NaN sigma or unknown object type."""
+    """(missing_rule_input, untrusted).
+
+    missing_rule_input: NaN Pc upper bound / miss distance (the rule cannot clear it: at least Elevated).
+    untrusted: that, or NaN / non-positive sigma, unknown object type, NaN or negative time to TCA, or NaN relative
+    speed / position. Untrusted rows are never demoted below the rule tier and always flagged for review.
+    """
     missing = df[["max_risk_estimate", "miss_distance"]].isna().any(axis=1).to_numpy()
-    untrusted = missing | df[["c_sigma_r", "t_sigma_r"]].isna().any(axis=1).to_numpy() | df["c_object_type"].isna()
+    sigma = df[["c_sigma_r", "t_sigma_r"]]
+    untrusted = (
+        missing
+        | sigma.isna().any(axis=1).to_numpy()
+        | (sigma <= 0).any(axis=1).to_numpy()
+        | df[TRUSTED_INPUTS].isna().any(axis=1).to_numpy()
+        | (df["time_to_tca"] < 0).to_numpy()
+        | df["c_object_type"].isna().to_numpy()
+    )
     return missing, np.asarray(untrusted)
 
 
@@ -75,10 +96,14 @@ def predict_with(artifact: dict, df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+def predict_detailed(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    """predict() plus `p_elevated`: the model's score for demotion candidates (NaN elsewhere, or without a model).
+
+    Same tiers, confidence and needs_review as predict(); certificates (triage.certify) read the score from here.
+    """
     artifact = artifact if artifact is not None else load_artifact()
-    out = predict_with(artifact, df) if artifact else predict_baseline(df)
-    out = out[["pred_tier", "confidence", "needs_review"]].copy()
+    out = predict_with(artifact, df) if artifact else predict_baseline(df).assign(p_elevated=np.nan)
+    out = out[["pred_tier", "confidence", "needs_review", "p_elevated"]].copy()
     # Unknown input means "unknown", not "below threshold": keep at least the rule tier, escalate, flag.
     missing, untrusted = input_flags(df)
     if untrusted.any():
@@ -88,3 +113,18 @@ def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
         out["confidence"] = np.where(untrusted, 0.5, out["confidence"])
         out["needs_review"] = out["needs_review"].to_numpy() | untrusted
     return out
+
+
+def predict(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    return predict_detailed(df, artifact)[["pred_tier", "confidence", "needs_review"]]
+
+
+def predict_with_certificates(df: pd.DataFrame, artifact: dict | None = None) -> pd.DataFrame:
+    """predict() plus a `certificate` column (one dict per row, triage.certify.certify): why each tier holds."""
+    from triage.certify import certify
+
+    artifact = artifact if artifact is not None else load_artifact()
+    out = predict_detailed(df, artifact)
+    rows, preds = df.to_dict("records"), out.to_dict("records")
+    certs = [certify(row, pred, artifact) for row, pred in zip(rows, preds, strict=True)]
+    return out[["pred_tier", "confidence", "needs_review"]].assign(certificate=pd.Series(certs, index=df.index))

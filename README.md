@@ -26,6 +26,10 @@ threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** t
 - **Explains** each event: Claude rewords structured facts, with a template fallback.
 - **Answers questions** through an operator copilot (`/chat`): every number comes from read-only triage tools, it can jump the dashboard to an event, and a rule-based fallback answers without an API key (`/health` says which path answered). Independent eval: 38/38 grounded, 38/38 avoid "safe", 38/38 no manoeuvre advice, in fallback mode ([docs/eval_results.md](docs/eval_results.md)); Claude mode not yet evaluated.
 - **Handles bad input**: 26/26 junk and edge-case files are rejected clearly or flagged, never quietly tiered too low ([docs/robustness.md](docs/robustness.md)).
+- **Proves it live:** `GET /api/audit` re-checks the safety invariants over every decision; `POST /api/triage` tiers any CDM you send, with its certificate.
+  Each certificate says which rules fired, whether the model was allowed to act (and why not), its score against the stored threshold, and four invariants.
+  On the frozen test set: PASS on 11/11 checks over 2,167 events and 24,484 CDM decisions; all 288 demotions have score < threshold.
+  A tampered `events.json` (a Critical shown lower, a no-covariance event demoted) turns it FAIL and names the check ([docs/CONTRACT.md §6](docs/CONTRACT.md)).
 - **Serves** an API and dashboard views (`/api/*`, `static/`), plus one prediction per test CDM in `predictions/test_predictions.csv`.
 
 ## How it works
