@@ -48,7 +48,8 @@ produced. Write 3-5 plain sentences that:
 - repeat any caution in `cautions` (close call / needs review, probability dilution, missing uncertainty) in plain
   words; a close call is most likely an over-warning, so do not describe it as the riskiest case.
 Rules: use only numbers that appear in the facts. Never call an event "safe" - the lowest tier
-is "below threshold". Do not recommend or rule out a manoeuvre; that is the operator's decision.
+is "below threshold". Do not mention manoeuvres, burns or recommendations at all; that is the operator's decision, and
+any such wording is rejected.
 No headings, lists or markdown."""
 
 
@@ -115,7 +116,7 @@ def facts(event: dict) -> dict:
         "time_to_tca": f"{latest['time_to_tca_days']:.1f} days",
         "miss_distance": _dist(miss),
         "relative_speed": f"{latest['relative_speed_ms'] / 1000:.1f} km/s",
-        "pc_upper_bound": f"1e{pc_log:.1f}",
+        "pc_upper_bound": _pc(pc_log),
         "object_type": latest["object_type"].lower(),
         "combined_sigma_r": None if no_covariance else _dist(sigma),
         "no_covariance": no_covariance,
@@ -128,7 +129,7 @@ def facts(event: dict) -> dict:
         out["trend"] = {
             "updates": len(history),
             "miss_distance": f"{_dist(first['miss_distance_m'])} -> {_dist(last['miss_distance_m'])}",
-            "pc_upper_bound": f"1e{first['max_risk_estimate_log10']:.1f} -> 1e{last['max_risk_estimate_log10']:.1f}",
+            "pc_upper_bound": f"{_pc(first['max_risk_estimate_log10'])} -> {_pc(last['max_risk_estimate_log10'])}",
             "closing": last["miss_distance_m"] < first["miss_distance_m"],
         }
     return out
@@ -238,6 +239,17 @@ def _sdk_discovers_credentials() -> bool:
 
 def _tier_in_sentence(name: str) -> str:
     return "below threshold" if name == TIER_NAMES[0] else name
+
+
+def _pc(log10: float) -> str:
+    """Pc as people write it, matching the dashboard: -4.38 -> "4.2e-5" (not "1e-4.4")."""
+    if log10 is None or not math.isfinite(log10):
+        return "unknown"
+    e = math.floor(log10)
+    m = round(10 ** (log10 - e), 1)
+    if m >= 10:
+        m, e = 1.0, e + 1
+    return f"{m:.1f}e{e}"
 
 
 def _dist(m: float) -> str:

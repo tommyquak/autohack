@@ -5,6 +5,8 @@ import os
 
 os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-test")  # client construction only; no requests are made
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -141,3 +143,13 @@ async def test_rejected_claude_text_falls_back_with_reason(monkeypatch):
     monkeypatch.setattr(explain, "_claude", invents)
     out = await explain.explain(_event())
     assert out["source"] == "template" and "42" in out["claude_rejected"]
+
+
+@pytest.mark.parametrize(("log10", "text"), [(-4.38, "4.2e-5"), (-4.0, "1.0e-4"), (-6.0, "1.0e-6"), (-30.0, "1.0e-30")])
+def test_pc_matches_dashboard_format(log10, text):
+    assert explain._pc(log10) == text  # same rounding as fmtPc in static/close_approach.js and static/js/fmt.js
+
+
+def test_every_demo_template_passes_check():
+    ev = json.loads((Path(__file__).resolve().parent.parent / "data" / "demo" / "events.json").read_text())["events"]
+    assert all(explain.check(explain.template_explanation(explain.facts(e)), explain.facts(e)) is None for e in ev)
