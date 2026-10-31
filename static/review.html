@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second Look Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/review.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="mark" aria-hidden="true"></span>Second Look <span class="muted">Review</span></div>
+  <p class="status" id="status" aria-live="polite">Loading&hellip;</p>
+</header>
+
+<main class="cols">
+  <nav class="list" id="list" aria-label="Events by queue, most urgent first"></nav>
+  <article class="detail" id="detail" aria-live="polite">
+    <p class="muted">Pick an event from the list.</p>
+  </article>
+</main>
+
+<p class="banner" id="banner" role="alert" hidden></p>
+<script type="module" src="/static/js/review.js"></script>
+</body>
+</html>
