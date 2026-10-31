@@ -82,3 +82,24 @@ No test CDM is closer than 2 days to TCA, so the 0-2 day buckets are empty.
 ## Provenance
 - Reproduced independently: the model-v2 workflow's verifier re-ran v1 on the test set and got the identical confusion matrix `[[13542, 2206, 8], [1, 6335, 165], [0, 0, 2227]]`.
 - **Kalent (evaluation owner) to sign off** by re-running the command above.
+
+## Official task: final tier from >=2-day messages
+
+The organisers' task (`challenge1_event_labels.xlsx`): predict each event's final tier from its messages with
+`time_to_tca >= 2` only. Cohort: `usable_for_training == yes`, 11,942 train events (8,946 / 2,162 / 834). The xlsx
+labels agree with our recomputed final tier on 13,154 of 13,154 events. Method, decision layer and limits:
+[FORECAST.md](FORECAST.md). Numbers from `data/demo/forecast_metrics.json` (`uv run python -m triage.forecast`).
+
+| Method (5-fold event CV, mean ± sd; 80/20 split in brackets) | Accuracy | Critical recall | Critical precision | Critical F2 | Escalations caught | False escalations |
+|---|---|---|---|---|---|---|
+| Always below threshold | 0.749 (0.749) | 0 (0) | 0 (0) | 0 (0) | 0/270 (0/50) | 0 (0) |
+| Persistence: miss-only tier | **0.938 ± 0.004** (0.943) | 0.865 ± 0.042 (0.886) | **0.857 ± 0.029** (0.902) | 0.863 ± 0.037 (0.889) | 0/270 (0/50) | 0 (0) |
+| Persistence: `max_risk_estimate` + miss | 0.770 ± 0.012 (0.775) | 0.873 ± 0.041 (0.892) | 0.808 ± 0.036 (0.837) | 0.859 ± 0.036 (0.881) | 40/270 (10/50) | 2,135 (430) |
+| *Reference: `risk` + miss (label column)* | *0.946 ± 0.005 (0.951)* | *0.866 ± 0.044 (0.886)* | *0.852 ± 0.029 (0.892)* | *0.863 ± 0.038 (0.887)* | *0/270 (0/50)* | *0 (0)* |
+| **Second Look forecast (bounded, 95% Critical recall target)** | 0.862 ± 0.011 (0.871) | **0.950 ± 0.025 (0.970)** | 0.565 ± 0.013 (0.579) | 0.835 ± 0.010 (0.854) | **115/270 (24/50)** | 1,139 (218) |
+
+**Where we lose:** miss-only persistence beats the bounded forecast on accuracy, macro F1 (0.887 vs 0.767), Critical
+precision and Critical F2. The forecast trades precision for recall: it catches 115 of 270 escalations that persistence
+never catches and lifts Critical recall to 0.950, at 1,139 false escalations (616 of them from keeping Pc-only Elevated
+events at Elevated, before the model escalates anything). At a 90% target it would reach Critical F2 0.875, above
+persistence, with 79 escalations caught and 775 false; that setting was seen only after the run, so it is not shipped.
