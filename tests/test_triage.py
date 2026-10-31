@@ -71,3 +71,23 @@ def test_events_contract(cdms):
     assert {"event_id", "tier", "tier_name", "reasons", "latest", "history", "needs_review"} <= set(e)
     assert len(e["latest"]["relative_position_rtn_m"]) == 3
     assert "Safe" not in {ev["tier_name"] for ev in out["events"]}  # we never say "safe"
+
+
+@pytest.mark.parametrize("config", ["v1", "v2"])
+def test_trained_model_keeps_safety_rails(config):
+    from triage.data import SAMPLE_PATH, load_cdms
+    from triage.features import dilution_flag
+    from triage.train import train
+
+    df = load_cdms(SAMPLE_PATH)
+    artifact = train(df, config=config, verbose=False)
+    out = model.predict(df, artifact)
+    assert list(out.columns) == ["pred_tier", "confidence", "needs_review"]
+    assert out["confidence"].between(0, 1).all()
+    base = model.predict_baseline(df)["pred_tier"].to_numpy()
+    pred = out["pred_tier"].to_numpy()
+    assert (pred <= base).all()  # the model only ever demotes from the conservative baseline
+    assert (pred >= miss_tier(df["miss_distance"])).all()  # miss-distance rule is never overridden
+    assert (pred[base == Tier.CRITICAL] == Tier.CRITICAL).all()
+    diluted = dilution_flag(df)
+    assert (pred[diluted] == base[diluted]).all()  # unusable covariance is never demoted

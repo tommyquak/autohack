@@ -17,11 +17,12 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from triage.features import build_features, dilution_flag
+from triage.features import dilution_flag
 from triage.tiers import RISK_CRITICAL, RISK_ELEVATED, Tier, miss_tier, pc_tier
 
 ARTIFACT = Path(__file__).resolve().parent.parent / "reports" / "model.joblib"
 REVIEW_MARGIN = 0.5  # baseline only: within half a decade of a Pc threshold -> needs review
+ENSEMBLE_REVIEW_BAND = 0.05  # v2: kept within 5 percentile points above the demotion threshold -> needs review
 
 
 @cache
@@ -39,27 +40,34 @@ def predict_baseline(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def predict_with(artifact: dict, df: pd.DataFrame) -> pd.DataFrame:
-    from triage.train import candidates  # local import: train imports this module's deps
+    from triage.ensemble import score
+    from triage.train import candidates, features_for  # local import: train imports this module's deps
 
     out = predict_baseline(df)  # conservative upper-bound rule; the model may only demote from here
     cand = candidates(df)
-    p_elevated = np.full(len(df), np.nan)
+    s = np.full(len(df), np.nan)
     if cand.any():
-        X = build_features(df)[artifact["columns"]][cand]
-        p_elevated[cand] = artifact["model"].predict_proba(X)[:, 1]
+        X = features_for(artifact, df)[artifact["columns"]][cand]
+        s[cand] = score(artifact["model"], X)
     t = artifact["threshold"]
-    demote = cand & (p_elevated < t)
+    demote = cand & (s < t)
     tier = np.where(demote, Tier.SAFE, out["pred_tier"].to_numpy())
-    # Near the threshold (within 2x either side) -> flag for a human, keep Elevated.
-    near = cand & ~demote & (p_elevated < 2 * t)
+    if artifact.get("kind", "classifier") == "ensemble":
+        # s is a mean OOF percentile in [0, 1]: kept but within 5 points of the threshold -> human review
+        near = cand & ~demote & (s < t + ENSEMBLE_REVIEW_BAND)
+        model_conf = 0.5 + 0.49 * np.minimum(1.0, np.abs(s - t) / 0.25)
+    else:
+        # s is P(Elevated): kept but within 2x of the threshold -> human review
+        near = cand & ~demote & (s < 2 * t)
+        model_conf = np.where(demote, 1 - s, np.maximum(s, 0.5))
     review = (near | dilution_flag(df)) & (tier < Tier.CRITICAL)
-    confidence = np.where(cand, np.where(demote, 1 - p_elevated, np.maximum(p_elevated, 0.5)), out["confidence"])
+    confidence = np.where(cand, model_conf, out["confidence"])
     return pd.DataFrame(
         {
             "pred_tier": tier.astype(int),
             "confidence": np.clip(confidence, 0.5, 0.99),
             "needs_review": review,
-            "p_elevated": p_elevated,
+            "score": s,
         },
         index=df.index,
     )
