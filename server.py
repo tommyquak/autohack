@@ -87,7 +87,12 @@ def api_event(event_id: int):
 
 @app.get("/api/metrics")
 def api_metrics():
-    return load_report("metrics.json")
+    """metrics.json, plus a "forecast" block (final tier from >= 2-day messages) when forecast_metrics.json exists."""
+    out = load_report("metrics.json")
+    try:
+        return {**out, "forecast": load_report("forecast_metrics.json")}
+    except ReportMissing:
+        return out
 
 
 @app.get("/api/explain/{event_id}")

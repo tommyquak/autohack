@@ -18,6 +18,7 @@ DEMO = ROOT / "data" / "demo"  # frozen copy of the full-test-set reports, used 
 BUILD_HINT = {
     "events.json": "uv run python -m triage.build_events",
     "metrics.json": "uv run python -m triage.evaluate",
+    "forecast_metrics.json": "uv run python -m triage.forecast",
 }
 
 

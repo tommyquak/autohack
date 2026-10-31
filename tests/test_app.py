@@ -157,3 +157,12 @@ def test_dashboard_page_and_modules_exist():
     # every module main.js pulls in must be served too
     for name in re.findall(r'from "\./([\w]+\.js)"', Path("static/js/main.js").read_text(encoding="utf-8")):
         assert client.get(f"/static/js/{name}").status_code == 200, name
+
+
+def test_api_metrics_adds_forecast_block(api):
+    client, reports_dir = api
+    (reports_dir / "metrics.json").write_text(json.dumps({"split": "test"}))
+    assert "forecast" not in client.get("/api/metrics").json()  # no forecast file: metrics unchanged
+    (reports_dir / "forecast_metrics.json").write_text(json.dumps({"task": "final tier"}))
+    out = client.get("/api/metrics").json()
+    assert out["split"] == "test" and out["forecast"]["task"] == "final tier"
