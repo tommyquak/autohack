@@ -65,6 +65,7 @@ def api(tmp_path, monkeypatch, cdms):
 
     (tmp_path / "events.json").write_text(json.dumps(build(cdms)))
     monkeypatch.setattr(server, "REPORTS", tmp_path)
+    monkeypatch.setattr(server, "DEMO", tmp_path / "no-demo")
     return TestClient(server.app), tmp_path
 
 
@@ -102,3 +103,21 @@ def test_api_reloads_rebuilt_report_and_reports_missing_files(api):
     assert client.get("/api/summary").json() == {"n_events": 0}
     (reports / "metrics.json").write_text(json.dumps({"split": "test"}))
     assert client.get("/api/metrics").json()["split"] == "test"
+
+
+def test_api_falls_back_to_demo_reports(tmp_path, monkeypatch):
+    import server
+
+    demo = tmp_path / "demo"
+    demo.mkdir()
+    (demo / "metrics.json").write_text(json.dumps({"split": "demo"}))
+    monkeypatch.setattr(server, "REPORTS", tmp_path / "empty")
+    monkeypatch.setattr(server, "DEMO", demo)
+    assert TestClient(server.app).get("/api/metrics").json()["split"] == "demo"
+
+
+def test_events_carry_baseline_tier(cdms):
+    out = build(cdms)
+    assert all(e["baseline_tier"] >= e["tier"] for e in out["events"])  # the model only ever demotes
+    assert all("baseline_tier" in h for e in out["events"] for h in e["history"])
+    assert sum(out["summary"]["by_baseline_tier"].values()) == out["summary"]["n_events"]

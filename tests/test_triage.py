@@ -73,3 +73,17 @@ def test_events_contract(cdms):
     assert all(set(ev["cautions"]) <= {"needs_review", "no_covariance", "pc_diluted"} for ev in out["events"])
     assert set(out["summary"]["cautions"]) == {"needs_review", "no_covariance", "pc_diluted"}
     assert "Safe" not in {ev["tier_name"] for ev in out["events"]}  # we never say "safe"
+
+
+def test_predict_file_keeps_row_order_and_needs_no_labels(cdm_csv, tmp_path):
+    import pandas as pd
+
+    from triage.predict import predict_file
+
+    raw = pd.read_csv(cdm_csv).drop(columns=["risk"]).sample(frac=1, random_state=0)  # shuffled, unlabeled
+    path = tmp_path / "live.csv"
+    raw.to_csv(path, index=False)
+    out = predict_file(path)
+    assert list(out["row"]) == list(range(len(raw)))
+    assert list(out["event_id"]) == list(raw["event_id"])
+    assert (out["pred_tier"] <= out["baseline_tier"]).all()  # the model only ever demotes

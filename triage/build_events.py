@@ -7,11 +7,12 @@ import argparse
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from triage import explain, model
 from triage.data import EVENT, RAW_DIR, find_csv, load_cdms
-from triage.tiers import MISS_CRITICAL_M, TIER_NAMES, Tier, reasons
+from triage.tiers import MISS_CRITICAL_M, TIER_NAMES, Tier, miss_tier, pc_tier, reasons
 
 REPORTS = Path(__file__).resolve().parent.parent / "reports"
 WARNING_WINDOW_DAYS = 1.0  # "in a 24 hour frame"
@@ -19,6 +20,8 @@ WARNING_WINDOW_DAYS = 1.0  # "in a 24 hour frame"
 
 def build(df: pd.DataFrame) -> dict:
     df = df.join(model.predict(df))
+    # The conservative rule the model improves on: worse of the Pc upper bound and miss distance.
+    df["baseline_tier"] = np.maximum(pc_tier(df["max_risk_estimate"]), miss_tier(df["miss_distance"]))
     events = []
     for event_id, g in df.groupby(EVENT, sort=False):
         g = g.sort_values("time_to_tca", ascending=False)
@@ -28,6 +31,7 @@ def build(df: pd.DataFrame) -> dict:
                 "event_id": int(event_id),
                 "tier": int(last["pred_tier"]),
                 "tier_name": TIER_NAMES[Tier(int(last["pred_tier"]))],
+                "baseline_tier": int(last["baseline_tier"]),
                 "confidence": float(last["confidence"]),
                 "needs_review": bool(last["needs_review"]),
                 "reasons": reasons(float(last["max_risk_estimate"]), float(last["miss_distance"])),
@@ -48,6 +52,7 @@ def build(df: pd.DataFrame) -> dict:
                         "max_risk_estimate_log10": float(r.max_risk_estimate),
                         "risk_log10": float(r.risk) if "risk" in g else None,
                         "pred_tier": int(r.pred_tier),
+                        "baseline_tier": int(r.baseline_tier),
                     }
                     for r in g.itertuples()
                 ],
@@ -61,6 +66,7 @@ def build(df: pd.DataFrame) -> dict:
     summary = {
         "n_events": len(events),
         "by_tier": {TIER_NAMES[t]: sum(e["tier"] == t for e in events) for t in Tier},
+        "by_baseline_tier": {TIER_NAMES[t]: sum(e["baseline_tier"] == t for e in events) for t in Tier},
         "needs_review": sum(e["needs_review"] for e in events),
         "cautions": {c: sum(c in e["cautions"] for e in events) for c in explain.CAUTIONS},
         "warnings_24h": {
