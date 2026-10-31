@@ -30,8 +30,6 @@ SLIDES = [
     ("record", "record", "s-record"),
     ("live", "live", "s-live"),
     ("eval", "eval", "s-eval"),
-    ("fail", "fail", "s-fail"),
-    ("gate", "gate", "s-gate"),
     ("next", "next", "s-next"),
     ("close", "close", "s-close"),
 ]
