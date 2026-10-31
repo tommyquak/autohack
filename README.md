@@ -67,14 +67,14 @@ Critical recall stays 100%. These are measured counts; analyst time saved is not
 
 ## Our eval caught our bug
 
-Our first model regressed log Pc and flagged 100% of CDMs. The independent evaluation caught this
+Our first model regressed log Pc and flagged 100% of CDMs. Our evaluation caught this
 before it shipped, so we redesigned it as targeted demotion.
 
 ## Trust and traceability
 
 - Every tier lists the rules that fired (e.g. `Pc 10^-3.20 >= 1e-4 (critical threshold)`).
 - Uncertainty only escalates: needs review and cautions never lower a tier.
-- Claude only rewords structured facts and uses only their numbers. It never recommends a manoeuvre, and each response records `claude` or `template` as its source.
+- Claude only rewords structured facts and uses only their numbers. It is instructed never to recommend a manoeuvre, and each response records `claude` or `template` as its source.
 - Tier 0 is "below threshold", never "safe". The analyst decides the manoeuvre.
 
 ## What we don't solve yet
