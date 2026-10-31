@@ -18,7 +18,7 @@ import re
 import anthropic
 
 from triage.features import SIGMA_SENTINEL_M
-from triage.tiers import RISK_CRITICAL
+from triage.tiers import RISK_CRITICAL, TIER_NAMES
 
 LLM_TIMEOUT_S = 20.0
 # Pc peaks when the combined position sigma is about miss/sqrt(2); with a larger sigma, Pc falls
@@ -33,6 +33,8 @@ produced. Write 3-5 plain sentences that:
 - state the tier and the main reason it was assigned;
 - give the time to closest approach and the miss distance;
 - describe the trend across updates if one is given;
+- if `demoted` is true, say that the conservative baseline rule gives `baseline_tier` and the model
+  demoted the event to `tier` (with its `confidence`);
 - repeat any caution in `cautions` (needs review, probability dilution, missing uncertainty) in plain words.
 Rules: use only numbers that appear in the facts. Never call an event "safe" - the lowest tier
 is "below threshold". Do not recommend or rule out a manoeuvre; that is the operator's decision.
@@ -77,9 +79,12 @@ def facts(event: dict) -> dict:
             f"miss distance ({_dist(miss)}), so a low Pc may reflect poor tracking rather than real separation"
         )
 
+    baseline = event.get("baseline_tier", event["tier"])
     out = {
         "event_id": event["event_id"],
         "tier": event["tier_name"],
+        "baseline_tier": TIER_NAMES.get(baseline, str(baseline)),
+        "demoted": baseline > event["tier"],
         "reasons": event["reasons"],
         "confidence": round(event["confidence"], 2),
         "time_to_tca": f"{latest['time_to_tca_days']:.1f} days",
@@ -112,6 +117,11 @@ def template_explanation(f: dict) -> str:
         f"predicted miss distance {f['miss_distance']} at {f['relative_speed']}, "
         f"Pc upper bound {f['pc_upper_bound']}.",
     ]
+    if f.get("demoted"):
+        parts.append(
+            f"The conservative baseline rule gives {_tier_in_sentence(f['baseline_tier'])}; the model demoted it to "
+            f"{_tier_in_sentence(f['tier'])} (confidence {f['confidence']:.2f})."
+        )
     if trend := f.get("trend"):
         direction = "closing" if trend["closing"] else "opening"
         parts.append(
@@ -156,9 +166,34 @@ async def _claude(f: dict) -> str | None:
 
 
 def _has_credentials() -> bool:
-    """False only for the placeholder/test keys; otherwise let the SDK resolve a key or `ant` profile."""
-    key = os.getenv("ANTHROPIC_API_KEY", "")
-    return not (key.endswith("...") or key == "sk-ant-test")
+    """True when the SDK has something to authenticate with: a real ANTHROPIC_API_KEY (not the placeholder or test
+    key), an ANTHROPIC_AUTH_TOKEN, or a profile / workload-identity configuration it would discover on its own.
+    An unset or empty key with none of those means every Claude call would fail, so /health must say "fallback"."""
+    key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    if key:
+        return not (key.endswith("...") or key == "sk-ant-test")
+    if os.getenv("ANTHROPIC_AUTH_TOKEN", "").strip():
+        return True
+    return _sdk_discovers_credentials()
+
+
+def _sdk_discovers_credentials() -> bool:
+    """Profile or federation credentials the SDK resolves without an env key (ANTHROPIC_PROFILE, an active or default
+    profile under the config dir, ANTHROPIC_IDENTITY_TOKEN + federation ids). False if the SDK has no such support."""
+    try:
+        from anthropic.lib.credentials import _constants as c
+    except ImportError:
+        return False
+    try:
+        if c._has_auto_discoverable_credentials():
+            return True
+        return (c._config_dir() / "configs" / f"{c.DEFAULT_PROFILE}.json").is_file()
+    except Exception:  # private SDK helpers; any change there means "not configured"
+        return False
+
+
+def _tier_in_sentence(name: str) -> str:
+    return "below threshold" if name == TIER_NAMES[0] else name
 
 
 def _dist(m: float) -> str:

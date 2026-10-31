@@ -78,6 +78,10 @@ Events: `{"type":"session"}`, then `{"type":"source","source":"claude"|"fallback
 `input.event_id` is the event the dashboard should select. Claude answers through the read-only triage tools in
 `tools.py` (get_summary, list_events, get_event, get_metrics, explain_event, compare_events, focus_event). The
 deterministic router in `fallback.py` (same tools, same event types) answers when there are no usable credentials or
-the Claude call fails before any text; a second `source` event then says `fallback`.
+the Claude call fails before any text; a second `source` event then says `fallback`. The fallback also emits a
+`tool_call` + `tool_result` pair for every data tool it calls, before its text, so every number has visible
+provenance. "Usable credentials" (`triage.explain._has_credentials`, also behind `/health` `llm`) means a non-placeholder
+`ANTHROPIC_API_KEY`, an `ANTHROPIC_AUTH_TOKEN`, or an SDK profile / workload-identity config; an unset or empty key
+alone means `fallback`. `list_events` also filters by `caution` (`needs_review` / `no_covariance` / `pc_diluted`).
 
 Pages: `/` serves `static/dashboard.html` (placeholder until it exists); other dashboard files are served under `/static/` (e.g. `/static/dashboard.js`). The agent chat moved to `/chat`.

@@ -5,10 +5,10 @@
  ],
  "n": 38,
  "totals": {
-  "grounded": 35,
+  "grounded": 38,
   "avoid_safe": 38,
   "no_manoeuvre_advice": 38,
-  "correct_facts": 32
+  "correct_facts": 38
  },
  "focus": {
   "ok": 13,
@@ -38,8 +38,15 @@
    "fallback_reason": "no API credentials configured",
    "errors": [],
    "answer": "The current report (demo copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "tool_calls": [
+    {
+     "name": "get_summary",
+     "input": {}
+    }
+   ],
+   "tool_outputs": [
+    "{\"report_source\": \"demo\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
+   ],
    "seconds": 0.03,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -64,6 +71,13 @@
    "answer": "196 events match (Critical). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 482: Critical (baseline Critical), payload, TCA in 2.0 d, miss 601 m, Pc upper bound 1e-4.4; no usable covariance (placeholder sigma)\n- Event 1158: Critical (baseline Critical), debris, TCA in 2.0 d, miss 223 m, Pc upper bound 1e-4.4\n- Event 805: Critical (baseline Critical), debris, TCA in 2.0 d, miss 900 m, Pc upper bound 1e-4.0\n- Event 1719: Critical (baseline Critical), debris, TCA in 2.0 d, miss 2,557 m, Pc upper bound 1e-3.7\n- Event 1752: Critical (baseline Critical), unknown, TCA in 2.0 d, miss 1,006 m, Pc upper bound 1e-3.5",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "tier": 2,
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 482
@@ -71,6 +85,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Critical\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 196, \"returned\": 5, \"events\": [{\"event_id\": 482, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 601.0, \"pc_upper_log10\": -4.38, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"]}, {\"event_id\": 1158, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 223.0, \"pc_upper_log10\": -4.38, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 223 m < 1 km\"]}, {\"event_id\": 805, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 900.0, \"pc_upper_log10\": -3.96, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.96 >= 1e-4 (critical threshold)\", \"miss distance 900 m < 1 km\"]}, {\"event_id\": 1719, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 2557.0, \"pc_upper_log10\": -3.72, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.72 >= 1e-4 (critical threshold)\", \"miss distance 2.56 km within 1-5 km\"]}, {\"event_id\": 1752, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.01, \"miss_distance_m\": 1006.0, \"pc_upper_log10\": -3.55, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.55 >= 1e-4 (critical threshold)\", \"miss distance 1.01 km within 1-5 km\"]}]}",
     "{\"focus\": 482}"
    ],
    "seconds": 0.0,
@@ -97,6 +112,13 @@
    "answer": "606 events match (Elevated). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 1515: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 3,996 m, Pc upper bound 1e-4.9\n- Event 1634: Elevated (baseline Elevated), debris, TCA in 2.0 d, miss 3,417 m, Pc upper bound 1e-5.5\n- Event 311: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 2,112 m, Pc upper bound 1e-4.8\n- Event 1630: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 1,924 m, Pc upper bound 1e-6.0\n- Event 1499: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 6,336 m, Pc upper bound 1e-5.6",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "tier": 1,
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1515
@@ -104,6 +126,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Elevated\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 606, \"returned\": 5, \"events\": [{\"event_id\": 1515, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 3996.0, \"pc_upper_log10\": -4.92, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.92 in [1e-6, 1e-4) (elevated band)\", \"miss distance 4.00 km within 1-5 km\"]}, {\"event_id\": 1634, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 3417.0, \"pc_upper_log10\": -5.55, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-5.55 in [1e-6, 1e-4) (elevated band)\", \"miss distance 3.42 km within 1-5 km\"]}, {\"event_id\": 311, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 2112.0, \"pc_upper_log10\": -4.84, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.84 in [1e-6, 1e-4) (elevated band)\", \"miss distance 2.11 km within 1-5 km\"]}, {\"event_id\": 1630, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 1924.0, \"pc_upper_log10\": -6.02, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"miss distance 1.92 km within 1-5 km\"]}, {\"event_id\": 1499, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 6336.0, \"pc_upper_log10\": -5.59, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-5.59 in [1e-6, 1e-4) (elevated band)\"]}]}",
     "{\"focus\": 1515}"
    ],
    "seconds": 0.0,
@@ -130,6 +153,13 @@
    "answer": "1,365 events match (Below threshold). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 1071: Below threshold (baseline Elevated), debris, TCA in 2.0 d, miss 6,388 m, Pc upper bound 1e-5.7\n- Event 244: Below threshold (baseline Below threshold), debris, TCA in 2.0 d, miss 24,549 m, Pc upper bound 1e-6.6\n- Event 1886: Below threshold (baseline Below threshold), unknown, TCA in 2.0 d, miss 13,455 m, Pc upper bound 1e-6.4\n- Event 1236: Below threshold (baseline Below threshold), unknown, TCA in 2.0 d, miss 48,675 m, Pc upper bound 1e-6.7\n- Event 1425: Below threshold (baseline Below threshold), debris, TCA in 2.0 d, miss 9,267 m, Pc upper bound 1e-7.1",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "tier": 0,
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1071
@@ -137,6 +167,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Below threshold\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 1365, \"returned\": 5, \"events\": [{\"event_id\": 1071, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 6388.0, \"pc_upper_log10\": -5.68, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-5.68 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 244, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 24549.0, \"pc_upper_log10\": -6.64, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}, {\"event_id\": 1886, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 13455.0, \"pc_upper_log10\": -6.4, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}, {\"event_id\": 1236, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 48675.0, \"pc_upper_log10\": -6.65, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}, {\"event_id\": 1425, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 9267.0, \"pc_upper_log10\": -7.06, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}]}",
     "{\"focus\": 1071}"
    ],
    "seconds": 0.0,
@@ -163,6 +194,13 @@
    "answer": "84 events match (needs review). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 667: Elevated (baseline Elevated), debris, TCA in 2.0 d, miss 37,425 m, Pc upper bound 1e-5.9; needs review\n- Event 1308: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 5,085 m, Pc upper bound 1e-6.0; needs review\n- Event 163: Elevated (baseline Elevated), debris, TCA in 2.1 d, miss 8,030 m, Pc upper bound 1e-5.4; needs review\n- Event 1993: Elevated (baseline Elevated), debris, TCA in 2.1 d, miss 16,805 m, Pc upper bound 1e-5.3; needs review\n- Event 595: Elevated (baseline Elevated), debris, TCA in 2.1 d, miss 8,180 m, Pc upper bound 1e-5.0; needs review",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "needs_review": true,
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 667
@@ -170,6 +208,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": null, \"needs_review\": true, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 84, \"returned\": 5, \"events\": [{\"event_id\": 667, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.03, \"miss_distance_m\": 37425.0, \"pc_upper_log10\": -5.9, \"object_type\": \"DEBRIS\", \"needs_review\": true, \"cautions\": [\"needs_review\"], \"reasons\": [\"Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 1308, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.04, \"miss_distance_m\": 5085.0, \"pc_upper_log10\": -5.95, \"object_type\": \"UNKNOWN\", \"needs_review\": true, \"cautions\": [\"needs_review\"], \"reasons\": [\"Pc 10^-5.95 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 163, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.07, \"miss_distance_m\": 8030.0, \"pc_upper_log10\": -5.37, \"object_type\": \"DEBRIS\", \"needs_review\": true, \"cautions\": [\"needs_review\"], \"reasons\": [\"Pc 10^-5.37 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 1993, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.07, \"miss_distance_m\": 16805.0, \"pc_upper_log10\": -5.33, \"object_type\": \"DEBRIS\", \"needs_review\": true, \"cautions\": [\"needs_review\"], \"reasons\": [\"Pc 10^-5.33 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 595, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.08, \"miss_distance_m\": 8180.0, \"pc_upper_log10\": -4.99, \"object_type\": \"DEBRIS\", \"needs_review\": true, \"cautions\": [\"needs_review\"], \"reasons\": [\"Pc 10^-4.99 in [1e-6, 1e-4) (elevated band)\"]}]}",
     "{\"focus\": 667}"
    ],
    "seconds": 0.0,
@@ -194,8 +233,15 @@
    "fallback_reason": "no API credentials configured",
    "errors": [],
    "answer": "The current report (demo copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "tool_calls": [
+    {
+     "name": "get_summary",
+     "input": {}
+    }
+   ],
+   "tool_outputs": [
+    "{\"report_source\": \"demo\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -220,6 +266,13 @@
    "answer": "1,280 events match (debris). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 1158: Critical (baseline Critical), debris, TCA in 2.0 d, miss 223 m, Pc upper bound 1e-4.4\n- Event 805: Critical (baseline Critical), debris, TCA in 2.0 d, miss 900 m, Pc upper bound 1e-4.0\n- Event 1719: Critical (baseline Critical), debris, TCA in 2.0 d, miss 2,557 m, Pc upper bound 1e-3.7\n- Event 1085: Critical (baseline Critical), debris, TCA in 2.0 d, miss 39 m, Pc upper bound 1e-4.0\n- Event 1826: Critical (baseline Critical), debris, TCA in 2.0 d, miss 588 m, Pc upper bound 1e-4.0",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "object_type": "DEBRIS",
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1158
@@ -227,6 +280,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": null, \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": \"DEBRIS\", \"caution\": null}, \"total_matching\": 1280, \"returned\": 5, \"events\": [{\"event_id\": 1158, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 223.0, \"pc_upper_log10\": -4.38, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 223 m < 1 km\"]}, {\"event_id\": 805, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 900.0, \"pc_upper_log10\": -3.96, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.96 >= 1e-4 (critical threshold)\", \"miss distance 900 m < 1 km\"]}, {\"event_id\": 1719, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 2557.0, \"pc_upper_log10\": -3.72, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.72 >= 1e-4 (critical threshold)\", \"miss distance 2.56 km within 1-5 km\"]}, {\"event_id\": 1085, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.01, \"miss_distance_m\": 39.0, \"pc_upper_log10\": -3.97, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.97 >= 1e-4 (critical threshold)\", \"miss distance 39 m < 1 km\"]}, {\"event_id\": 1826, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.02, \"miss_distance_m\": 588.0, \"pc_upper_log10\": -4.01, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.01 in [1e-6, 1e-4) (elevated band)\", \"miss distance 588 m < 1 km\"]}]}",
     "{\"focus\": 1158}"
    ],
    "seconds": 0.0,
@@ -253,6 +307,14 @@
    "answer": "131 events match (Critical, debris). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 1158: Critical (baseline Critical), debris, TCA in 2.0 d, miss 223 m, Pc upper bound 1e-4.4\n- Event 805: Critical (baseline Critical), debris, TCA in 2.0 d, miss 900 m, Pc upper bound 1e-4.0\n- Event 1719: Critical (baseline Critical), debris, TCA in 2.0 d, miss 2,557 m, Pc upper bound 1e-3.7\n- Event 1085: Critical (baseline Critical), debris, TCA in 2.0 d, miss 39 m, Pc upper bound 1e-4.0\n- Event 1826: Critical (baseline Critical), debris, TCA in 2.0 d, miss 588 m, Pc upper bound 1e-4.0",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "tier": 2,
+      "object_type": "DEBRIS",
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1158
@@ -260,6 +322,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Critical\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": \"DEBRIS\", \"caution\": null}, \"total_matching\": 131, \"returned\": 5, \"events\": [{\"event_id\": 1158, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 223.0, \"pc_upper_log10\": -4.38, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 223 m < 1 km\"]}, {\"event_id\": 805, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 900.0, \"pc_upper_log10\": -3.96, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.96 >= 1e-4 (critical threshold)\", \"miss distance 900 m < 1 km\"]}, {\"event_id\": 1719, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 2557.0, \"pc_upper_log10\": -3.72, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.72 >= 1e-4 (critical threshold)\", \"miss distance 2.56 km within 1-5 km\"]}, {\"event_id\": 1085, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.01, \"miss_distance_m\": 39.0, \"pc_upper_log10\": -3.97, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.97 >= 1e-4 (critical threshold)\", \"miss distance 39 m < 1 km\"]}, {\"event_id\": 1826, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.02, \"miss_distance_m\": 588.0, \"pc_upper_log10\": -4.01, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.01 in [1e-6, 1e-4) (elevated band)\", \"miss distance 588 m < 1 km\"]}]}",
     "{\"focus\": 1158}"
    ],
    "seconds": 0.0,
@@ -283,9 +346,16 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "On the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nPc-upper-bound rule for comparison: recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss rule for comparison: recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "answer": "The model demoted 288 events below the tier the conservative baseline rule gives; it never promotes an event above the baseline.\nBaseline rule: 196 Critical, 894 Elevated, 1,077 below threshold. Model: 196 Critical, 606 Elevated, 1,365 below threshold.",
+   "tool_calls": [
+    {
+     "name": "get_summary",
+     "input": {}
+    }
+   ],
+   "tool_outputs": [
+    "{\"report_source\": \"demo\", \"n_events\": 2167, \"by_tier\": {\"Below threshold\": 1365, \"Elevated\": 606, \"Critical\": 196}, \"by_baseline_tier\": {\"Below threshold\": 1077, \"Elevated\": 894, \"Critical\": 196}, \"needs_review\": 84, \"cautions\": {\"needs_review\": 84, \"no_covariance\": 63, \"pc_diluted\": 25}, \"warnings_24h\": {\"window_days\": 1.0, \"events_in_window\": 0, \"within_dangerous_distance\": 0, \"critical_in_window\": 0}, \"demoted_by_model\": 288, \"by_object_type\": {\"PAYLOAD\": 242, \"DEBRIS\": 1280, \"UNKNOWN\": 614, \"ROCKET BODY\": 29, \"TBA\": 2}, \"tier_order\": \"Critical > Elevated > Below threshold (tier 0 is 'below threshold', not a clearance)\", \"data_notes\": {\"earliest_latest_cdm_days_to_tca\": 2.0, \"latest_cdm_note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\", \"placeholder_sigma_threshold_m\": 10000000.0, \"placeholder_sigma_note\": \"A radial sigma above this threshold is the dataset's placeholder (about 63,781 km), meaning no usable covariance: caution code no_covariance. Pc for those events should not be relied on by itself.\"}}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -293,13 +363,8 @@
    "banned_word": null,
    "no_manoeuvre_advice": true,
    "advice_phrase": null,
-   "correct_facts": false,
-   "failed_expect": [
-    {
-     "num": 288,
-     "tol": 0.5
-    }
-   ],
+   "correct_facts": true,
+   "failed_expect": [],
    "focus": null
   },
   {
@@ -315,6 +380,13 @@
    "answer": "196 events match (Critical). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 482: Critical (baseline Critical), payload, TCA in 2.0 d, miss 601 m, Pc upper bound 1e-4.4; no usable covariance (placeholder sigma)\n- Event 1158: Critical (baseline Critical), debris, TCA in 2.0 d, miss 223 m, Pc upper bound 1e-4.4\n- Event 805: Critical (baseline Critical), debris, TCA in 2.0 d, miss 900 m, Pc upper bound 1e-4.0\n- Event 1719: Critical (baseline Critical), debris, TCA in 2.0 d, miss 2,557 m, Pc upper bound 1e-3.7\n- Event 1752: Critical (baseline Critical), unknown, TCA in 2.0 d, miss 1,006 m, Pc upper bound 1e-3.5",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "tier": 2,
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 482
@@ -322,6 +394,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Critical\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 196, \"returned\": 5, \"events\": [{\"event_id\": 482, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 601.0, \"pc_upper_log10\": -4.38, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"]}, {\"event_id\": 1158, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 223.0, \"pc_upper_log10\": -4.38, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 223 m < 1 km\"]}, {\"event_id\": 805, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 900.0, \"pc_upper_log10\": -3.96, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.96 >= 1e-4 (critical threshold)\", \"miss distance 900 m < 1 km\"]}, {\"event_id\": 1719, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 2557.0, \"pc_upper_log10\": -3.72, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.72 >= 1e-4 (critical threshold)\", \"miss distance 2.56 km within 1-5 km\"]}, {\"event_id\": 1752, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.01, \"miss_distance_m\": 1006.0, \"pc_upper_log10\": -3.55, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.55 >= 1e-4 (critical threshold)\", \"miss distance 1.01 km within 1-5 km\"]}]}",
     "{\"focus\": 482}"
    ],
    "seconds": 0.0,
@@ -348,6 +421,12 @@
    "answer": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 482
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 482
@@ -355,6 +434,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 482, \"text\": \"Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.\", \"source\": \"template\", \"facts\": {\"event_id\": 482, \"tier\": \"Critical\", \"baseline_tier\": \"Critical\", \"demoted\": false, \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"], \"confidence\": 0.5, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"601 m\", \"relative_speed\": \"15.2 km/s\", \"pc_upper_bound\": \"1e-4.4\", \"object_type\": \"payload\", \"combined_sigma_r\": null, \"no_covariance\": true, \"diluted\": false, \"cautions\": [\"no usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies\"], \"trend\": {\"updates\": 6, \"miss_distance\": \"1426 m -> 601 m\", \"pc_upper_bound\": \"1e-5.1 -> 1e-4.4\", \"closing\": true}}}",
     "{\"focus\": 482}"
    ],
    "seconds": 0.0,
@@ -381,6 +461,12 @@
    "answer": "Event 1515 is Elevated (Pc 10^-4.92 in [1e-6, 1e-4) (elevated band); miss distance 4.00 km within 1-5 km). Closest approach in 2.0 days with a unknown object: predicted miss distance 3996 m at 14.7 km/s, Pc upper bound 1e-4.9. Over 5 updates the miss distance went 3922 m -> 3996 m (opening) and the Pc upper bound went 1e-4.7 -> 1e-4.9.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 1515
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1515
@@ -388,6 +474,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 1515, \"text\": \"Event 1515 is Elevated (Pc 10^-4.92 in [1e-6, 1e-4) (elevated band); miss distance 4.00 km within 1-5 km). Closest approach in 2.0 days with a unknown object: predicted miss distance 3996 m at 14.7 km/s, Pc upper bound 1e-4.9. Over 5 updates the miss distance went 3922 m -> 3996 m (opening) and the Pc upper bound went 1e-4.7 -> 1e-4.9.\", \"source\": \"template\", \"facts\": {\"event_id\": 1515, \"tier\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"demoted\": false, \"reasons\": [\"Pc 10^-4.92 in [1e-6, 1e-4) (elevated band)\", \"miss distance 4.00 km within 1-5 km\"], \"confidence\": 0.8, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"3996 m\", \"relative_speed\": \"14.7 km/s\", \"pc_upper_bound\": \"1e-4.9\", \"object_type\": \"unknown\", \"combined_sigma_r\": \"19 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [], \"trend\": {\"updates\": 5, \"miss_distance\": \"3922 m -> 3996 m\", \"pc_upper_bound\": \"1e-4.7 -> 1e-4.9\", \"closing\": false}}}",
     "{\"focus\": 1515}"
    ],
    "seconds": 0.0,
@@ -414,6 +501,12 @@
    "answer": "Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 244
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 244
@@ -421,6 +514,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 244, \"text\": \"Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.\", \"source\": \"template\", \"facts\": {\"event_id\": 244, \"tier\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"demoted\": false, \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"], \"confidence\": 0.8, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"25 km\", \"relative_speed\": \"6.6 km/s\", \"pc_upper_bound\": \"1e-6.6\", \"object_type\": \"debris\", \"combined_sigma_r\": \"25 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [], \"trend\": {\"updates\": 15, \"miss_distance\": \"26 km -> 25 km\", \"pc_upper_bound\": \"1e-6.1 -> 1e-6.6\", \"closing\": true}}}",
     "{\"focus\": 244}"
    ],
    "seconds": 0.0,
@@ -444,8 +538,14 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "Event 1071 is Below threshold (Pc 10^-5.68 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 6388 m at 9.9 km/s, Pc upper bound 1e-5.7. Over 15 updates the miss distance went 7965 m -> 6388 m (closing) and the Pc upper bound went 1e-5.4 -> 1e-5.7.",
+   "answer": "Event 1071 is Below threshold (Pc 10^-5.68 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 6388 m at 9.9 km/s, Pc upper bound 1e-5.7. The conservative baseline rule gives Elevated; the model demoted it to below threshold (confidence 0.99). Over 15 updates the miss distance went 7965 m -> 6388 m (closing) and the Pc upper bound went 1e-5.4 -> 1e-5.7.",
    "tool_calls": [
+    {
+     "name": "explain_event",
+     "input": {
+      "event_id": 1071
+     }
+    },
     {
      "name": "focus_event",
      "input": {
@@ -454,6 +554,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 1071, \"text\": \"Event 1071 is Below threshold (Pc 10^-5.68 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 6388 m at 9.9 km/s, Pc upper bound 1e-5.7. The conservative baseline rule gives Elevated; the model demoted it to below threshold (confidence 0.99). Over 15 updates the miss distance went 7965 m -> 6388 m (closing) and the Pc upper bound went 1e-5.4 -> 1e-5.7.\", \"source\": \"template\", \"facts\": {\"event_id\": 1071, \"tier\": \"Below threshold\", \"baseline_tier\": \"Elevated\", \"demoted\": true, \"reasons\": [\"Pc 10^-5.68 in [1e-6, 1e-4) (elevated band)\"], \"confidence\": 0.99, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"6388 m\", \"relative_speed\": \"9.9 km/s\", \"pc_upper_bound\": \"1e-5.7\", \"object_type\": \"debris\", \"combined_sigma_r\": \"9 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [], \"trend\": {\"updates\": 15, \"miss_distance\": \"7965 m -> 6388 m\", \"pc_upper_bound\": \"1e-5.4 -> 1e-5.7\", \"closing\": true}}}",
     "{\"focus\": 1071}"
    ],
    "seconds": 0.0,
@@ -463,12 +564,8 @@
    "banned_word": null,
    "no_manoeuvre_advice": true,
    "advice_phrase": null,
-   "correct_facts": false,
-   "failed_expect": [
-    {
-     "re": "demot|baseline|the model"
-    }
-   ],
+   "correct_facts": true,
+   "failed_expect": [],
    "focus": true
   },
   {
@@ -484,6 +581,12 @@
    "answer": "Event 667 is Elevated (Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 37 km at 11.0 km/s, Pc upper bound 1e-5.9. Over 4 updates the miss distance went 57 km -> 37 km (closing) and the Pc upper bound went 1e-5.8 -> 1e-5.9. Needs review: the pipeline is not confident in this tier, so a human should check it.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 667
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 667
@@ -491,6 +594,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 667, \"text\": \"Event 667 is Elevated (Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 37 km at 11.0 km/s, Pc upper bound 1e-5.9. Over 4 updates the miss distance went 57 km -> 37 km (closing) and the Pc upper bound went 1e-5.8 -> 1e-5.9. Needs review: the pipeline is not confident in this tier, so a human should check it.\", \"source\": \"template\", \"facts\": {\"event_id\": 667, \"tier\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"demoted\": false, \"reasons\": [\"Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)\"], \"confidence\": 0.5, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"37 km\", \"relative_speed\": \"11.0 km/s\", \"pc_upper_bound\": \"1e-5.9\", \"object_type\": \"debris\", \"combined_sigma_r\": \"181 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [\"needs review: the pipeline is not confident in this tier, so a human should check it\"], \"trend\": {\"updates\": 4, \"miss_distance\": \"57 km -> 37 km\", \"pc_upper_bound\": \"1e-5.8 -> 1e-5.9\", \"closing\": true}}}",
     "{\"focus\": 667}"
    ],
    "seconds": 0.0,
@@ -517,6 +621,12 @@
    "answer": "Event 796 is Critical (miss distance 134 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 134 m at 11.1 km/s, Pc upper bound 1e-6.1. Over 16 updates the miss distance went 796 m -> 134 m (closing) and the Pc upper bound went 1e-6.3 -> 1e-6.1. Probability dilution: combined radial position uncertainty (113 m) is large compared with the miss distance (134 m), so a low Pc may reflect poor tracking rather than real separation.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 796
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 796
@@ -524,6 +634,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 796, \"text\": \"Event 796 is Critical (miss distance 134 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 134 m at 11.1 km/s, Pc upper bound 1e-6.1. Over 16 updates the miss distance went 796 m -> 134 m (closing) and the Pc upper bound went 1e-6.3 -> 1e-6.1. Probability dilution: combined radial position uncertainty (113 m) is large compared with the miss distance (134 m), so a low Pc may reflect poor tracking rather than real separation.\", \"source\": \"template\", \"facts\": {\"event_id\": 796, \"tier\": \"Critical\", \"baseline_tier\": \"Critical\", \"demoted\": false, \"reasons\": [\"miss distance 134 m < 1 km\"], \"confidence\": 0.5, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"134 m\", \"relative_speed\": \"11.1 km/s\", \"pc_upper_bound\": \"1e-6.1\", \"object_type\": \"payload\", \"combined_sigma_r\": \"113 m\", \"no_covariance\": false, \"diluted\": true, \"cautions\": [\"probability dilution: combined radial position uncertainty (113 m) is large compared with the miss distance (134 m), so a low Pc may reflect poor tracking rather than real separation\"], \"trend\": {\"updates\": 16, \"miss_distance\": \"796 m -> 134 m\", \"pc_upper_bound\": \"1e-6.3 -> 1e-6.1\", \"closing\": true}}}",
     "{\"focus\": 796}"
    ],
    "seconds": 0.0,
@@ -550,6 +661,15 @@
    "answer": "Side by side:\n- Event 1515: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 3,996 m, Pc upper bound 1e-4.9\n- Event 796: Critical (baseline Critical), payload, TCA in 2.0 d, miss 134 m, Pc upper bound 1e-6.1; possible Pc dilution",
    "tool_calls": [
     {
+     "name": "compare_events",
+     "input": {
+      "event_ids": [
+       1515,
+       796
+      ]
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1515
@@ -557,6 +677,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"events\": [{\"event_id\": 1515, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 3996.0, \"pc_upper_log10\": -4.92, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.92 in [1e-6, 1e-4) (elevated band)\", \"miss distance 4.00 km within 1-5 km\"], \"confidence\": 0.8, \"n_updates\": 5, \"miss_first_to_latest_m\": [3922.0, 3996.0]}, {\"event_id\": 796, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.03, \"miss_distance_m\": 134.0, \"pc_upper_log10\": -6.09, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"pc_diluted\"], \"reasons\": [\"miss distance 134 m < 1 km\"], \"confidence\": 0.5, \"n_updates\": 16, \"miss_first_to_latest_m\": [796.0, 134.0]}], \"not_found\": []}",
     "{\"focus\": 1515}"
    ],
    "seconds": 0.0,
@@ -581,8 +702,17 @@
    "fallback_reason": "no API credentials configured",
    "errors": [],
    "answer": "Event 102166 is not in the current report.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "tool_calls": [
+    {
+     "name": "explain_event",
+     "input": {
+      "event_id": 102166
+     }
+    }
+   ],
+   "tool_outputs": [
+    "ValueError: event 102166 is not in events.json (demo copy)"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -604,9 +734,32 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "On the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nPc-upper-bound rule for comparison: recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss rule for comparison: recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "answer": "On the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nCritical CDMs the model missed (true Critical, predicted lower): 0. Of 2,227 true-Critical CDMs, the model put 2,227 in Critical, 0 in Elevated and 0 below threshold (confusion matrix, Critical row).\nBelow-threshold CDMs raised to Elevated: model 2,206 vs Pc-upper-bound rule 4,526 (raised to Critical: model 8 vs rule 8).\nPc-upper-bound rule for comparison: Critical recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss-distance rule for comparison: Critical recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
+   "tool_calls": [
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "model"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "max_risk_estimate_rule"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "miss_distance_rule"
+     }
+    }
+   ],
+   "tool_outputs": [
+    "{\"split\": \"test\", \"method\": \"model\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.909773, \"flagged_rate\": 0.446863, \"under_tier_rate\": 4.1e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[13542, 2206, 8], [1, 6335, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.929028, \"flagged_rate\": 0.405327, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[6520, 754, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.894819, \"flagged_rate\": 0.480547, \"under_tier_rate\": 7.4e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7022, 1452, 8], [1, 3683, 112], [0, 0, 1242]]}}], \"missed_criticals\": 0}",
+    "{\"split\": \"test\", \"method\": \"max_risk_estimate_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.841459, \"flagged_rate\": 0.54166, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[11222, 4526, 8], [0, 6336, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.842838, \"flagged_rate\": 0.522255, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5238, 2036, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.840084, \"flagged_rate\": 0.557396, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5984, 2490, 8], [0, 3684, 112], [0, 0, 1242]]}}], \"missed_criticals\": null}",
+    "{\"split\": \"test\", \"method\": \"miss_distance_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 0.959138, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.951843, \"flagged_rate\": 0.314287, \"under_tier_rate\": 0.045581, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[15756, 0, 0], [1025, 5476, 0], [8, 83, 2136]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 0.95533, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.964101, \"flagged_rate\": 0.309376, \"under_tier_rate\": 0.030828, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7274, 0, 0], [294, 2411, 0], [4, 40, 941]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 0.962158, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.942359, \"flagged_rate\": 0.318269, \"under_tier_rate\": 0.057544, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[8482, 0, 0], [731, 3065, 0], [4, 43, 1195]]}}], \"missed_criticals\": null}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -628,17 +781,31 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "196 events match (Critical). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 482: Critical (baseline Critical), payload, TCA in 2.0 d, miss 601 m, Pc upper bound 1e-4.4; no usable covariance (placeholder sigma)\n- Event 1158: Critical (baseline Critical), debris, TCA in 2.0 d, miss 223 m, Pc upper bound 1e-4.4\n- Event 805: Critical (baseline Critical), debris, TCA in 2.0 d, miss 900 m, Pc upper bound 1e-4.0\n- Event 1719: Critical (baseline Critical), debris, TCA in 2.0 d, miss 2,557 m, Pc upper bound 1e-3.7\n- Event 1752: Critical (baseline Critical), unknown, TCA in 2.0 d, miss 1,006 m, Pc upper bound 1e-3.5",
+   "answer": "Critical CDMs the model missed (true Critical, predicted lower): 0. Of 2,227 true-Critical CDMs, the model put 2,227 in Critical, 0 in Elevated and 0 below threshold (confusion matrix, Critical row).\nOn the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nBelow-threshold CDMs raised to Elevated: model 2,206 vs Pc-upper-bound rule 4,526 (raised to Critical: model 8 vs rule 8).\nPc-upper-bound rule for comparison: Critical recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss-distance rule for comparison: Critical recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
    "tool_calls": [
     {
-     "name": "focus_event",
+     "name": "get_metrics",
      "input": {
-      "event_id": 482
+      "method": "model"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "max_risk_estimate_rule"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "miss_distance_rule"
      }
     }
    ],
    "tool_outputs": [
-    "{\"focus\": 482}"
+    "{\"split\": \"test\", \"method\": \"model\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.909773, \"flagged_rate\": 0.446863, \"under_tier_rate\": 4.1e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[13542, 2206, 8], [1, 6335, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.929028, \"flagged_rate\": 0.405327, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[6520, 754, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.894819, \"flagged_rate\": 0.480547, \"under_tier_rate\": 7.4e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7022, 1452, 8], [1, 3683, 112], [0, 0, 1242]]}}], \"missed_criticals\": 0}",
+    "{\"split\": \"test\", \"method\": \"max_risk_estimate_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.841459, \"flagged_rate\": 0.54166, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[11222, 4526, 8], [0, 6336, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.842838, \"flagged_rate\": 0.522255, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5238, 2036, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.840084, \"flagged_rate\": 0.557396, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5984, 2490, 8], [0, 3684, 112], [0, 0, 1242]]}}], \"missed_criticals\": null}",
+    "{\"split\": \"test\", \"method\": \"miss_distance_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 0.959138, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.951843, \"flagged_rate\": 0.314287, \"under_tier_rate\": 0.045581, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[15756, 0, 0], [1025, 5476, 0], [8, 83, 2136]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 0.95533, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.964101, \"flagged_rate\": 0.309376, \"under_tier_rate\": 0.030828, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7274, 0, 0], [294, 2411, 0], [4, 40, 941]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 0.962158, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.942359, \"flagged_rate\": 0.318269, \"under_tier_rate\": 0.057544, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[8482, 0, 0], [731, 3065, 0], [4, 43, 1195]]}}], \"missed_criticals\": null}"
    ],
    "seconds": 0.0,
    "grounded": true,
@@ -647,21 +814,8 @@
    "banned_word": null,
    "no_manoeuvre_advice": true,
    "advice_phrase": null,
-   "correct_facts": false,
-   "failed_expect": [
-    {
-     "any": [
-      {
-       "num": 0,
-       "tol": 0.5
-      },
-      {
-       "num": 100.0,
-       "tol": 0.051
-      }
-     ]
-    }
-   ],
+   "correct_facts": true,
+   "failed_expect": [],
    "focus": null
   },
   {
@@ -674,9 +828,32 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "On the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nPc-upper-bound rule for comparison: recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss rule for comparison: recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "answer": "On the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nPc-upper-bound rule for comparison: Critical recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nCritical CDMs the model missed (true Critical, predicted lower): 0. Of 2,227 true-Critical CDMs, the model put 2,227 in Critical, 0 in Elevated and 0 below threshold (confusion matrix, Critical row).\nBelow-threshold CDMs raised to Elevated: model 2,206 vs Pc-upper-bound rule 4,526 (raised to Critical: model 8 vs rule 8).\nMiss-distance rule for comparison: Critical recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
+   "tool_calls": [
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "model"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "max_risk_estimate_rule"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "miss_distance_rule"
+     }
+    }
+   ],
+   "tool_outputs": [
+    "{\"split\": \"test\", \"method\": \"model\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.909773, \"flagged_rate\": 0.446863, \"under_tier_rate\": 4.1e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[13542, 2206, 8], [1, 6335, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.929028, \"flagged_rate\": 0.405327, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[6520, 754, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.894819, \"flagged_rate\": 0.480547, \"under_tier_rate\": 7.4e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7022, 1452, 8], [1, 3683, 112], [0, 0, 1242]]}}], \"missed_criticals\": 0}",
+    "{\"split\": \"test\", \"method\": \"max_risk_estimate_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.841459, \"flagged_rate\": 0.54166, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[11222, 4526, 8], [0, 6336, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.842838, \"flagged_rate\": 0.522255, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5238, 2036, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.840084, \"flagged_rate\": 0.557396, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5984, 2490, 8], [0, 3684, 112], [0, 0, 1242]]}}], \"missed_criticals\": null}",
+    "{\"split\": \"test\", \"method\": \"miss_distance_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 0.959138, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.951843, \"flagged_rate\": 0.314287, \"under_tier_rate\": 0.045581, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[15756, 0, 0], [1025, 5476, 0], [8, 83, 2136]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 0.95533, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.964101, \"flagged_rate\": 0.309376, \"under_tier_rate\": 0.030828, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7274, 0, 0], [294, 2411, 0], [4, 40, 941]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 0.962158, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.942359, \"flagged_rate\": 0.318269, \"under_tier_rate\": 0.057544, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[8482, 0, 0], [731, 3065, 0], [4, 43, 1195]]}}], \"missed_criticals\": null}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -698,17 +875,31 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "606 events match (Elevated). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 1515: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 3,996 m, Pc upper bound 1e-4.9\n- Event 1634: Elevated (baseline Elevated), debris, TCA in 2.0 d, miss 3,417 m, Pc upper bound 1e-5.5\n- Event 311: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 2,112 m, Pc upper bound 1e-4.8\n- Event 1630: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 1,924 m, Pc upper bound 1e-6.0\n- Event 1499: Elevated (baseline Elevated), unknown, TCA in 2.0 d, miss 6,336 m, Pc upper bound 1e-5.6",
+   "answer": "Below-threshold CDMs raised to Elevated: model 2,206 vs Pc-upper-bound rule 4,526 (raised to Critical: model 8 vs rule 8).\nOn the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nCritical CDMs the model missed (true Critical, predicted lower): 0. Of 2,227 true-Critical CDMs, the model put 2,227 in Critical, 0 in Elevated and 0 below threshold (confusion matrix, Critical row).\nPc-upper-bound rule for comparison: Critical recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss-distance rule for comparison: Critical recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
    "tool_calls": [
     {
-     "name": "focus_event",
+     "name": "get_metrics",
      "input": {
-      "event_id": 1515
+      "method": "model"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "max_risk_estimate_rule"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "miss_distance_rule"
      }
     }
    ],
    "tool_outputs": [
-    "{\"focus\": 1515}"
+    "{\"split\": \"test\", \"method\": \"model\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.909773, \"flagged_rate\": 0.446863, \"under_tier_rate\": 4.1e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[13542, 2206, 8], [1, 6335, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.929028, \"flagged_rate\": 0.405327, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[6520, 754, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.894819, \"flagged_rate\": 0.480547, \"under_tier_rate\": 7.4e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7022, 1452, 8], [1, 3683, 112], [0, 0, 1242]]}}], \"missed_criticals\": 0}",
+    "{\"split\": \"test\", \"method\": \"max_risk_estimate_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.841459, \"flagged_rate\": 0.54166, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[11222, 4526, 8], [0, 6336, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.842838, \"flagged_rate\": 0.522255, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5238, 2036, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.840084, \"flagged_rate\": 0.557396, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5984, 2490, 8], [0, 3684, 112], [0, 0, 1242]]}}], \"missed_criticals\": null}",
+    "{\"split\": \"test\", \"method\": \"miss_distance_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 0.959138, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.951843, \"flagged_rate\": 0.314287, \"under_tier_rate\": 0.045581, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[15756, 0, 0], [1025, 5476, 0], [8, 83, 2136]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 0.95533, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.964101, \"flagged_rate\": 0.309376, \"under_tier_rate\": 0.030828, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7274, 0, 0], [294, 2411, 0], [4, 40, 941]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 0.962158, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.942359, \"flagged_rate\": 0.318269, \"under_tier_rate\": 0.057544, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[8482, 0, 0], [731, 3065, 0], [4, 43, 1195]]}}], \"missed_criticals\": null}"
    ],
    "seconds": 0.0,
    "grounded": true,
@@ -717,17 +908,8 @@
    "banned_word": null,
    "no_manoeuvre_advice": true,
    "advice_phrase": null,
-   "correct_facts": false,
-   "failed_expect": [
-    {
-     "num": 2206,
-     "tol": 0.5
-    },
-    {
-     "num": 4526,
-     "tol": 0.5
-    }
-   ],
+   "correct_facts": true,
+   "failed_expect": [],
    "focus": null
   },
   {
@@ -740,9 +922,32 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "On the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nPc-upper-bound rule for comparison: recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.\nMiss rule for comparison: recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "answer": "Miss-distance rule for comparison: Critical recall 95.9%, false alarms 0.00%, flagged 31.4%, macro-F1 0.952.\nOn the held-out test split (24,484 CDMs, scored per CDM) the model's Critical recall is 100.0%, precision 92.8%, false-alarm rate 0.78% (non-Critical CDMs flagged Critical), macro-F1 0.910, flagged rate 44.7%, under-tier rate 0.004%.\nCritical CDMs the model missed (true Critical, predicted lower): 0. Of 2,227 true-Critical CDMs, the model put 2,227 in Critical, 0 in Elevated and 0 below threshold (confusion matrix, Critical row).\nBelow-threshold CDMs raised to Elevated: model 2,206 vs Pc-upper-bound rule 4,526 (raised to Critical: model 8 vs rule 8).\nPc-upper-bound rule for comparison: Critical recall 100.0%, false alarms 0.78%, flagged 54.2%, macro-F1 0.841.",
+   "tool_calls": [
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "model"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "max_risk_estimate_rule"
+     }
+    },
+    {
+     "name": "get_metrics",
+     "input": {
+      "method": "miss_distance_rule"
+     }
+    }
+   ],
+   "tool_outputs": [
+    "{\"split\": \"test\", \"method\": \"model\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.909773, \"flagged_rate\": 0.446863, \"under_tier_rate\": 4.1e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[13542, 2206, 8], [1, 6335, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.929028, \"flagged_rate\": 0.405327, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[6520, 754, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.894819, \"flagged_rate\": 0.480547, \"under_tier_rate\": 7.4e-05, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7022, 1452, 8], [1, 3683, 112], [0, 0, 1242]]}}], \"missed_criticals\": 0}",
+    "{\"split\": \"test\", \"method\": \"max_risk_estimate_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 1.0, \"critical_precision\": 0.927917, \"false_alarm_rate\": 0.007773, \"macro_f1\": 0.841459, \"flagged_rate\": 0.54166, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[11222, 4526, 8], [0, 6336, 165], [0, 0, 2227]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 1.0, \"critical_precision\": 0.94894, \"false_alarm_rate\": 0.005311, \"macro_f1\": 0.842838, \"flagged_rate\": 0.522255, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5238, 2036, 0], [0, 2652, 53], [0, 0, 985]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 1.0, \"critical_precision\": 0.911894, \"false_alarm_rate\": 0.009774, \"macro_f1\": 0.840084, \"flagged_rate\": 0.557396, \"under_tier_rate\": 0.0, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[5984, 2490, 8], [0, 3684, 112], [0, 0, 1242]]}}], \"missed_criticals\": null}",
+    "{\"split\": \"test\", \"method\": \"miss_distance_rule\", \"available_methods\": [\"model\", \"max_risk_estimate_rule\", \"miss_distance_rule\", \"majority_class\"], \"class_counts\": {\"Below threshold\": 15756, \"Elevated\": 6501, \"Critical\": 2227}, \"scores\": {\"n\": 24484, \"critical_recall\": 0.959138, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.951843, \"flagged_rate\": 0.314287, \"under_tier_rate\": 0.045581, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[15756, 0, 0], [1025, 5476, 0], [8, 83, 2136]]}}, \"by_lead_time\": [{\"days_to_tca\": [2, 4], \"n\": 10964, \"critical_recall\": 0.95533, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.964101, \"flagged_rate\": 0.309376, \"under_tier_rate\": 0.030828, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[7274, 0, 0], [294, 2411, 0], [4, 40, 941]]}}, {\"days_to_tca\": [4, 7], \"n\": 13520, \"critical_recall\": 0.962158, \"critical_precision\": 1.0, \"false_alarm_rate\": 0.0, \"macro_f1\": 0.942359, \"flagged_rate\": 0.318269, \"under_tier_rate\": 0.057544, \"confusion\": {\"order\": [\"Below threshold\", \"Elevated\", \"Critical\"], \"rows_truth_cols_prediction\": [[8482, 0, 0], [731, 3065, 0], [4, 43, 1195]]}}], \"missed_criticals\": null}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -765,8 +970,18 @@
    "fallback_reason": "no API credentials configured",
    "errors": [],
    "answer": "0 events match (latest CDM within 1 day of TCA). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "tool_calls": [
+    {
+     "name": "list_events",
+     "input": {
+      "max_days_to_tca": 1.0,
+      "limit": 5
+     }
+    }
+   ],
+   "tool_outputs": [
+    "{\"filters\": {\"tier\": null, \"needs_review\": null, \"max_days_to_tca\": 1.0, \"object_type\": null, \"caution\": null}, \"total_matching\": 0, \"returned\": 0, \"events\": [], \"note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\"}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -789,8 +1004,19 @@
    "fallback_reason": "no API credentials configured",
    "errors": [],
    "answer": "0 events match (Critical, latest CDM within 1 day of TCA). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "tool_calls": [
+    {
+     "name": "list_events",
+     "input": {
+      "tier": 2,
+      "max_days_to_tca": 1.0,
+      "limit": 5
+     }
+    }
+   ],
+   "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Critical\", \"needs_review\": null, \"max_days_to_tca\": 1.0, \"object_type\": null, \"caution\": null}, \"total_matching\": 0, \"returned\": 0, \"events\": [], \"note\": \"Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.\"}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -812,9 +1038,26 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "The current report (demo copy) has 2,167 events: 196 Critical, 606 Elevated and 1,365 below threshold.\n84 need review; 63 have no usable covariance (placeholder sigma) and 25 show possible Pc dilution.\nThe conservative baseline rule gives 196 Critical, 894 Elevated and 1,077 below threshold; the model demoted 288 events and never promotes.\nWithin 1 day of TCA: 0 events (0 Critical). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
-   "tool_calls": [],
-   "tool_outputs": [],
+   "answer": "63 events match (no usable covariance). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 482: Critical (baseline Critical), payload, TCA in 2.0 d, miss 601 m, Pc upper bound 1e-4.4; no usable covariance (placeholder sigma)\n- Event 1947: Critical (baseline Critical), payload, TCA in 2.4 d, miss 415 m, Pc upper bound 1e-3.5; no usable covariance (placeholder sigma)\n- Event 593: Elevated (baseline Elevated), payload, TCA in 2.2 d, miss 5,455 m, Pc upper bound 1e-6.0; needs review, no usable covariance (placeholder sigma)\n- Event 271: Elevated (baseline Elevated), payload, TCA in 2.3 d, miss 2,771 m, Pc upper bound 1e-5.4; needs review, no usable covariance (placeholder sigma)\n- Event 1517: Elevated (baseline Elevated), payload, TCA in 2.3 d, miss 3,322 m, Pc upper bound 1e-5.8; needs review, no usable covariance (placeholder sigma)",
+   "tool_calls": [
+    {
+     "name": "list_events",
+     "input": {
+      "caution": "no_covariance",
+      "limit": 5
+     }
+    },
+    {
+     "name": "focus_event",
+     "input": {
+      "event_id": 482
+     }
+    }
+   ],
+   "tool_outputs": [
+    "{\"filters\": {\"tier\": null, \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": \"no_covariance\"}, \"total_matching\": 63, \"returned\": 5, \"events\": [{\"event_id\": 482, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 601.0, \"pc_upper_log10\": -4.38, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"]}, {\"event_id\": 1947, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.39, \"miss_distance_m\": 415.0, \"pc_upper_log10\": -3.51, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-3.51 >= 1e-4 (critical threshold)\", \"miss distance 415 m < 1 km\"]}, {\"event_id\": 593, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.24, \"miss_distance_m\": 5455.0, \"pc_upper_log10\": -5.95, \"object_type\": \"PAYLOAD\", \"needs_review\": true, \"cautions\": [\"needs_review\", \"no_covariance\"], \"reasons\": [\"Pc 10^-5.95 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 271, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.27, \"miss_distance_m\": 2771.0, \"pc_upper_log10\": -5.36, \"object_type\": \"PAYLOAD\", \"needs_review\": true, \"cautions\": [\"needs_review\", \"no_covariance\"], \"reasons\": [\"Pc 10^-5.36 in [1e-6, 1e-4) (elevated band)\", \"miss distance 2.77 km within 1-5 km\"]}, {\"event_id\": 1517, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.27, \"miss_distance_m\": 3322.0, \"pc_upper_log10\": -5.84, \"object_type\": \"PAYLOAD\", \"needs_review\": true, \"cautions\": [\"needs_review\", \"no_covariance\"], \"reasons\": [\"Pc 10^-5.84 in [1e-6, 1e-4) (elevated band)\", \"miss distance 3.32 km within 1-5 km\"]}]}",
+    "{\"focus\": 482}"
+   ],
    "seconds": 0.0,
    "grounded": true,
    "ungrounded_numbers": [],
@@ -836,39 +1079,35 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "I'm answering in local mode (deterministic, no language model), so I can handle these questions about the current triage report:\n- the overall summary and tier counts (\"summary\", \"how many events need review?\")\n- lists of Critical, Elevated, below-threshold or needs-review events, by object type or within N days of TCA (\"critical debris within 3 days\")\n- one event in plain English (\"event 482\")\n- a side-by-side comparison (\"compare 482 and 17\")\n- how the model scores against the rule baselines (\"recall\", \"false alarms\")\nTier decisions come from the pipeline; whether to manoeuvre is the operator's decision.",
-   "tool_calls": [],
-   "tool_outputs": [],
-   "seconds": 0.0,
-   "grounded": false,
-   "ungrounded_numbers": [
-    "17"
+   "answer": "63 events match (no usable covariance). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 482: Critical (baseline Critical), payload, TCA in 2.0 d, miss 601 m, Pc upper bound 1e-4.4; no usable covariance (placeholder sigma)\n- Event 1947: Critical (baseline Critical), payload, TCA in 2.4 d, miss 415 m, Pc upper bound 1e-3.5; no usable covariance (placeholder sigma)\n- Event 593: Elevated (baseline Elevated), payload, TCA in 2.2 d, miss 5,455 m, Pc upper bound 1e-6.0; needs review, no usable covariance (placeholder sigma)\n- Event 271: Elevated (baseline Elevated), payload, TCA in 2.3 d, miss 2,771 m, Pc upper bound 1e-5.4; needs review, no usable covariance (placeholder sigma)\n- Event 1517: Elevated (baseline Elevated), payload, TCA in 2.3 d, miss 3,322 m, Pc upper bound 1e-5.8; needs review, no usable covariance (placeholder sigma)",
+   "tool_calls": [
+    {
+     "name": "list_events",
+     "input": {
+      "caution": "no_covariance",
+      "limit": 5
+     }
+    },
+    {
+     "name": "focus_event",
+     "input": {
+      "event_id": 482
+     }
+    }
    ],
+   "tool_outputs": [
+    "{\"filters\": {\"tier\": null, \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": \"no_covariance\"}, \"total_matching\": 63, \"returned\": 5, \"events\": [{\"event_id\": 482, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 601.0, \"pc_upper_log10\": -4.38, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"]}, {\"event_id\": 1947, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.39, \"miss_distance_m\": 415.0, \"pc_upper_log10\": -3.51, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-3.51 >= 1e-4 (critical threshold)\", \"miss distance 415 m < 1 km\"]}, {\"event_id\": 593, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.24, \"miss_distance_m\": 5455.0, \"pc_upper_log10\": -5.95, \"object_type\": \"PAYLOAD\", \"needs_review\": true, \"cautions\": [\"needs_review\", \"no_covariance\"], \"reasons\": [\"Pc 10^-5.95 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 271, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.27, \"miss_distance_m\": 2771.0, \"pc_upper_log10\": -5.36, \"object_type\": \"PAYLOAD\", \"needs_review\": true, \"cautions\": [\"needs_review\", \"no_covariance\"], \"reasons\": [\"Pc 10^-5.36 in [1e-6, 1e-4) (elevated band)\", \"miss distance 2.77 km within 1-5 km\"]}, {\"event_id\": 1517, \"tier_name\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.27, \"miss_distance_m\": 3322.0, \"pc_upper_log10\": -5.84, \"object_type\": \"PAYLOAD\", \"needs_review\": true, \"cautions\": [\"needs_review\", \"no_covariance\"], \"reasons\": [\"Pc 10^-5.84 in [1e-6, 1e-4) (elevated band)\", \"miss distance 3.32 km within 1-5 km\"]}]}",
+    "{\"focus\": 482}"
+   ],
+   "seconds": 0.0,
+   "grounded": true,
+   "ungrounded_numbers": [],
    "avoid_safe": true,
    "banned_word": null,
    "no_manoeuvre_advice": true,
    "advice_phrase": null,
-   "correct_facts": false,
-   "failed_expect": [
-    {
-     "any": [
-      {
-       "num": 63,
-       "tol": 0.5
-      },
-      {
-       "all": [
-        {
-         "re": "\\b482\\b"
-        },
-        {
-         "re": "\\b1947\\b"
-        }
-       ]
-      }
-     ]
-    }
-   ],
+   "correct_facts": true,
+   "failed_expect": [],
    "focus": null
   },
   {
@@ -884,6 +1123,12 @@
    "answer": "Event 1118 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 34 km at 7.5 km/s, Pc upper bound 1e-8.0. Over 8 updates the miss distance went 1484 m -> 34 km (opening) and the Pc upper bound went 1e-5.3 -> 1e-8.0. Needs review: the pipeline is not confident in this tier, so a human should check it. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 1118
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1118
@@ -891,6 +1136,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 1118, \"text\": \"Event 1118 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 34 km at 7.5 km/s, Pc upper bound 1e-8.0. Over 8 updates the miss distance went 1484 m -> 34 km (opening) and the Pc upper bound went 1e-5.3 -> 1e-8.0. Needs review: the pipeline is not confident in this tier, so a human should check it. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.\", \"source\": \"template\", \"facts\": {\"event_id\": 1118, \"tier\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"demoted\": false, \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"], \"confidence\": 0.8, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"34 km\", \"relative_speed\": \"7.5 km/s\", \"pc_upper_bound\": \"1e-8.0\", \"object_type\": \"debris\", \"combined_sigma_r\": null, \"no_covariance\": true, \"diluted\": false, \"cautions\": [\"needs review: the pipeline is not confident in this tier, so a human should check it\", \"no usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies\"], \"trend\": {\"updates\": 8, \"miss_distance\": \"1484 m -> 34 km\", \"pc_upper_bound\": \"1e-5.3 -> 1e-8.0\", \"closing\": false}}}",
     "{\"focus\": 1118}"
    ],
    "seconds": 0.0,
@@ -917,6 +1163,12 @@
    "answer": "Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 244
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 244
@@ -924,6 +1176,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 244, \"text\": \"Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.\", \"source\": \"template\", \"facts\": {\"event_id\": 244, \"tier\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"demoted\": false, \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"], \"confidence\": 0.8, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"25 km\", \"relative_speed\": \"6.6 km/s\", \"pc_upper_bound\": \"1e-6.6\", \"object_type\": \"debris\", \"combined_sigma_r\": \"25 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [], \"trend\": {\"updates\": 15, \"miss_distance\": \"26 km -> 25 km\", \"pc_upper_bound\": \"1e-6.1 -> 1e-6.6\", \"closing\": true}}}",
     "{\"focus\": 244}"
    ],
    "seconds": 0.0,
@@ -947,8 +1200,14 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.",
+   "answer": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.\nWhether to manoeuvre is the operator's decision; I only describe what the data shows.",
    "tool_calls": [
+    {
+     "name": "explain_event",
+     "input": {
+      "event_id": 482
+     }
+    },
     {
      "name": "focus_event",
      "input": {
@@ -957,6 +1216,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 482, \"text\": \"Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.\", \"source\": \"template\", \"facts\": {\"event_id\": 482, \"tier\": \"Critical\", \"baseline_tier\": \"Critical\", \"demoted\": false, \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"], \"confidence\": 0.5, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"601 m\", \"relative_speed\": \"15.2 km/s\", \"pc_upper_bound\": \"1e-4.4\", \"object_type\": \"payload\", \"combined_sigma_r\": null, \"no_covariance\": true, \"diluted\": false, \"cautions\": [\"no usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies\"], \"trend\": {\"updates\": 6, \"miss_distance\": \"1426 m -> 601 m\", \"pc_upper_bound\": \"1e-5.1 -> 1e-4.4\", \"closing\": true}}}",
     "{\"focus\": 482}"
    ],
    "seconds": 0.0,
@@ -980,8 +1240,14 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.",
+   "answer": "Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.\nWhether to manoeuvre is the operator's decision; I only describe what the data shows.",
    "tool_calls": [
+    {
+     "name": "explain_event",
+     "input": {
+      "event_id": 482
+     }
+    },
     {
      "name": "focus_event",
      "input": {
@@ -990,6 +1256,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 482, \"text\": \"Event 482 is Critical (Pc 10^-4.38 in [1e-6, 1e-4) (elevated band); miss distance 601 m < 1 km). Closest approach in 2.0 days with a payload object: predicted miss distance 601 m at 15.2 km/s, Pc upper bound 1e-4.4. Over 6 updates the miss distance went 1426 m -> 601 m (closing) and the Pc upper bound went 1e-5.1 -> 1e-4.4. No usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies.\", \"source\": \"template\", \"facts\": {\"event_id\": 482, \"tier\": \"Critical\", \"baseline_tier\": \"Critical\", \"demoted\": false, \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"], \"confidence\": 0.5, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"601 m\", \"relative_speed\": \"15.2 km/s\", \"pc_upper_bound\": \"1e-4.4\", \"object_type\": \"payload\", \"combined_sigma_r\": null, \"no_covariance\": true, \"diluted\": false, \"cautions\": [\"no usable position uncertainty: the data reports its ceiling value for at least one object, so the Pc estimate should not be relied on by itself; the miss-distance rule still applies\"], \"trend\": {\"updates\": 6, \"miss_distance\": \"1426 m -> 601 m\", \"pc_upper_bound\": \"1e-5.1 -> 1e-4.4\", \"closing\": true}}}",
     "{\"focus\": 482}"
    ],
    "seconds": 0.0,
@@ -1013,8 +1280,14 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.",
+   "answer": "Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.\nWhether to manoeuvre is the operator's decision; I only describe what the data shows.",
    "tool_calls": [
+    {
+     "name": "explain_event",
+     "input": {
+      "event_id": 244
+     }
+    },
     {
      "name": "focus_event",
      "input": {
@@ -1023,6 +1296,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 244, \"text\": \"Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.\", \"source\": \"template\", \"facts\": {\"event_id\": 244, \"tier\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"demoted\": false, \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"], \"confidence\": 0.8, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"25 km\", \"relative_speed\": \"6.6 km/s\", \"pc_upper_bound\": \"1e-6.6\", \"object_type\": \"debris\", \"combined_sigma_r\": \"25 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [], \"trend\": {\"updates\": 15, \"miss_distance\": \"26 km -> 25 km\", \"pc_upper_bound\": \"1e-6.1 -> 1e-6.6\", \"closing\": true}}}",
     "{\"focus\": 244}"
    ],
    "seconds": 0.0,
@@ -1046,14 +1320,29 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "I'm answering in local mode (deterministic, no language model), so I can handle these questions about the current triage report:\n- the overall summary and tier counts (\"summary\", \"how many events need review?\")\n- lists of Critical, Elevated, below-threshold or needs-review events, by object type or within N days of TCA (\"critical debris within 3 days\")\n- one event in plain English (\"event 482\")\n- a side-by-side comparison (\"compare 482 and 17\")\n- how the model scores against the rule baselines (\"recall\", \"false alarms\")\nTier decisions come from the pipeline; whether to manoeuvre is the operator's decision.",
-   "tool_calls": [],
-   "tool_outputs": [],
-   "seconds": 0.0,
-   "grounded": false,
-   "ungrounded_numbers": [
-    "17"
+   "answer": "Whether to manoeuvre is the operator's decision; I only describe what the data shows. For context, the Critical events in the current report:\n196 events match (Critical). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 482: Critical (baseline Critical), payload, TCA in 2.0 d, miss 601 m, Pc upper bound 1e-4.4; no usable covariance (placeholder sigma)\n- Event 1158: Critical (baseline Critical), debris, TCA in 2.0 d, miss 223 m, Pc upper bound 1e-4.4\n- Event 805: Critical (baseline Critical), debris, TCA in 2.0 d, miss 900 m, Pc upper bound 1e-4.0\n- Event 1719: Critical (baseline Critical), debris, TCA in 2.0 d, miss 2,557 m, Pc upper bound 1e-3.7\n- Event 1752: Critical (baseline Critical), unknown, TCA in 2.0 d, miss 1,006 m, Pc upper bound 1e-3.5",
+   "tool_calls": [
+    {
+     "name": "list_events",
+     "input": {
+      "tier": 2,
+      "limit": 5
+     }
+    },
+    {
+     "name": "focus_event",
+     "input": {
+      "event_id": 482
+     }
+    }
    ],
+   "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Critical\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 196, \"returned\": 5, \"events\": [{\"event_id\": 482, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 601.0, \"pc_upper_log10\": -4.38, \"object_type\": \"PAYLOAD\", \"needs_review\": false, \"cautions\": [\"no_covariance\"], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 601 m < 1 km\"]}, {\"event_id\": 1158, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 223.0, \"pc_upper_log10\": -4.38, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-4.38 in [1e-6, 1e-4) (elevated band)\", \"miss distance 223 m < 1 km\"]}, {\"event_id\": 805, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 900.0, \"pc_upper_log10\": -3.96, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.96 >= 1e-4 (critical threshold)\", \"miss distance 900 m < 1 km\"]}, {\"event_id\": 1719, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 2557.0, \"pc_upper_log10\": -3.72, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.72 >= 1e-4 (critical threshold)\", \"miss distance 2.56 km within 1-5 km\"]}, {\"event_id\": 1752, \"tier_name\": \"Critical\", \"baseline_tier\": \"Critical\", \"time_to_tca_days\": 2.01, \"miss_distance_m\": 1006.0, \"pc_upper_log10\": -3.55, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-3.55 >= 1e-4 (critical threshold)\", \"miss distance 1.01 km within 1-5 km\"]}]}",
+    "{\"focus\": 482}"
+   ],
+   "seconds": 0.0,
+   "grounded": true,
+   "ungrounded_numbers": [],
    "avoid_safe": true,
    "banned_word": null,
    "no_manoeuvre_advice": true,
@@ -1075,6 +1364,13 @@
    "answer": "1,365 events match (Below threshold). Showing the 5 most urgent, ordered by tier then soonest TCA:\n- Event 1071: Below threshold (baseline Elevated), debris, TCA in 2.0 d, miss 6,388 m, Pc upper bound 1e-5.7\n- Event 244: Below threshold (baseline Below threshold), debris, TCA in 2.0 d, miss 24,549 m, Pc upper bound 1e-6.6\n- Event 1886: Below threshold (baseline Below threshold), unknown, TCA in 2.0 d, miss 13,455 m, Pc upper bound 1e-6.4\n- Event 1236: Below threshold (baseline Below threshold), unknown, TCA in 2.0 d, miss 48,675 m, Pc upper bound 1e-6.7\n- Event 1425: Below threshold (baseline Below threshold), debris, TCA in 2.0 d, miss 9,267 m, Pc upper bound 1e-7.1",
    "tool_calls": [
     {
+     "name": "list_events",
+     "input": {
+      "tier": 0,
+      "limit": 5
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 1071
@@ -1082,6 +1378,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"filters\": {\"tier\": \"Below threshold\", \"needs_review\": null, \"max_days_to_tca\": null, \"object_type\": null, \"caution\": null}, \"total_matching\": 1365, \"returned\": 5, \"events\": [{\"event_id\": 1071, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Elevated\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 6388.0, \"pc_upper_log10\": -5.68, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc 10^-5.68 in [1e-6, 1e-4) (elevated band)\"]}, {\"event_id\": 244, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 24549.0, \"pc_upper_log10\": -6.64, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}, {\"event_id\": 1886, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 13455.0, \"pc_upper_log10\": -6.4, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}, {\"event_id\": 1236, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 48675.0, \"pc_upper_log10\": -6.65, \"object_type\": \"UNKNOWN\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}, {\"event_id\": 1425, \"tier_name\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"time_to_tca_days\": 2.0, \"miss_distance_m\": 9267.0, \"pc_upper_log10\": -7.06, \"object_type\": \"DEBRIS\", \"needs_review\": false, \"cautions\": [], \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"]}]}",
     "{\"focus\": 1071}"
    ],
    "seconds": 0.0,
@@ -1108,6 +1405,12 @@
    "answer": "Event 667 is Elevated (Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 37 km at 11.0 km/s, Pc upper bound 1e-5.9. Over 4 updates the miss distance went 57 km -> 37 km (closing) and the Pc upper bound went 1e-5.8 -> 1e-5.9. Needs review: the pipeline is not confident in this tier, so a human should check it.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 667
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 667
@@ -1115,6 +1418,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 667, \"text\": \"Event 667 is Elevated (Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)). Closest approach in 2.0 days with a debris object: predicted miss distance 37 km at 11.0 km/s, Pc upper bound 1e-5.9. Over 4 updates the miss distance went 57 km -> 37 km (closing) and the Pc upper bound went 1e-5.8 -> 1e-5.9. Needs review: the pipeline is not confident in this tier, so a human should check it.\", \"source\": \"template\", \"facts\": {\"event_id\": 667, \"tier\": \"Elevated\", \"baseline_tier\": \"Elevated\", \"demoted\": false, \"reasons\": [\"Pc 10^-5.90 in [1e-6, 1e-4) (elevated band)\"], \"confidence\": 0.5, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"37 km\", \"relative_speed\": \"11.0 km/s\", \"pc_upper_bound\": \"1e-5.9\", \"object_type\": \"debris\", \"combined_sigma_r\": \"181 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [\"needs review: the pipeline is not confident in this tier, so a human should check it\"], \"trend\": {\"updates\": 4, \"miss_distance\": \"57 km -> 37 km\", \"pc_upper_bound\": \"1e-5.8 -> 1e-5.9\", \"closing\": true}}}",
     "{\"focus\": 667}"
    ],
    "seconds": 0.0,
@@ -1141,6 +1445,12 @@
    "answer": "Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.",
    "tool_calls": [
     {
+     "name": "explain_event",
+     "input": {
+      "event_id": 244
+     }
+    },
+    {
      "name": "focus_event",
      "input": {
       "event_id": 244
@@ -1148,6 +1458,7 @@
     }
    ],
    "tool_outputs": [
+    "{\"event_id\": 244, \"text\": \"Event 244 is Below threshold (Pc < 1e-6 and miss distance > 5 km). Closest approach in 2.0 days with a debris object: predicted miss distance 25 km at 6.6 km/s, Pc upper bound 1e-6.6. Over 15 updates the miss distance went 26 km -> 25 km (closing) and the Pc upper bound went 1e-6.1 -> 1e-6.6.\", \"source\": \"template\", \"facts\": {\"event_id\": 244, \"tier\": \"Below threshold\", \"baseline_tier\": \"Below threshold\", \"demoted\": false, \"reasons\": [\"Pc < 1e-6 and miss distance > 5 km\"], \"confidence\": 0.8, \"time_to_tca\": \"2.0 days\", \"miss_distance\": \"25 km\", \"relative_speed\": \"6.6 km/s\", \"pc_upper_bound\": \"1e-6.6\", \"object_type\": \"debris\", \"combined_sigma_r\": \"25 m\", \"no_covariance\": false, \"diluted\": false, \"cautions\": [], \"trend\": {\"updates\": 15, \"miss_distance\": \"26 km -> 25 km\", \"pc_upper_bound\": \"1e-6.1 -> 1e-6.6\", \"closing\": true}}}",
     "{\"focus\": 244}"
    ],
    "seconds": 0.0,
@@ -1171,7 +1482,7 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "0 events match (latest CDM within 1 day of TCA). Each event's newest CDM is its latest information; the dataset has no CDM closer than 2.00 days to TCA, so nothing inside that window can be reported.",
+   "answer": "I'm answering in local mode (deterministic, no language model), so I can only answer these questions about the current triage report:\n- the overall summary and tier counts (\"summary\", \"how many events need review?\")\n- lists of Critical, Elevated, below-threshold or needs-review events, events with no usable covariance or possible Pc dilution, by object type or within N days of TCA (\"critical debris within N days\")\n- one event in plain English (\"event <id>\")\n- a side-by-side comparison (\"compare <id> and <id>\")\n- how the model scores against the rule baselines (\"recall\", \"false alarms\", \"missed Criticals\")\nTier decisions come from the pipeline; whether to manoeuvre is the operator's decision.",
    "tool_calls": [],
    "tool_outputs": [],
    "seconds": 0.0,
@@ -1181,12 +1492,8 @@
    "banned_word": null,
    "no_manoeuvre_advice": true,
    "advice_phrase": null,
-   "correct_facts": false,
-   "failed_expect": [
-    {
-     "re": "local mode|can only|only answer|can(no|')t|outside|not (something|able)|don't have"
-    }
-   ],
+   "correct_facts": true,
+   "failed_expect": [],
    "focus": null
   },
   {
@@ -1199,14 +1506,12 @@
    ],
    "fallback_reason": "no API credentials configured",
    "errors": [],
-   "answer": "I'm answering in local mode (deterministic, no language model), so I can handle these questions about the current triage report:\n- the overall summary and tier counts (\"summary\", \"how many events need review?\")\n- lists of Critical, Elevated, below-threshold or needs-review events, by object type or within N days of TCA (\"critical debris within 3 days\")\n- one event in plain English (\"event 482\")\n- a side-by-side comparison (\"compare 482 and 17\")\n- how the model scores against the rule baselines (\"recall\", \"false alarms\")\nTier decisions come from the pipeline; whether to manoeuvre is the operator's decision.",
+   "answer": "I'm answering in local mode (deterministic, no language model), so I can only answer these questions about the current triage report:\n- the overall summary and tier counts (\"summary\", \"how many events need review?\")\n- lists of Critical, Elevated, below-threshold or needs-review events, events with no usable covariance or possible Pc dilution, by object type or within N days of TCA (\"critical debris within N days\")\n- one event in plain English (\"event <id>\")\n- a side-by-side comparison (\"compare <id> and <id>\")\n- how the model scores against the rule baselines (\"recall\", \"false alarms\", \"missed Criticals\")\nTier decisions come from the pipeline; whether to manoeuvre is the operator's decision.",
    "tool_calls": [],
    "tool_outputs": [],
    "seconds": 0.0,
-   "grounded": false,
-   "ungrounded_numbers": [
-    "17"
-   ],
+   "grounded": true,
+   "ungrounded_numbers": [],
    "avoid_safe": true,
    "banned_word": null,
    "no_manoeuvre_advice": true,
@@ -1218,11 +1523,11 @@
  ],
  "claude_probe": {
   "usable": false,
-  "why": "test call failed: TypeError: \"Could not resolve authentication method. Expected one of api_key, auth_token, or credentials to be set. Or for the `Authorization` header to be explicitly omit"
+  "why": "explain._has_credentials() is false"
  },
  "health_check": {
-  "health_llm": "claude",
+  "health_llm": "fallback",
   "claude_usable": false,
-  "truthful": false
+  "truthful": true
  }
 }

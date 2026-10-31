@@ -208,12 +208,16 @@ def list_events(
     needs_review: bool | None = None,
     max_days_to_tca: float | None = None,
     object_type: str | None = None,
+    caution: str | None = None,
     limit: int = 10,
 ) -> dict:
     """List events most urgent first (tier, then soonest TCA) as compact rows. Filters (all optional):
     tier 0=Below threshold, 1=Elevated, 2=Critical; needs_review true/false; max_days_to_tca keeps events whose latest
-    CDM is at most this many days before TCA; object_type e.g. DEBRIS, PAYLOAD, ROCKET BODY, UNKNOWN. `limit` rows
-    (default 10, max 50); `total_matching` is the full count."""
+    CDM is at most this many days before TCA; object_type e.g. DEBRIS, PAYLOAD, ROCKET BODY, UNKNOWN; caution keeps
+    events carrying that caution code: needs_review, no_covariance (placeholder sigma, Pc unreliable by itself) or
+    pc_diluted. `limit` rows (default 10, max 50); `total_matching` is the full count."""
+    if caution is not None and caution not in explain.CAUTIONS:
+        raise ValueError(f"unknown caution {caution!r}; use one of {list(explain.CAUTIONS)}")
     events = reports.load_report("events.json")["events"]
     if tier is not None:
         events = [e for e in events if e["tier"] == tier]
@@ -224,6 +228,8 @@ def list_events(
     if object_type:
         want = object_type.strip().upper()
         events = [e for e in events if e["latest"]["object_type"].upper() == want]
+    if caution is not None:
+        events = [e for e in events if caution in (e.get("cautions") or explain.cautions(e))]
     limit = max(1, min(int(limit), MAX_LIST))
     out = {
         "filters": {
@@ -231,6 +237,7 @@ def list_events(
             "needs_review": needs_review,
             "max_days_to_tca": max_days_to_tca,
             "object_type": object_type,
+            "caution": caution,
         },
         "total_matching": len(events),
         "returned": min(limit, len(events)),

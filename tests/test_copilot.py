@@ -265,3 +265,73 @@ def test_chat_uses_claude_when_it_answers(report, monkeypatch):
 def test_system_prompt_wording_rules():
     p = agent.SYSTEM_PROMPT.lower()
     assert "below threshold" in p and "focus_event" in p and "manoeuvre" in p
+    assert "operator decides" in p and "caution" in p and "demoted" in p
+
+
+# ---------- round-1 eval fixes ----------
+
+
+def test_fallback_demoted_count(report):
+    demoted = sum(e.get("baseline_tier", e["tier"]) > e["tier"] for e in report["events"])
+    text, focus = fallback.answer("How many events did the model demote compared with the conservative baseline rule?")
+    assert text.startswith(f"The model demoted {demoted:,} events") and focus is None
+
+
+def test_fallback_metrics_missed_and_false_elevated(report):
+    text, _ = fallback.answer("How many Critical CDMs did the model miss on the test set?")
+    assert text.startswith("Critical CDMs the model missed (true Critical, predicted lower): 0.")
+    text, _ = fallback.answer("How many below-threshold CDMs does the model raise to Elevated, vs the Pc rule?")
+    assert text.startswith("Below-threshold CDMs raised to Elevated: model 1 vs Pc-upper-bound rule 1")
+    text, _ = fallback.answer("What is the miss-distance rule's Critical recall?")
+    assert text.startswith("Miss-distance rule")
+
+
+def test_list_events_caution_filter(report):
+    for code in explain.CAUTIONS:
+        out = tools.list_events(caution=code, limit=50)
+        assert out["total_matching"] == sum(code in e["cautions"] for e in report["events"])
+        assert all(code in row["cautions"] for row in out["events"])
+    with pytest.raises(ValueError):
+        tools.list_events(caution="nope")
+    text, _ = fallback.answer("List the events with no usable covariance.")
+    n = sum("no_covariance" in e["cautions"] for e in report["events"])
+    assert text.startswith(f"{n:,} events match (no usable covariance)")
+
+
+def test_fallback_off_topic_gets_help_without_numbers(report):
+    for prompt in ("What's the weather in Singapore today?", "Write a short poem about the ISS."):
+        text, focus = fallback.answer(prompt)
+        assert text == fallback.HELP and focus is None
+    assert not any(ch.isdigit() for ch in fallback.HELP)
+    assert "within 1 day of TCA" in fallback.answer("any critical events today?")[0]
+
+
+def test_fallback_manoeuvre_hands_off_to_operator(report):
+    eid = report["events"][0]["event_id"]
+    for prompt in (f"Should we manoeuvre for event {eid}?", "Which events should we manoeuvre for?", f"skip #{eid}?"):
+        text, _ = fallback.answer(prompt)
+        assert "operator's decision" in text and "recommend" not in text.lower()
+
+
+def test_fallback_stream_shows_data_tools(report):
+    events = list(fallback.events("how many critical events?"))
+    types = [e["type"] for e in events]
+    call = next(e for e in events if e["type"] == "tool_call")
+    result = next(e for e in events if e["type"] == "tool_result")
+    assert call == {"type": "tool_call", "name": "list_events", "input": {"tier": 2, "limit": fallback.LIST_LIMIT}}
+    assert json.loads(result["output"])["total_matching"] == report["summary"]["by_tier"]["Critical"]
+    assert types.index("tool_result") < types.index("text")
+
+
+def test_has_credentials_needs_a_real_source(monkeypatch):
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(explain, "_sdk_discovers_credentials", lambda: False)  # no profile / federation config
+    assert not explain._has_credentials()
+    assert TestClient(server.app).get("/health").json()["llm"] == "fallback"
+    for key, want in (("", False), ("  ", False), ("sk-ant-test", False), ("sk-ant-...", False), ("sk-ant-x", True)):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", key)
+        assert explain._has_credentials() is want, key
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "token")
+    assert explain._has_credentials()
