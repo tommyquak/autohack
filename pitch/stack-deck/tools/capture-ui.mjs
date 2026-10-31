@@ -47,7 +47,10 @@ async function open(url, sel, ms = 2500) {
 }
 
 // Dashboard, "Final tier" (default since #67): the forecast final tier for the 2,167 test events.
+// Select the first escalated event (forecast above its current tier) so the card shows why the forecast lifts it.
 let p = await open(`${BASE}/`, "#queue .row", 3500);
+await p.evaluate(() => [...document.querySelectorAll("#queue .row")].find((r) => /now\s*Elev/i.test(r.textContent))?.click());
+await wait(3000);
 await shot(p, "dash-final");
 await rects_(p, { dfWorkload: "#workload", dfSwitch: "#horizon", dfStamp: "#stamp", dfQueue: "#queue", dfDetail: "#detail" });
 await p.close();

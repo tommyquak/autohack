@@ -39,6 +39,6 @@ push-in on a capture. No back, elastic or bounce eases.
 - Say "preserves every rule-defined Critical", never "never misses a collision". The 99% is a recall target, not
   a guarantee. No "only one" claims. Tier 0 is "below threshold", never "safe" (drawn grey, never green).
 - Forecast numbers only from docs/FORECAST.md / data/demo/forecast_metrics.json at the shipped operating point.
-  Say the accuracy is lower than persistence; the 95% is a recall target, not a guarantee.
+  Say the accuracy is lower than persistence; the 90% is a recall target, not a guarantee.
 - Claude only writes explanations; the copilot is not featured.
 - No AI attribution on slides.

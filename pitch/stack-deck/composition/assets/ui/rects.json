@@ -4,7 +4,7 @@
   "y": 0,
   "w": 0,
   "h": 0,
-  "text": "Forecast to need review842+40 vs rule floorForecast Critical477Critical recall95.0%final tier, 5-fold CV, 11,942 train events"
+  "text": "Forecast to need review824+22 vs rule floorForecast Critical255Critical recall91.1%final tier, 5-fold CV, 11,942 train events"
  },
  "dfSwitch": {
   "x": 0,
@@ -102,14 +102,14 @@
   "y": 201,
   "w": 980,
   "h": 165,
-  "text": "METHOD\tCRITICAL RECALL\tCRITICAL PRECISION\tCRITICAL F2\tESCALATIONS CAUGHT / FALSE\tACCURACY\tMACRO F1\nSecond Look forecast\nrule floor + model escalation\n\t95.0%\n± 2"
+  "text": "METHOD\tCRITICAL RECALL\tCRITICAL PRECISION\tCRITICAL F2\tESCALATIONS CAUGHT / FALSE\tACCURACY\tMACRO F1\nSecond Look forecast\nrule floor + model escalation\n\t91.1%\n± 5"
  },
  "evoModel": {
   "x": 324,
   "y": 221,
   "w": 980,
   "h": 48,
-  "text": "Second Look forecast\nrule floor + model escalation\n\t95.0%\n± 2.5\n\t56.5%\n± 1.3\n\t0.835\n± 0.010\n\t115 / 1,139\ncaught of 270\n\t86.2%\n± 1.1\n\t0.767\n± 0.011"
+  "text": "Second Look forecast\nrule floor + model escalation\n\t91.1%\n± 5.0\n\t75.7%\n± 3.6\n\t0.875\n± 0.037\n\t79 / 775\ncaught of 270\n\t88.8%\n± 1.2\n\t0.834\n± 0.017"
  },
  "evoCm": {
   "x": 324,
@@ -698,9 +698,9 @@
  "dpCounts": {
   "x": 24,
   "y": 91,
-  "w": 1092,
+  "w": 1082,
   "h": 26,
-  "text": "NOW 196 Critical · 606 Elevated\n→\nFORECAST FINAL 477 Critical · 365 Elevated · 301 escalations\nNEXT 24 H 0 none within 1 d of TCA at its latest update (soonest "
+  "text": "NOW 196 Critical · 606 Elevated\n→\nFORECAST FINAL 255 Critical · 569 Elevated · 81 escalations\nNEXT 24 H 0 none within 1 d of TCA at its latest update (soonest 2"
  },
  "dpChart": {
   "x": 24,

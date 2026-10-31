@@ -37,8 +37,8 @@ Cover (Horizon prediction replay flipbook: event 482 at CDM 1, 3, 6, then event 
 2 Why Second Look (the USP) · 3 The stack · 4 Risk pipeline · 5 The official task (decision point, final-tier
 forecast vs keep today's tier, 5-fold CV) · 6 Decision record · 7 It proves it live (replay trace + /api/audit +
 /api/triage) · 8 Honest evaluation · 9 Where it fails (event 1278) · 10 Safety gate (v2 didn't ship) ·
-11 In progress (forecast confusion matrix, the 0.90 vs 0.95 choice) · Close
+11 In progress (forecast confusion matrix, the shipped 0.90 target with 0.95 as a sensitivity, the distance-rule comparison) · Close
 
 Forecast numbers come from docs/FORECAST.md and data/demo/forecast_metrics.json at the shipped operating point
-(95% final-Critical recall target). dash-final is the dashboard's default Final tier view (#67); eval is the Evaluation tab's official panel
+(90% final-Critical recall target, PR #74). dash-final is the dashboard's default Final tier view (#67); eval is the Evaluation tab's official panel
 (#68); the per-message captures (dash-model, dash-baseline, compare-1278) are from deck v2 (the dashboard's Now view).
