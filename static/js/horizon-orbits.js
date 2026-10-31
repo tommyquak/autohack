@@ -6,7 +6,7 @@
 
 export const GM = 398600.4418; // km^3/s^2
 export const R_E = 6371; // km
-export const SPEED = 90; // one global time compression: simulated seconds per replay second
+export const SPEED = 120; // one global time compression: simulated seconds per replay second
 export const MISS_SCALE = 100; // miss distances drawn 100x so a 200 m pass is visible
 export const INCLINATION = (97.4 * Math.PI) / 180; // a typical sun-synchronous LEO plane; reaches +-82.6 deg latitude
 const RAAN = (35 * Math.PI) / 180; // illustrative
@@ -82,7 +82,8 @@ export function plan(events) {
     const a = Math.asin(Math.sin(lat) / Math.sin(INCLINATION));
     const base = idx === 0 ? -Infinity : u + gap;
     let best = Infinity;
-    for (let k = -1; k < 8; k++) {
+    const k0 = Number.isFinite(u) ? Math.floor(u / (2 * Math.PI)) - 1 : -1;
+    for (let k = k0; k < k0 + 4; k++) {
       for (const c of [a, Math.PI - a]) {
         const cand = c + 2 * Math.PI * k;
         if (cand >= (idx === 0 ? 0 : base) && cand < best) best = cand;
@@ -152,4 +153,29 @@ export function basis(e) {
   const byPc = pc != null && pc >= -6;
   const byMiss = miss != null && miss <= 5000;
   return byPc && byMiss ? "Pc band + distance" : byPc ? "Pc band" : "distance";
+}
+
+/**
+ * Background traffic: real below-threshold events on their own simulated circular orbits. Each plane passes through
+ * our orbit at the event's real latitude, at the crossing angle from its real relative speed, at the radius of its
+ * real target altitude band. Phase is illustrative (seeded by event id): they are not scheduled to meet us.
+ */
+export function background(events, P) {
+  const maxLat = Math.PI / 2 - Math.abs(Math.PI / 2 - INCLINATION);
+  return events.map((e) => {
+    const L = e.latest;
+    const lat = Math.max(-maxLat, Math.min(maxLat, ((L.geocentric_latitude_deg ?? 0) * Math.PI) / 180));
+    const a = Math.asin(Math.sin(lat) / Math.sin(INCLINATION));
+    const u = e.event_id % 2 ? a : Math.PI - a;
+    const X = P.own.dirAt(u);
+    const t = v3.add(v3.mul(P.own.e1, -Math.sin(u)), v3.mul(P.own.e2, Math.cos(u)));
+    const band = L.target_altitude_km;
+    const r = band ? 1 + (band[0] + band[1]) / 2 / R_E : P.r;
+    const theta = crossingAngle(L.relative_speed_ms ?? 14000, circularSpeed(r));
+    const side = e.event_id % 3 ? 1 : -1;
+    const vdir = v3.norm(v3.add(v3.mul(t, Math.cos(theta)), v3.mul(P.own.normal, side * Math.sin(theta))));
+    const o = orbit(r, X, vdir, 0);
+    o.phase0 = ((e.event_id * 2.399963) % (2 * Math.PI)); // golden-angle spread, illustrative
+    return { id: e.event_id, event: e, type: typeKey(L.object_type), orbit: o };
+  });
 }

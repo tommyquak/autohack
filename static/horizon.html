@@ -27,12 +27,24 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <header class="hz-top">
   <div class="brand"><span class="mark" aria-hidden="true"></span>SECOND LOOK <span class="sep">·</span> HORIZON</div>
+  <p id="counts" class="counts num" aria-live="off"></p>
   <div class="views" role="group" aria-label="Camera view">
     <button type="button" data-view="0" aria-pressed="true">Horizon</button>
     <button type="button" data-view="1" aria-pressed="false">Globe</button>
   </div>
 </header>
 
+<section class="panel next" aria-labelledby="next-h">
+  <h2 id="next-h">Next passes</h2>
+  <ol id="next"></ol>
+</section>
+<section class="panel log" aria-labelledby="log-h">
+  <h2 id="log-h">Flag log</h2>
+  <ol id="log"><li class="empty">No flags yet</li></ol>
+</section>
+
+<div id="own-label" class="own-label" aria-hidden="true"></div>
+<div id="tip" class="tip" hidden></div>
 <div id="callout" class="callout" hidden role="status" aria-live="polite"></div>
 <svg id="leader" class="leader" aria-hidden="true"><line x1="0" y1="0" x2="0" y2="0"/></svg>
 

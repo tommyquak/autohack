@@ -120,3 +120,41 @@ button, input { font: inherit; color: inherit; }
   .callout { animation: none; }
   #scene { transition: none; }
 }
+
+/* header counters */
+.counts { margin: 0; font-size: 11px; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+.counts b { font-weight: 500; color: var(--ink); }
+.counts b.c { color: var(--crit); }
+.counts b.e { color: var(--elev); }
+.counts .z { color: var(--ink); }
+
+/* small side panels: hairline-topped lists, no cards */
+.panel { position: fixed; left: var(--gutter); width: 236px; font: 11px/1.5 var(--mono); }
+.panel h2 { margin: 0 0 var(--s1); padding-bottom: var(--s1); border-bottom: 1px solid var(--hair2); font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.panel ol { margin: 0; padding: 0; list-style: none; }
+.panel li.empty { color: var(--muted); padding: 5px 0; }
+.panel button {
+  width: 100%; display: flex; align-items: center; gap: var(--s2); padding: 5px 0; background: none; border: 0;
+  border-bottom: 1px solid var(--hair); cursor: pointer; text-align: left; font: inherit; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.panel button:hover { color: var(--own); }
+.panel button .t { margin-left: auto; color: var(--muted); }
+.panel button:hover .t { color: inherit; }
+.tdot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+.next { top: 56px; }
+.log { bottom: 150px; }
+
+/* our satellite's label + hover tooltip */
+.own-label { position: fixed; left: 0; top: 0; font: 11px var(--mono); letter-spacing: .04em; color: var(--own); pointer-events: none; white-space: nowrap; will-change: transform; }
+.tip {
+  position: fixed; left: 0; top: 0; padding: 3px 8px; background: rgba(8, 10, 11, .9); border: 1px solid var(--hair2);
+  border-radius: 2px; font: 11px var(--mono); color: var(--ink); pointer-events: none; white-space: nowrap;
+}
+.tip .c { color: var(--crit); } .tip .e { color: var(--elev); } .tip .m { color: var(--muted); } .tip .o { color: var(--own); }
+
+@media (max-width: 900px) {
+  .counts { display: none; }
+  .panel.log { display: none; }
+  .panel { width: 200px; }
+}

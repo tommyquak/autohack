@@ -1,10 +1,11 @@
 // Horizon: one three.js scene, two camera poses (HORIZON chase shot near the limb, GLOBE pulled back), blended by a
 // single zoom value. Orbits come from horizon-orbits.js; this file draws them and runs the replay clock.
 // Data: GET /api/events (docs/CONTRACT.md §4). The motion is illustrative; the page says so in plain words.
-import { plan, visibility, basis, MISS_SCALE, SPEED } from "./horizon-orbits.js";
+import { plan, background, visibility, basis, MISS_SCALE, SPEED } from "./horizon-orbits.js";
 
 const THREE = window.THREE;
-const MAX_OBJECTS = 8;
+const MAX_OBJECTS = 16; // flagged (Critical + Elevated), soonest by time to TCA
+const BG_COUNT = 40; // real below-threshold events, drawn as dim specks
 const WARN_BEFORE_S = 3.5; // replay seconds before closest approach that a flag turns on
 const WARN_AFTER_S = 1.5;
 const COL = { bg: 0x080a0b, own: 0x5ea9ff, grey: 0x9ba5a1, crit: 0xff4a3d, elev: 0xe8a33c };
@@ -36,7 +37,10 @@ async function main() {
   }
   const chosen = pick(events);
   if (!chosen.length) return showError(new Error("no Critical or Elevated events"));
-  start(plan(chosen), icons);
+  const below = events.filter((e) => e.tier === 0 && e.latest && e.latest.time_to_tca_days != null)
+    .sort((a, b) => a.latest.time_to_tca_days - b.latest.time_to_tca_days).slice(0, BG_COUNT);
+  const P = plan(chosen);
+  start(P, icons, background(below, P));
 }
 
 /** The soonest Critical and Elevated events by time to TCA (the #demo event is kept in if it is flagged). */
@@ -61,7 +65,7 @@ function showError(err) {
   document.body.append(el);
 }
 
-function start(P, icons) {
+function start(P, icons, bg) {
   // ---------- renderer: colours are written as given (no colour management), matching the CSS tokens ----------
   THREE.ColorManagement.enabled = false;
   const canvas = $("#scene");
@@ -74,6 +78,9 @@ function start(P, icons) {
 
   const keyView = new THREE.Vector3(-0.45, 0.8, 0.4).normalize(); // key light, fixed relative to the camera
   const keyWorld = new THREE.Vector3();
+  // Sun: fixed in the world (illustrative direction), placed so the first Critical pass happens in daylight.
+  const sunRef = P.encounters.find((e) => e.id === Number(hash.get("demo"))) || P.encounters.find((e) => e.tier >= 2) || P.encounters[0];
+  const sunWorld = V(sunRef.orbit.e1).multiplyScalar(0.75).addScaledVector(V(P.own.normal), -0.65).normalize();
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const key = new THREE.DirectionalLight(0xffffff, 1.35);
   scene.add(key, key.target);
@@ -86,6 +93,8 @@ function start(P, icons) {
       uLine: { value: new THREE.Color(0x2b3c37) },
       uRim: { value: new THREE.Color(0x1f4f80) },
       uMinor: { value: 1 },
+      uSun: { value: sunWorld },
+      uHaze: { value: new THREE.Color(0x3b78b8) },
     },
     vertexShader: `
       varying vec3 vN; varying vec3 vObj; varying vec3 vV;
@@ -98,7 +107,9 @@ function start(P, icons) {
       }`,
     fragmentShader: `
       uniform vec3 uLight; uniform vec3 uBase; uniform vec3 uLine; uniform vec3 uRim; uniform float uMinor;
+      uniform vec3 uSun; uniform vec3 uHaze;
       varying vec3 vN; varying vec3 vObj; varying vec3 vV;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       void main() {
         vec3 N = normalize(vN); vec3 Vd = normalize(vV);
         float lat = degrees(asin(clamp(normalize(vObj).y, -1.0, 1.0)));
@@ -108,8 +119,15 @@ function start(P, icons) {
         float fade = 1.0 - smoothstep(0.6, 3.5, w);
         float lines = (0.45 * uMinor * (1.0 - smoothstep(0.0, w * 1.1, d10)) + 0.8 * (1.0 - smoothstep(0.0, w * 1.4, d30))) * fade;
         float diff = max(dot(N, uLight), 0.0);
-        float fres = pow(1.0 - max(dot(N, Vd), 0.0), 5.0);
-        vec3 col = uBase * (0.6 + 0.9 * diff) + uLine * lines * (0.45 + 0.55 * diff) + uRim * fres * (0.15 + 0.55 * diff);
+        float sunDot = dot(normalize(vObj), uSun);
+        float day = smoothstep(-0.12, 0.3, sunDot); // soft terminator; the night side stays readable, never black
+        float edge = 1.0 - max(dot(N, Vd), 0.0);
+        float fres = pow(edge, 5.0);
+        vec3 col = uBase * (0.55 + 0.35 * diff + 0.75 * day)
+                 + uLine * lines * (0.4 + 0.3 * diff + 0.3 * day)
+                 + uRim * fres * (0.12 + 0.6 * day)
+                 + uHaze * pow(edge, 2.4) * day * 0.16; // faint scattering toward the limb, day side only
+        col += (hash(gl_FragCoord.xy) - 0.5) / 255.0; // dither against banding
         gl_FragColor = vec4(col, 1.0);
       }`,
   });
@@ -127,8 +145,10 @@ function start(P, icons) {
         vec3 tp = uCam + d * tca;
         float h = length(tp) - 1.0;
         float g = h > 0.0 ? exp(-h / 0.008) : 0.0;
-        float lit = 0.3 + 0.7 * max(dot(normalize(tp), uSun), 0.0);
-        gl_FragColor = vec4(uColor * g * lit * 0.8, 1.0);
+        float lit = 0.22 + 0.78 * smoothstep(-0.2, 0.4, dot(normalize(tp), uSun));
+        vec3 c = uColor * g * lit * 0.8;
+        c += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0 * g;
+        gl_FragColor = vec4(c, 1.0);
       }`,
     side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
@@ -160,8 +180,8 @@ function start(P, icons) {
   const ownRing = new THREE.Line(ringGeom(P.own), new THREE.LineBasicMaterial({ color: COL.own, transparent: true, opacity: 0.3, depthWrite: false }));
   scene.add(ownRing);
 
-  const TRAIL_N = 28, TRAIL_STEP = (0.55 * Math.PI) / 180;
-  const makeTrail = (hex) => {
+  const TRAIL_STEP = (0.55 * Math.PI) / 180;
+  const makeTrail = (hex, TRAIL_N = 28) => {
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL_N * 3), 3));
     const c = new Float32Array(TRAIL_N * 3), base = new THREE.Color(hex);
@@ -169,12 +189,13 @@ function start(P, icons) {
     g.setAttribute("color", new THREE.BufferAttribute(c, 3));
     const line = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     line.frustumCulled = false;
+    line.userData.n = TRAIL_N;
     scene.add(line);
     return line;
   };
   const updateTrail = (line, o, tau, alpha) => {
     const a = line.geometry.attributes.position, ph = o.phase(tau);
-    for (let i = 0; i < TRAIL_N; i++) {
+    for (let i = 0; i < line.userData.n; i++) {
       const d = o.dirAt(ph - i * TRAIL_STEP);
       a.setXYZ(i, d[0] * o.r, d[1] * o.r, d[2] * o.r);
     }
@@ -208,7 +229,50 @@ function start(P, icons) {
   const own = new THREE.Mesh(geomFor("own_satellite"), modelMat(COL.own));
   own.matrixAutoUpdate = false;
   scene.add(own);
-  const ownTrail = makeTrail(COL.own);
+  const ownTrail = makeTrail(COL.own, 80); // ours is longer
+
+  // Background traffic: real below-threshold events as dim specks with short trails (one draw call each layer).
+  const BG_TRAIL = 10;
+  const bgPos = new Float32Array(bg.length * 3);
+  const bgGeom = new THREE.BufferGeometry();
+  bgGeom.setAttribute("position", new THREE.BufferAttribute(bgPos, 3));
+  const bgMat = new THREE.PointsMaterial({ color: 0x8a9490, size: 2.6, sizeAttenuation: false, transparent: true, opacity: 0.7, depthWrite: false });
+  const bgPoints = new THREE.Points(bgGeom, bgMat);
+  bgPoints.frustumCulled = false;
+  scene.add(bgPoints);
+  const bgTrailPos = new Float32Array(bg.length * (BG_TRAIL - 1) * 2 * 3);
+  const bgTrailCol = new Float32Array(bgTrailPos.length);
+  for (let j = 0; j < bg.length; j++) {
+    for (let i = 0; i < BG_TRAIL - 1; i++) {
+      const f0 = (1 - i / (BG_TRAIL - 1)) ** 1.5 * 0.32, f1 = (1 - (i + 1) / (BG_TRAIL - 1)) ** 1.5 * 0.32;
+      const o = (j * (BG_TRAIL - 1) + i) * 6;
+      bgTrailCol.set([f0 * 0.54, f0 * 0.58, f0 * 0.56, f1 * 0.54, f1 * 0.58, f1 * 0.56], o);
+    }
+  }
+  const bgTrailGeom = new THREE.BufferGeometry();
+  bgTrailGeom.setAttribute("position", new THREE.BufferAttribute(bgTrailPos, 3));
+  bgTrailGeom.setAttribute("color", new THREE.BufferAttribute(bgTrailCol, 3));
+  const bgTrails = new THREE.LineSegments(bgTrailGeom, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  bgTrails.frustumCulled = false;
+  scene.add(bgTrails);
+  const bgWorld = bg.map(() => new THREE.Vector3());
+  function updateBackground(tau) {
+    const step = TRAIL_STEP * 1.4;
+    bg.forEach((b, j) => {
+      const o = b.orbit, ph = o.phase(tau);
+      const d0 = o.dirAt(ph);
+      bgPos.set([d0[0] * o.r, d0[1] * o.r, d0[2] * o.r], j * 3);
+      bgWorld[j].set(d0[0] * o.r, d0[1] * o.r, d0[2] * o.r);
+      let prev = d0;
+      for (let i = 0; i < BG_TRAIL - 1; i++) {
+        const d1 = o.dirAt(ph - (i + 1) * step);
+        bgTrailPos.set([prev[0] * o.r, prev[1] * o.r, prev[2] * o.r, d1[0] * o.r, d1[1] * o.r, d1[2] * o.r], (j * (BG_TRAIL - 1) + i) * 6);
+        prev = d1;
+      }
+    });
+    bgGeom.attributes.position.needsUpdate = true;
+    bgTrailGeom.attributes.position.needsUpdate = true;
+  }
 
   // Rings: one canvas-drawn circle, screen-sized sprites in the tier colour.
   const ringTex = (() => {
@@ -236,7 +300,7 @@ function start(P, icons) {
   slider.max = P.endS.toFixed(2);
   $("#ticks").innerHTML = P.encounters.map((e) =>
     `<span style="left:${((e.tcaS / P.endS) * 100).toFixed(2)}%;--c:${e.tier >= 2 ? "var(--crit)" : "var(--elev)"}" title="EVT ${e.id}"></span>`).join("");
-  $("#scale").innerHTML = `Our orbit ${Math.round(P.altKm)} km (median target altitude)<br>×${SPEED} speed · miss distance ×${MISS_SCALE} · models not to scale`;
+  $("#scale").innerHTML = `Our orbit ${Math.round(P.altKm)} km (median target altitude)<br>×${SPEED} speed · miss ×${MISS_SCALE} · models not to scale`;
 
   let s = 0, playing = !reduced;
   const demo = P.encounters.find((e) => e.id === Number(hash.get("demo")));
@@ -286,6 +350,86 @@ function start(P, icons) {
   const up = (e) => { pointers.delete(e.pointerId); pinch0 = 0; if (!pointers.size) canvas.classList.remove("dragging"); };
   canvas.addEventListener("pointerup", up);
   canvas.addEventListener("pointercancel", up);
+
+  // ---------- jumping: Next passes and the flag log both move the replay (and camera) to a flag ----------
+  function jumpTo(enc, pause) {
+    s = Math.max(0, enc.tcaS - 1.2);
+    zoomTarget = 0; yaw = 0; pitch = 0; syncViewBtns();
+    if (pause) setPlaying(false);
+  }
+  const byId = new Map(P.encounters.map((e) => [e.id, e]));
+  const tierVar = (t) => (t >= 2 ? "var(--crit)" : "var(--elev)");
+  const nextEl = $("#next"), logEl = $("#log");
+  let nextKey = "", logKey = "";
+  const row = (e, right) =>
+    `<li><button type="button" data-id="${e.id}"><span class="tdot" style="--c:${tierVar(e.tier)}" aria-hidden="true"></span>EVT ${e.id}<span class="t">${right}</span></button></li>`;
+  nextEl.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) jumpTo(byId.get(Number(b.dataset.id)), false); });
+  logEl.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) jumpTo(byId.get(Number(b.dataset.id)), true); });
+  const mins = (e) => Math.max(0, Math.round(((e.tcaS - s) * SPEED) / 60));
+  function updatePanels() {
+    const upcoming = P.encounters.filter((e) => e.tcaS > s).slice(0, 3);
+    const nk = upcoming.map((e) => `${e.id}:${mins(e)}`).join();
+    if (nk !== nextKey) {
+      nextKey = nk;
+      nextEl.innerHTML = upcoming.length
+        ? upcoming.map((e) => row(e, `${TIER_NAME[e.tier]} · in ${mins(e)} min`)).join("")
+        : `<li class="empty">No more passes in this replay</li>`;
+    }
+    const flagged = P.encounters.filter((e) => s >= e.tcaS - WARN_BEFORE_S).slice(-3).reverse();
+    const lk = flagged.map((e) => e.id).join();
+    if (lk !== logKey) {
+      logKey = lk;
+      logEl.innerHTML = flagged.length
+        ? flagged.map((e) => row(e, `${TIER_NAME[e.tier]} · ${fmtDist(e.event.latest.miss_distance_m)}`)).join("")
+        : `<li class="empty">No flags yet</li>`;
+    }
+  }
+
+  // ---------- hover tooltip + our satellite's label ----------
+  const tip = $("#tip"), ownLabel = $("#own-label"), countsEl = $("#counts");
+  ownLabel.textContent = `Our satellite · ${Math.round(P.altKm)} km`;
+  let mouse = null;
+  canvas.addEventListener("pointermove", (e) => { mouse = pointers.size ? null : [e.clientX, e.clientY]; });
+  canvas.addEventListener("pointerleave", () => { mouse = null; });
+  const isOccluded = (pos) => {
+    const d = tmp.b.copy(pos).sub(camera.position);
+    const k = clamp(-camera.position.dot(d) / d.lengthSq(), 0, 1);
+    return tmp.c.copy(camera.position).addScaledVector(d, k).length() < 1;
+  };
+  const toScreen = (pos) => {
+    const p = tmp.a.copy(pos).project(camera);
+    if (p.z >= 1 || Math.abs(p.x) > 1.05 || Math.abs(p.y) > 1.05 || isOccluded(pos)) return null;
+    return [(p.x * 0.5 + 0.5) * innerWidth, (-p.y * 0.5 + 0.5) * innerHeight];
+  };
+  function updateHover(ownPos) {
+    if (!mouse) { tip.hidden = true; canvas.style.cursor = ""; return; }
+    let best = null, bd = 14 * 14;
+    const consider = (pos, html) => {
+      const sp = toScreen(pos);
+      if (!sp) return;
+      const d = (sp[0] - mouse[0]) ** 2 + (sp[1] - mouse[1]) ** 2;
+      if (d < bd) { bd = d; best = html; }
+    };
+    bg.forEach((b, j) => consider(bgWorld[j], `EVT ${b.id} <span class="m">· ${esc(typeLabel(b.type))} · below threshold</span>`));
+    for (const o of objs) if (o.mesh.visible) consider(o.pos, `EVT ${o.enc.id} <span class="m">· ${esc(typeLabel(o.enc.type))} ·</span> <span class="${o.enc.tier >= 2 ? "c" : "e"}">${TIER_NAME[o.enc.tier]}</span>`);
+    consider(ownPos, `<span class="o">Our satellite</span> <span class="m">· ${Math.round(P.altKm)} km</span>`);
+    tip.hidden = !best;
+    canvas.style.cursor = best ? "pointer" : "";
+    if (best) {
+      tip.innerHTML = best;
+      const x = Math.min(mouse[0] + 14, innerWidth - tip.offsetWidth - 8), y = Math.max(8, mouse[1] - 30);
+      tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+    }
+  }
+  let countsKey = "";
+  function updateCounts(tau) {
+    let c = 0, e = 0;
+    for (const o of objs) if (visibility(o.enc, tau) > 0.5) o.enc.tier >= 2 ? c++ : e++;
+    const k = `${c}/${e}`;
+    if (k === countsKey) return;
+    countsKey = k;
+    countsEl.innerHTML = `Passing now: <b class="${c ? "c" : ""}">${c} Critical</b> · <b class="${e ? "e" : ""}">${e} Elevated</b> · <b class="z">${bg.length}</b> below threshold`;
+  }
 
   const tmp = { a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), q: new THREE.Quaternion(), m: new THREE.Matrix4() };
   function placeCamera(tau) {
@@ -407,11 +551,15 @@ function start(P, icons) {
     keyWorld.copy(keyView).transformDirection(camera.matrixWorld);
     key.position.copy(keyWorld).multiplyScalar(10);
     atmoMat.uniforms.uCam.value.copy(camera.position);
-    atmoMat.uniforms.uSun.value.copy(keyWorld);
+    atmoMat.uniforms.uSun.value.copy(sunWorld);
 
     const size = lerp(0.0045, 0.075, z);
     earthMat.uniforms.uMinor.value = 1 - z;
-    placeModel(own, V(P.own.pos(tau)), V(P.own.vel(tau)), size * 1.25, "own_satellite", 0);
+    const ownPos = V(P.own.pos(tau));
+    placeModel(own, ownPos, V(P.own.vel(tau)), size * 1.25, "own_satellite", 0);
+    updateBackground(tau);
+    bgMat.opacity = lerp(0.75, 0.6, z);
+    bgTrails.material.opacity = lerp(1, 0.6, z);
     updateTrail(ownTrail, P.own, tau, lerp(0.9, 0.5, z));
     ownRing.material.opacity = lerp(0.22, 0.4, z);
 
@@ -457,6 +605,20 @@ function start(P, icons) {
 
     renderer.render(scene, camera);
     positionCallout();
+    updatePanels();
+    updateCounts(tau);
+    updateHover(ownPos);
+    const sp = toScreen(ownPos);
+    let showLabel = !!sp;
+    if (sp) {
+      const lw = ownLabel.offsetWidth, lx = sp[0] - lw / 2, ly = sp[1] + 18;
+      if (active && !callout.hidden) { // never let the label slide under the callout
+        const r = callout.getBoundingClientRect();
+        if (lx < r.right + 8 && lx + lw > r.left - 8 && ly < r.bottom + 8 && ly + 16 > r.top - 8) showLabel = false;
+      }
+      ownLabel.style.transform = `translate(${Math.round(lx)}px, ${Math.round(ly)}px)`;
+    }
+    ownLabel.style.display = showLabel ? "" : "none";
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
