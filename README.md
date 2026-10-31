@@ -11,6 +11,18 @@ model may only remove over-warnings.
 
 **CDMs arrive → rules tier every message → model removes only the over-warnings → analyst reviews a ranked queue with reasons → analyst decides**
 
+## See it
+
+![Second Look horizon view: prediction replay](docs/media/horizon.gif)
+
+Each dot is one CDM's predicted miss point at closest approach, replayed in the order received; shells turn red as the prediction crosses 1 km. Orbits: real size, shape and tilt from the CDM; orientation around Earth isn't in the data. Manoeuvre illustrative.
+
+| <img src="docs/media/thumb-horizon.png" width="400" alt="Horizon view"><br>**Horizon** · `/static/horizon.html`<br>Five cases replayed CDM by CDM in the close-up, each ending on its decision and backend trace; Globe shows our satellites' orbits. | <img src="docs/media/thumb-decision.png" width="400" alt="Decision point view"><br>**Decision point** · `/static/decision.html`<br>Real miss-distance tracks up to 2 days before closest approach, then each event's forecast final tier. |
+|---|---|
+| <img src="docs/media/thumb-review.png" width="400" alt="Review page"><br>**Review page** · `/static/review.html`<br>Analyst queues and each event's decision record (rule, eligibility, score, decision) with its approach history. | <img src="docs/media/thumb-dashboard.png" width="400" alt="Dashboard"><br>**Dashboard** · `/`<br>Every event on the globe by tier, with evaluation, 3D encounter and compare tabs. |
+
+Run it locally: `uv sync && uv run uvicorn server:app`, then open http://127.0.0.1:8000/static/horizon.html. It serves the frozen `data/demo` reports and needs no API key ([Run it](#run-it)). MP4 version: [docs/media/horizon.mp4](docs/media/horizon.mp4).
+
 ## The problem
 
 **User:** a conjunction assessment analyst on a satellite operator's flight dynamics team.
