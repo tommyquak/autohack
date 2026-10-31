@@ -11,6 +11,12 @@ model may only remove over-warnings.
 
 **CDMs arrive → rules tier every message → model removes only the over-warnings → analyst reviews a ranked queue with reasons → analyst decides**
 
+> **Final predictions (official task) are in [`predictions/test_final_tier.csv`](predictions/test_final_tier.csv)**:
+> one row per test event (2,167), with the predicted **final tier** at closest approach, made from messages 2+ days out.
+> It also holds the three tier scores, the rule floor, the decision (floor kept / escalated) and the top reason.
+> The same predictions, with units, latitude and every message, are in [`predictions/test_final_tier_predictions.xlsx`](predictions/test_final_tier_predictions.xlsx).
+> [`predictions/test_predictions.csv`](predictions/test_predictions.csv) is the per-message tier (one row per test CDM), not the final tier.
+
 ## See it
 
 ![Second Look horizon view: prediction replay](docs/media/horizon.gif)
@@ -42,7 +48,7 @@ threshold gets a human look. **Cost, measured on our test set (24,484 CDMs):** t
   Each certificate says which rules fired, whether the model was allowed to act (and why not), its score against the stored threshold, and four invariants.
   On the frozen test set: PASS on 11/11 checks over 2,167 events and 24,484 CDM decisions; all 288 demotions have score < threshold.
   A tampered `events.json` (a Critical shown lower, a no-covariance event demoted) turns it FAIL and names the check ([docs/CONTRACT.md §6](docs/CONTRACT.md)).
-- **Serves** an API and dashboard views (`/api/*`, `static/`), plus one prediction per test CDM in `predictions/test_predictions.csv`.
+- **Serves** an API and dashboard views (`/api/*`, `static/`), plus one prediction per test CDM in `predictions/test_predictions.csv` and the final-tier forecast per test event in `predictions/test_final_tier.csv`.
 
 ## How it works
 
@@ -157,7 +163,8 @@ Full pipeline (organisers' CSVs in `data/raw/`, see [data/README.md](data/README
 uv run python -m triage.train          # -> reports/model.joblib
 uv run python -m triage.evaluate       # -> reports/metrics.json
 uv run python -m triage.build_events   # -> reports/events.json
-uv run python -m triage.predict        # -> predictions/test_predictions.csv
+uv run python -m triage.predict        # -> predictions/test_predictions.csv (per message)
+uv run python -m triage.forecast       # -> predictions/test_final_tier.csv (final tier per event; needs data/raw/labels/challenge1_event_labels.xlsx)
 uv run pytest -q                       # runs on data/sample, no key needed
 ```
 
