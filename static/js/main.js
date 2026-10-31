@@ -1,5 +1,6 @@
 // Dashboard entry point. Every number on screen comes from /api/* (docs/CONTRACT.md); nothing is typed in by hand.
 import { api } from "./api.js";
+import { initAsk } from "./ask.js";
 import { initClock } from "./clock.js";
 import { initDetail } from "./detail.js";
 import { initEncounter } from "./encounter.js";
@@ -36,6 +37,7 @@ async function main() {
   initGlobe();
   initEncounter();
   initEval();
+  initAsk();
   // Open on the most urgent event so the right rail isn't empty.
   if (list.events.length) set({ selectedId: list.events[0].event_id });
 }
