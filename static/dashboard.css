@@ -110,7 +110,7 @@ select { background: var(--bg); border: 1px solid var(--hair2); border-radius: 4
 .empty-q { padding: 18px 4px; color: var(--muted); font: 12px var(--mono); }
 
 /* stage */
-.stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0 var(--s5) var(--s3); }
+.stage { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0 var(--s5) var(--s3); }
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--hair); margin: 0 calc(-1 * var(--s5)) var(--s4); padding: 0 var(--s5); }
 .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 12px 14px 10px; cursor: pointer; color: var(--muted); }
 .tabs button:hover { color: var(--ink); }
@@ -271,10 +271,21 @@ select { background: var(--bg); border: 1px solid var(--hair2); border-radius: 4
 #panel-eval #funnel-wrap { flex: none; height: 400px; min-height: 0; }
 #panel-eval .ev { flex: none; border-top: 1px solid var(--hair); margin-top: var(--s4); padding-top: var(--s5); }
 
-/* ---- Globe tab: the left and right panels collapse to give the globe the room ---- */
+/* ---- Both side panels collapse on every tab (handles: rails.js) ---- */
 .layout { transition: grid-template-columns .3s cubic-bezier(.16, 1, .3, 1); }
-.layout[data-view="globe"].hide-left { grid-template-columns: 0 minmax(0, 1fr) 340px; }
-.layout[data-view="globe"].hide-right { grid-template-columns: 300px minmax(0, 1fr) 0; }
-.layout[data-view="globe"].hide-left.hide-right { grid-template-columns: 0 minmax(0, 1fr) 0; }
-.layout[data-view="globe"].hide-left .rail.left,
-.layout[data-view="globe"].hide-right .rail.right { visibility: hidden; overflow: hidden; padding-left: 0; padding-right: 0; border-width: 0; }
+.layout.hide-left { grid-template-columns: 0 minmax(0, 1fr) 340px; }
+.layout.hide-right { grid-template-columns: 300px minmax(0, 1fr) 0; }
+.layout.hide-left.hide-right { grid-template-columns: 0 minmax(0, 1fr) 0; }
+.layout.hide-left .rail.left,
+.layout.hide-right .rail.right { visibility: hidden; overflow: hidden; padding-left: 0; padding-right: 0; border-width: 0; }
+
+/* collapse handles: thin tabs on the stage's left and right edges, on every tab */
+.rail-toggle { position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 56px; display: grid; place-items: center; padding: 0; cursor: pointer;
+  background: rgba(8, 14, 24, .7); border: 1px solid var(--hair2); color: var(--muted); z-index: 3; }
+.rail-toggle:hover { color: var(--ink); border-color: var(--muted); }
+.rail-toggle.left { left: 0; border-radius: 0 8px 8px 0; border-left: 0; }
+.rail-toggle.right { right: 0; border-radius: 8px 0 0 8px; border-right: 0; }
+.rail-toggle.right svg { transform: scaleX(-1); }
+.layout.hide-left .rail-toggle.left svg { transform: scaleX(-1); }
+.layout.hide-right .rail-toggle.right svg { transform: none; }
+@media (max-width: 1180px) { .rail-toggle { display: none; } }
