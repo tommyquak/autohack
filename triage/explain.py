@@ -17,14 +17,14 @@ import re
 
 import anthropic
 
+from triage.features import SIGMA_SENTINEL_M
 from triage.tiers import RISK_CRITICAL
 
 LLM_TIMEOUT_S = 20.0
 # Pc peaks when the combined position sigma is about miss/sqrt(2); with a larger sigma, Pc falls
 # because of uncertainty, not because the objects are further apart ("probability dilution").
 DILUTION_RATIO = 1 / math.sqrt(2)
-# The dataset caps missing/unusable sigmas at ~10 Earth radii (63,781,361-63,781,363 m, ~5% of test events).
-SIGMA_CAP_M = 6.3e7
+CAUTIONS = ("needs_review", "no_covariance", "pc_diluted")
 BANNED = re.compile(r"\bsafe(ly|ty)?\b", re.IGNORECASE)  # tier 0 is "below threshold", never "safe"
 
 SYSTEM_PROMPT = """You write short explanations of satellite conjunction (close-approach) events for
@@ -39,26 +39,42 @@ is "below threshold". Do not recommend or rule out a manoeuvre; that is the oper
 No headings, lists or markdown."""
 
 
+def cautions(event: dict) -> list[str]:
+    """Caution codes for one event (events.json `cautions`): needs_review, no_covariance, pc_diluted."""
+    latest = event["latest"]
+    sigmas = latest["sigma_r_m"]["chaser"], latest["sigma_r_m"]["target"]
+    out = ["needs_review"] if event["needs_review"] else []
+    if max(sigmas) > SIGMA_SENTINEL_M:  # dataset placeholder: no usable covariance
+        out.append("no_covariance")
+    elif (
+        math.hypot(*sigmas) > DILUTION_RATIO * latest["miss_distance_m"]
+        and latest["max_risk_estimate_log10"] < RISK_CRITICAL
+    ):
+        out.append("pc_diluted")
+    return out
+
+
 def facts(event: dict) -> dict:
     """The only information the explanation may use: fields already present in events.json."""
     latest = event["latest"]
     miss = latest["miss_distance_m"]
     pc_log = latest["max_risk_estimate_log10"]
-    sigmas = latest["sigma_r_m"]["chaser"], latest["sigma_r_m"]["target"]
-    sigma = math.hypot(*sigmas)
-    no_covariance = max(sigmas) >= SIGMA_CAP_M
+    sigma = math.hypot(latest["sigma_r_m"]["chaser"], latest["sigma_r_m"]["target"])
+    codes = event.get("cautions") or cautions(event)
+    no_covariance, diluted = "no_covariance" in codes, "pc_diluted" in codes
 
-    cautions = []
-    if event["needs_review"]:
-        cautions.append("needs review: the estimate sits close to a threshold, so it is shown at the higher tier")
-    diluted = not no_covariance and sigma > DILUTION_RATIO * miss and pc_log < RISK_CRITICAL
+    cautions_text = []
+    if "needs_review" in codes:
+        cautions_text.append(
+            "needs review: the pipeline is not confident here, so it keeps the higher tier for a human"
+        )
     if no_covariance:
-        cautions.append(
+        cautions_text.append(
             "no usable position uncertainty: the data reports its ceiling value for at least one object, "
             "so the Pc estimate should not be relied on by itself; the miss-distance rule still applies"
         )
     elif diluted:
-        cautions.append(
+        cautions_text.append(
             f"probability dilution: combined radial position uncertainty ({_dist(sigma)}) exceeds the "
             f"miss distance ({_dist(miss)}), so a low Pc may reflect poor tracking rather than real separation"
         )
@@ -76,7 +92,7 @@ def facts(event: dict) -> dict:
         "combined_sigma_r": None if no_covariance else _dist(sigma),
         "no_covariance": no_covariance,
         "diluted": diluted,
-        "cautions": cautions,
+        "cautions": cautions_text,
     }
     history = event.get("history") or []
     if len(history) >= 2:
