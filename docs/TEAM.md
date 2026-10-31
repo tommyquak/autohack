@@ -10,9 +10,11 @@ builder couldn't see by eye. Same here. Contracts: `docs/CONTRACT.md`.
 | David - API + agent, scoring model (+ PM here) | **2. Model & API (logic) + PM** | `triage/features.py`, `triage/train.py`, `triage/model.py`, `server.py` `/api/*` | publishes `predict()` + `/api/*` |
 | Sarah - Chalk service + Agent Evals | **3. Evaluation (independent)** | `triage/evaluate.py`, `tests/`, baselines, failure cases, "Honest evaluation" slide | publishes `metrics.json`; can veto a model change that lowers Critical recall |
 | Evan - agent flow with local fallback, globe events, saved compare | **4. Integration & trust** | `/api/explain` (Claude + template fallback), dashboard interactions (select event → 3D view, compare), dilution/needs-review UX | consumes `predict()` + `/api/*` |
+| - | **5. Algorithms forecast** | `docs/algorithm/`, `triage/forecast_*.py` (planned): per-event forecast of the tier at TCA, on top of the nowcast | consumes `triage/tiers.py`, `triage/features.py`; will publish a per-event `forecast` in `events.json` once the contract PR is agreed (proposal: `docs/algorithm/algorithm.md` §4.1) |
 
-**Assignments:** 1 Visualisation & UI = **Reagan** · 2 Model & API (logic) + PM = **Tommy** · 3 Evaluation = **Kalent** · 4 Integration & trust = **Franky**
+**Assignments:** 1 Visualisation & UI = **Reagan** · 2 Model & API (logic) + PM = **Tommy** · 3 Evaluation = **Kalent** · 4 Integration & trust = **Franky** · 5 Algorithms forecast = **Kalent**
 (Swap freely by strengths - just keep the evaluator separate from the model owner.)
+Kalent holds both 3 and 5, so on forecast PRs a teammate other than Kalent runs `python -m triage.evaluate` and posts the table.
 
 ## Rules (what made lvl 500 parallel)
 - Work only in your files; change a contract only in a PR that updates all consumers + tests.

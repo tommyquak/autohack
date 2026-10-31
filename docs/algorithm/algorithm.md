@@ -1,7 +1,7 @@
 # Algorithm design: collision risk forecaster
 
 **Challenge #1: AI-driven satellite collision avoidance**
-Owner: Algorithms (Chai); this role still needs adding to `docs/TEAM.md` · Version 1.1 · 31 Oct 2026
+Owner: Algorithms forecast (Kalent), role 5 in `docs/TEAM.md` · Version 1.1 · 31 Oct 2026
 Changes from 1.0 and the evidence behind them are in [`VERIFICATION.md`](VERIFICATION.md).
 
 This document extends the team's algorithm write-up, [`docs/ALGO.md`](../ALGO.md). That doc covers the **nowcast**:
@@ -262,14 +262,14 @@ post-freeze only.
 
 | Latest window | Phase | Owner | Deliverable | Done when | Cut if behind? |
 |---|---|---|---|---|---|
-| 12:15–12:45 | **0. Data prep** | Algorithms | `triage/forecast_data.py`: event filter, cutoff split, `data/folds/forecast_folds.csv` | 8,293 events, folds committed | Never |
+| 12:15–12:45 | **0. Data prep** | Algorithms forecast (Kalent) | `triage/forecast_data.py`: event filter, cutoff split, `data/folds/forecast_folds.csv` | 8,293 events, folds committed | Never |
 | — | **1. Rule engine** | — | Reuse `triage/tiers.py` (identical rules). No new file. | — | — |
-| 12:45–13:15 | **2. Baselines into eval** | Evaluation (Kalent) | `triage/evaluate.py` forecast section: persistence baselines plus the metrics in §1.4 → `metrics.json["forecast"]` | Reproduces §2.4 persistence rows | Never |
-| 12:45–13:45 | **3. Framework A: escalation model** | Algorithms | Out-of-fold tier probabilities on the saved folds | Beats the plain model on escalations, Critical R ≥ 0.82 | Never |
-| 13:45–14:15 | **4. Framework A: conformal + reasons** | Algorithms | Prediction sets, decisions, top-3 reasons | Critical coverage ≥ 95% in CV | Use fixed 0.5 thresholds |
-| 14:15–14:45 | **5. Inference on test_data + contract PR** | Algorithms + Visualisation (Reagan) | `forecast` object in `events.json`; forecast count in `warnings_24h` | Dashboard loads it | Drop the 24 h forecast count first |
-| 14:45–15:00 | **6. Lock results** | Evaluation (Kalent) | Comparison table in `metrics.json`; `[X]`s in `feature.md` filled from it | Numbers frozen | — |
-| after 15:00 | **7. Framework B (stretch)** | Algorithms | Out-of-fold distributions of final risk and miss distance | Sensible predictions within 45 min | **Yes, already cut from the main plan** |
+| 12:45–13:15 | **2. Baselines into eval** | Evaluation, run by a teammate other than Kalent (TEAM.md) | `triage/evaluate.py` forecast section: persistence baselines plus the metrics in §1.4 → `metrics.json["forecast"]` | Reproduces §2.4 persistence rows | Never |
+| 12:45–13:45 | **3. Framework A: escalation model** | Algorithms forecast (Kalent) | Out-of-fold tier probabilities on the saved folds | Beats the plain model on escalations, Critical R ≥ 0.82 | Never |
+| 13:45–14:15 | **4. Framework A: conformal + reasons** | Algorithms forecast (Kalent) | Prediction sets, decisions, top-3 reasons | Critical coverage ≥ 95% in CV | Use fixed 0.5 thresholds |
+| 14:15–14:45 | **5. Inference on test_data + contract PR** | Algorithms forecast (Kalent) + Visualisation (Reagan) | `forecast` object in `events.json`; forecast count in `warnings_24h` | Dashboard loads it | Drop the 24 h forecast count first |
+| 14:45–15:00 | **6. Lock results** | Evaluation, run by a teammate other than Kalent (TEAM.md) | Comparison table in `metrics.json`; `[X]`s in `feature.md` filled from it | Numbers frozen | — |
+| after 15:00 | **7. Framework B (stretch)** | Algorithms forecast (Kalent) | Out-of-fold distributions of final risk and miss distance | Sensible predictions within 45 min | **Yes, already cut from the main plan** |
 
 **Tooling:** Python, pandas, numpy, scikit-learn (all locked dependencies). Optional and outside CI: lightgbm (comparison only), shap, PyTorch (Framework B). Everything runs on a laptop CPU.
 
