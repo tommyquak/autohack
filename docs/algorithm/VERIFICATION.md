@@ -130,7 +130,7 @@ Ordered by severity. Rows 1 to 6 block integration. The rest are wording or plan
 | 6 | **Rule-engine output vs label** | Phase 1 `rules.py` gives each event a `tier` from `risk` + miss, shown on the dashboard. | That value is `true_tier` (the label). CONTRACT: show `true_tier` / `risk_log10` "only in the evaluation view". The live tier is `pred_tier`. | The forecast feeds `pred_tier`-side fields. The risk-based tier appears only in the evaluation view. |
 | 7 | **24-hour view on test** | `in_24h`, `danger_flag` columns, undefined on test. | `build_events` counts events with latest CDM ≤ 1 d. test_data's minimum `time_to_tca` is 2.000, so **the count is 0 on test** (HANDOVER: "say so"). | **Opportunity:** our forecast is the only honest way to fill the README's 24 h view on test, e.g. "events forecast within 1 km at TCA, by TCA day". Add `warnings_24h.forecast_within_dangerous_distance` in the same contract PR. |
 | 8 | **Metrics schema** | F2, escalations caught, auto-clear %, Kelvins L, coverage. Unit = event at the 2 d cutoff. | `metrics.json` is per-CDM with recall / precision / false-alarm / macro-F1 / confusion and has none of ours. | Add a `forecast` section, owned by evaluate.py's owner. Also report **false escalations**, because "escalations caught" alone is gameable (see §d-4). |
-| 9 | **Ownership** | Header "Owner: Algorithms (Chai)". Roadmap puts prep, rules, baselines, models, metrics and test inference in one team. | No Algorithms role and no "Chai" in TEAM.md. Model = Tommy, eval = Kalent, events = Reagan, explain = Franky. **The evaluator must not be the model owner.** | Add an "Algorithms (forecast)" row to TEAM.md, naming the person. Forecast **metrics and baselines** go in `evaluate.py` under the evaluator. If the algorithms lead is also the evaluator, hand forecast evaluation to someone else. |
+| 9 | **Ownership** | Header "Owner: Algorithms (Chai)". Roadmap puts prep, rules, baselines, models, metrics and test inference in one team. | No Algorithms role and no "Chai" in TEAM.md. Model = Tommy, eval = Kalent, events = Reagan, explain = Franky. **The evaluator must not be the model owner.** | Add an "Algorithms (forecast)" row to TEAM.md, naming the person. Forecast **metrics and baselines** go in `evaluate.py` under the evaluator. If the algorithms lead is also the evaluator, hand forecast evaluation to someone else. **Done:** TEAM.md role 5 "Algorithms forecast" = Kalent. Kalent also holds Evaluation, so TEAM.md now says a teammate other than Kalent runs the eval on forecast PRs. |
 | 10 | **Timeline** | 5 h roadmap. Integration at 4:15–4:30, buffer 4:30–5:00, numbers into feature.md at 3:45–4:15. | Freeze 15:00, submit 16:00. PLAN: submit ~T+4.5 h. HANDOVER at ~11:15 shows the day already started. | Even from 10:30, integration ends exactly at the 15:00 freeze with no buffer. Any later start overruns. Cut B now (or run it as a post-freeze experiment), land A + metrics before ~14:00, and integrate by 14:30. |
 | 11 | **Tech stack** | LightGBM, shap, PyTorch. | Locked deps have none. CI runs `uv sync --locked`. PR #3 uses sklearn HGB. | Use sklearn `HistGradientBoostingClassifier` (handles NaN and categoricals, has class weights). Make reasons template-based, or put shap in an optional group. Put torch in an optional dependency group outside CI. |
 | 12 | **Wording** | "Safe", "Always Safe", "{Safe} only → AUTO-CLEAR", "Guaranteed-safe triage". | "Never 'Safe' — tier 0 is 'Below threshold'". | Rename: "Below threshold", "Always below threshold", "Coverage-controlled triage". |
@@ -233,7 +233,8 @@ the per-CDM nowcast (PR #3) and the per-event forecast as two clearly named task
 - The 24 h warnings stay in `build_events.py` (Reagan). The forecast adds a forecast-based count through the contract
   PR below.
 
-**Eval: extend `triage/evaluate.py`** (owner: Kalent, the independent evaluator)
+**Eval: extend `triage/evaluate.py`** (file owner: Evaluation. Kalent also owns the forecast, so a teammate other
+than Kalent runs and reviews the forecast eval.)
 - Add `evaluate_forecast()`, which writes `metrics.json["forecast"]`.
 - Baselines: miss-only persistence, allowed-columns persistence, always below threshold, plus a risk-based persistence
   labelled `reference_uses_label`.
@@ -241,7 +242,7 @@ the per-CDM nowcast (PR #3) and the per-event forecast as two clearly named task
   `critical_coverage`. Add Kelvins L as reference only.
 - Also emit the miss-vs-Pc Critical breakdown, so feature.md's numbers come from `metrics.json`.
 
-**Framework A: `triage/forecast_features.py` + `triage/forecast_model.py`** (owner: Algorithms)
+**Framework A: `triage/forecast_features.py` + `triage/forecast_model.py`** (owner: Algorithms forecast, Kalent)
 - Event features from **allowed columns only**. Reuse `features.dilution_flag`.
 - sklearn HGB with class weights.
 - Mondrian conformal, calibrated inside the training folds.
@@ -334,8 +335,11 @@ Each step is its own PR. The evaluator posts the table on step 3, per TEAM rules
 7. The literature claims (12 of 97 teams, L = 0.694, Neuraspace numbers) were **not** re-verified here. They are taken
    as cited.
 
-Status: the edits above are applied in algorithm.md v1.1 and feature.md. Exception: the TEAM.md role row (§b-9) needs
-the PM.
+Status: the edits above are applied in algorithm.md v1.1 and feature.md. Team docs got only two additions:
+- `docs/TEAM.md`: role 5 "Algorithms forecast" = Kalent, with the evaluator-independence note.
+- `docs/ALGO.md`: §5, a pointer to this forecast work. The rest of ALGO.md is unchanged.
+
+`docs/CONTRACT.md` waits for the forecast build PR, per the contract rule.
 
 ---
 
