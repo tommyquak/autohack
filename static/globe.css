@@ -32,8 +32,6 @@ body[data-view="globe"] .top-review { display: block; justify-self: end; font-si
 /* ---- overlays ---- */
 .globe-head { position: absolute; top: 0; left: 0; margin: 0; max-width: 30ch; font: 500 16px/1.4 var(--sans); letter-spacing: -.005em; text-wrap: balance; color: var(--ink); pointer-events: none; }
 .globe-hint[hidden] { display: none; }
-.globe-pause { position: absolute; top: 0; right: 0; background: none; border: 1px solid var(--hair2); border-radius: 4px; padding: 4px 10px; cursor: pointer; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.globe-pause:hover { border-color: var(--muted); color: var(--ink); }
 
 .globe-key { position: absolute; top: 40px; right: 0; width: 200px; font: 11px/1.4 var(--mono); color: var(--muted); pointer-events: none; }
 .gk-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; color: var(--ink); }
@@ -41,14 +39,14 @@ body[data-view="globe"] .top-review { display: block; justify-self: end; font-si
 .gk-note { margin: 8px 0 0; font: 11px/1.45 var(--sans); color: var(--muted); }
 
 /* next 24 h: one number, one honest sentence, the same count for each later 24 h window */
-.globe-24 { position: absolute; left: 0; bottom: 0; width: 220px; }
+.globe-24 { position: absolute; left: 0; bottom: 0; width: 260px; }
 .g24-k { margin: 0 0 2px; }
 .g24-v { margin: 0; font-size: 13px; color: var(--muted); }
 .g24-v b { font: 600 30px/1.1 var(--mono); color: var(--ink); margin-right: 6px; }
 .g24-note { margin: 4px 0 var(--s2); font: 12px/1.45 var(--sans); color: var(--muted); }
 .g24-cap { margin: 0 0 4px; padding-top: var(--s2); border-top: 1px solid var(--hair); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .g24-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.g24-days li { display: flex; flex-direction: column; gap: 1px; font: 10px var(--mono); color: #5d6965; }
+.g24-days li { display: flex; flex-direction: column; gap: 1px; font: 10px var(--mono); color: #5d6965; white-space: nowrap; }
 .g24-days li b { font-size: 12px; font-weight: 500; }
 .g24-days li.on { color: var(--muted); }
 .g24-days li.on b { color: var(--ink); }
@@ -63,6 +61,7 @@ body[data-view="globe"] .top-review { display: block; justify-self: end; font-si
 .gc-rows dt { font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .gc-rows dd { margin: 0; font-size: 13px; color: var(--ink); }
 .gc-rows dd .muted { font-size: 11px; margin-left: 4px; }
+.gc-rows > div.grey dd { color: var(--muted); }
 .gc-scale { grid-column: 2; width: 132px; height: 26px; overflow: visible; font: 9px var(--mono); fill: var(--muted); margin-top: 2px; }
 .gc-basis { font: 11px var(--mono); padding: 1px 7px; border-radius: 3px; border: 1px solid var(--hair2); }
 .gc-basis.pc { border-color: color-mix(in srgb, var(--own) 60%, transparent); color: #a9cfff; }

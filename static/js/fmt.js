@@ -16,7 +16,13 @@ export const MAX_DAYS = 7; // replay horizon (events are 2.0-6.9 d from TCA)
 
 export const km = (m) => m / 1000;
 export const fmtDist = (m) => (m < 10_000 ? `${Math.round(m).toLocaleString("en")} m` : `${(m / 1000).toFixed(1)} km`);
-export const fmtPc = (log10) => `1e${log10.toFixed(1)}`;
+// Pc from its log10, as people write it: -4.38 -> "4.2e-5" (not "1e-4.4").
+export const fmtPc = (log10) => {
+  if (log10 == null || !Number.isFinite(log10)) return "—";
+  let e = Math.floor(log10), m = Math.round(10 ** (log10 - e) * 10) / 10;
+  if (m >= 10) { m = 1; e += 1; }
+  return `${m.toFixed(1)}e${e}`;
+};
 export const fmtDays = (d) => `${d.toFixed(d < 10 ? 2 : 1)} d`;
 export const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));

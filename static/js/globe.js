@@ -8,10 +8,7 @@
 //                 The CDM files have no longitude, so a dot's east-west position is arbitrary: a fixed spread from the
 //                 event id (golden angle), so dots are stable between loads. The key says so.
 //                 Click a dot (or the Critical count) to open its card.
-// What is not:    the stars, the orbiting debris and the continents' lighting. The debris positions are made up for the
-//                 picture; only its colour mix follows the real chaser types in the events. The key says so.
-// Also real:      the blue ring sits at the median target altitude (events' `target_altitude_km`) on a near-polar orbit,
-//                 which is what the targets fly (inclination 87-99 deg in the CDMs); its longitude is arbitrary.
+// What is not:    the stars and the continents' lighting. No orbits or background traffic are drawn: the data has none.
 //
 // d3 and topojson load the first time the tab opens; offline, the globe still draws without land outlines.
 import { CAUTIONS, MAX_DAYS, TIERS, clamp, esc, fmtDays, fmtDist, fmtPc } from "./fmt.js";
@@ -21,36 +18,26 @@ const D3 = "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js";
 const TOPO = "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js";
 const LAND = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json";
 const OWN = "#5ea9ff";
-// The tier thresholds from triage/tiers.py. Display only: the card names WHICH rule set the pipeline's tier; it never
-// computes a tier itself.
+// Threshold positions for drawing the Pc scale and the 1 km counts only. Which rule fired comes from event.reasons.
 const RISK_CRIT = -4, RISK_ELEV = -6, MISS_CRIT_M = 1000, MISS_ELEV_M = 5000;
-// Chaser types and their dot colours; the particle mix is sampled from the real counts.
-const KINDS = [
-  { type: "DEBRIS", label: "Debris", color: "#b9a38f", size: 1.6 },
-  { type: "PAYLOAD", label: "Payload", color: "#f2f6f4", size: 2 },
-  { type: "ROCKET BODY", label: "Rocket body", color: "#a596ff", size: 2.2 },
-  { type: "UNKNOWN", label: "Unidentified", color: "#8a9490", size: 1.6 },
-];
-const PARTICLES = 1100; // enough to read as traffic, few enough that the event dots carry the picture
-
-let canvas, ctx, wrap, card, head, pauseBtn, d3, land = null;
+let canvas, ctx, wrap, card, head, d3, land = null;
+let reviewPage = false; // "Open in review" shows only once /static/review.html is known to exist
 let w = 0, h = 0, dpr = 1;
 let rot = 20, tilt = 24; // spin and tilt toward the viewer, degrees
 let aim = null; // {rot, tilt} the globe eases toward so the selected dot faces the viewer
-let auto = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const auto = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let dots = [];
 let hoverDot = null;
 let cardOpen = false;
 let drag = null;
 let raf = 0, last = 0, clock = 0, ready = false;
-let stars = [], parts = null, orbitR = 1.08;
+let stars = [];
 
 // One drawn chevron (points left); the right-hand handle is the same shape flipped by CSS.
 const CHEV = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg>`;
 const panel = () => document.getElementById("panel-globe");
 const isOpen = () => panel() && !panel().hidden;
 const lat = (e) => e.latest.geocentric_latitude_deg;
-const rad = (d) => (d * Math.PI) / 180;
 const n = (v) => v.toLocaleString("en");
 const selected = () => state.events.find((e) => e.event_id === state.selectedId);
 
@@ -82,7 +69,6 @@ export function initGlobe() {
       <div class="canvas-wrap" id="globe-wrap">
         <canvas id="globe" tabindex="0" aria-label="Globe of events by real latitude. Arrow up and down step through events, most urgent first; Escape closes the card."></canvas>
         <p class="globe-head" id="globe-head"></p>
-        <button type="button" class="globe-pause" id="globe-pause"></button>
         <div class="globe-key" id="globe-key"></div>
         <p class="globe-hint" id="globe-hint" hidden></p>
         <section class="globe-24" id="globe-24" aria-label="Next 24 hours"></section>
@@ -98,7 +84,6 @@ export function initGlobe() {
   ctx = canvas.getContext("2d");
   card = document.getElementById("globe-card");
   head = document.getElementById("globe-head");
-  pauseBtn = document.getElementById("globe-pause");
 
   // Tab switching itself is the generic data-tab handler in encounter.js; here we only start and stop drawing.
   // The side panels only collapse while the globe is showing (layout[data-view="globe"] in dashboard.css), so the other
@@ -110,7 +95,10 @@ export function initGlobe() {
   document.getElementById("tabs").addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-tab]");
     if (btn) setView(btn.dataset.tab);
-    if (ev.target.closest('[data-tab="globe"]')) queueMicrotask(open);
+    if (ev.target.closest('[data-tab="globe"]')) {
+      set({ elapsed: 0, playing: false }); // the globe shows the snapshot: the replay clock starts again from now
+      queueMicrotask(open);
+    }
     else stop();
   });
   for (const [id, cls, name] of [["rail-l", "hide-left", "queue"], ["rail-r", "hide-right", "full event panel"]]) {
@@ -122,7 +110,9 @@ export function initGlobe() {
       b.title = b.getAttribute("aria-label");
     });
   }
-  pauseBtn.addEventListener("click", () => ((auto = !auto), paintPause(), kick()));
+  fetch("/static/review.html", { method: "HEAD" })
+    .then((r) => ((reviewPage = r.ok), cardOpen && paintCard()))
+    .catch(() => {});
   new ResizeObserver(resize).observe(wrap);
 
   canvas.addEventListener("pointerdown", (ev) => {
@@ -154,7 +144,6 @@ export function initGlobe() {
   subscribe(["filters"], () => redraw());
   subscribe(["elapsed"], () => (paint24(), cardOpen && paintCard(), redraw()));
   rebuild();
-  paintPause();
 }
 
 // One dot per event: real latitude, arbitrary but fixed longitude (golden-angle spread by event id).
@@ -167,36 +156,11 @@ function buildDots() {
   });
 }
 
-// Stars, debris and the target ring. Seeded, so the sky is the same on every load.
+// Stars only. Seeded, so the sky is the same on every load.
 function buildSky() {
   const rnd = prng(7);
   stars = Array.from({ length: 360 }, () => ({ x: rnd(), y: rnd(), r: 0.3 + rnd() ** 3 * 1.3, a: 0.18 + rnd() * 0.5, p: rnd() * 6.28, s: 0.5 + rnd() * 1.6, warm: rnd() < 0.2 }));
 
-  // particle colour mix follows the events' real chaser types
-  const counts = KINDS.map((k) => state.events.filter((e) => (k.type === "UNKNOWN" ? e.latest.object_type === "UNKNOWN" || e.latest.object_type === "TBA" : e.latest.object_type === k.type)).length);
-  const total = counts.reduce((a, b) => a + b, 0) || 1;
-  const weights = counts.some(Boolean) ? counts.map((c) => c / total) : [0.58, 0.1, 0.02, 0.3];
-  const pick = () => {
-    let u = rnd(), i = 0;
-    while (i < weights.length - 1 && u > weights[i]) u -= weights[i++];
-    return i;
-  };
-  const list = Array.from({ length: PARTICLES }, () => {
-    const rr = 1.07 + rnd() ** 1.7 * 0.95; // dense near the surface, thinning outward
-    const polar = rnd() < 0.6;
-    return {
-      rr,
-      inc: rad(polar ? 82 + rnd() * 20 : rnd() * 180),
-      node: rnd() * 6.2832,
-      phase: rnd() * 6.2832,
-      omega: 0.16 * (1.1 / rr) ** 1.5 * (rnd() < 0.5 ? 1 : -1),
-      kind: pick(),
-    };
-  }).sort((a, b) => a.kind - b.kind);
-  parts = { list, pos: new Float32Array(PARTICLES * 3) };
-
-  const alts = state.events.map((e) => e.latest.target_altitude_km).filter((a) => a && a[0] != null).map((a) => (a[0] + a[1]) / 2).sort((a, b) => a - b);
-  orbitR = 1 + (alts.length ? alts[Math.floor(alts.length / 2)] : 700) / 6371;
 }
 
 // Header: tier counts from the model, and the review workload the conservative rule would have queued vs. ours.
@@ -210,7 +174,8 @@ function paintTop() {
   const review = (x) => (x.Elevated ?? 0) + (x.Critical ?? 0);
   const el = document.getElementById("top-review");
   if (b) {
-    el.innerHTML = `<span class="muted">${n(review(b))}</span> → <b>${n(review(t))}</b> to review`;
+    const fewer = review(b) ? Math.round((1 - review(t) / review(b)) * 100) : 0;
+    el.innerHTML = `<span class="muted">${n(review(b))}</span> → <b>${n(review(t))}</b> to review <span class="muted">(rule → Second Look, ${fewer}% fewer)</span>`;
     el.title = `Elevated + Critical. Conservative rule: ${n(review(b))}. Second Look: ${n(review(t))}. Second Look never downgrades a rule-defined Critical.`;
   } else {
     el.innerHTML = `<b>${n(review(t))}</b> to review`;
@@ -228,12 +193,7 @@ function paintHead() {
 function paintKey() {
   document.getElementById("globe-key").innerHTML = `
     ${[2, 1, 0].map((t) => `<div class="gk-row"><i style="background:${TIERS[t].color}"></i>${esc(TIERS[t].name)}</div>`).join("")}
-    <div class="gk-note">One dot per event, at its real latitude and orbit height. The data has no longitude, so east–west is arbitrary. Background traffic is illustrative.</div>`;
-}
-
-function paintPause() {
-  pauseBtn.textContent = auto ? "Pause" : "Play";
-  pauseBtn.setAttribute("aria-label", auto ? "Pause globe motion" : "Play globe motion");
+    <div class="gk-note">One dot per event, at its real latitude and orbit height. The data has no longitude, so east–west is arbitrary.</div>`;
 }
 
 // Next 24 h: how many events reach closest approach within the Critical miss distance (1 km). The test set has no CDM
@@ -258,31 +218,28 @@ function paint24() {
     <p class="g24-note">${esc(note)}</p>
     <p class="g24-cap">Within 1 km, per 24 h window</p>
     <ol class="g24-days">${days
-      .map((c, d) => `<li class="${c ? "on" : ""}" aria-label="Day ${d + 1}: ${c} within 1 km"><span>D${d + 1}</span><b class="num">${n(c)}</b></li>`)
+      .map((c, d) => `<li class="${c ? "on" : ""}" aria-label="${d} to ${d + 1} days: ${c} within 1 km"><span>${d}–${d + 1} d</span><b class="num">${n(c)}</b></li>`)
       .join("")}</ol>`;
 }
 
-// Which rule set the conservative tier, and whether the Pc bound backs it or only the miss distance does.
+// Which rule fired, straight from the pipeline's event.reasons, with Pc written as 4.2e-5. Basis: is the rule tier
+// backed by the Pc bound (one of its reasons is the Pc reason for that tier) or by the miss distance alone?
+const pcText = (r) =>
+  r.replace(/Pc 10\^(-?\d+(?:\.\d+)?)/, (_, v) => `Pc bound ${fmtPc(Number(v))}`).replace(/ in \[1e-6, 1e-4\) \(elevated band\)/, " in the elevated band");
 function ruleOf(e) {
-  const L = e.latest, pc = L.max_risk_estimate_log10, m = L.miss_distance_m;
-  const hasPc = pc != null && Number.isFinite(pc);
-  if (e.baseline_tier === 2) {
-    const fired = [hasPc && pc >= RISK_CRIT && "Pc bound ≥ 1e-4", m != null && m < MISS_CRIT_M && "miss < 1 km"].filter(Boolean);
-    return { text: fired.join(" and ") || "Critical tier from the pipeline", basis: hasPc && pc >= RISK_CRIT ? "Pc-backed" : "Distance only" };
-  }
-  if (e.baseline_tier === 1) {
-    const fired = [hasPc && pc >= RISK_ELEV && pc < RISK_CRIT && "Pc bound in 1e-6 – 1e-4", m != null && m >= MISS_CRIT_M && m <= MISS_ELEV_M && "miss 1–5 km"].filter(Boolean);
-    return { text: fired.join(" and ") || "Elevated tier from the pipeline", basis: hasPc && pc >= RISK_ELEV ? "Pc-backed" : "Distance only" };
-  }
-  return { text: "None: Pc bound < 1e-6 and miss > 5 km", basis: null };
+  const rs = e.reasons || [];
+  const text = rs.map(pcText).join(" and ") || "—";
+  if (!(e.baseline_tier > 0)) return { text, basis: null };
+  const pcKey = e.baseline_tier === 2 ? "critical threshold" : "elevated band";
+  return { text, basis: rs.some((r) => r.startsWith("Pc") && r.includes(pcKey)) ? "Pc-backed" : "Distance only" };
 }
 
 // Pc upper bound on a log scale from 1e-9 to 1e-2, with the two thresholds marked.
-function pcScale(pc) {
+function pcScale(pc, grey = false) {
   const W = 132, lo = -9, hi = -2, x = (v) => ((clamp(v, lo, hi) - lo) / (hi - lo)) * W;
   const band = (a, b, c) => `<rect x="${x(a)}" y="7" width="${x(b) - x(a)}" height="4" fill="${c}" opacity=".35"/>`;
   const tick = (v, t) => `<line x1="${x(v)}" x2="${x(v)}" y1="4" y2="14" stroke="#7d8a85"/><text x="${x(v)}" y="24" text-anchor="middle">${t}</text>`;
-  const mark = pc != null && Number.isFinite(pc) ? `<path d="M${x(pc) - 4} 0 L${x(pc) + 4} 0 L${x(pc)} 7 Z" fill="#e6ebe8"/>` : "";
+  const mark = pc != null && Number.isFinite(pc) ? `<path d="M${x(pc) - 4} 0 L${x(pc) + 4} 0 L${x(pc)} 7 Z" fill="${grey ? "#7d8a85" : "#e6ebe8"}"/>` : "";
   return `<svg class="gc-scale" viewBox="0 0 ${W} 26" aria-hidden="true">${band(lo, RISK_ELEV, TIERS[0].color)}${band(RISK_ELEV, RISK_CRIT, TIERS[1].color)}${band(RISK_CRIT, hi, TIERS[2].color)}${tick(RISK_ELEV, "1e-6")}${tick(RISK_CRIT, "1e-4")}${mark}</svg>`;
 }
 
@@ -295,6 +252,7 @@ function paintCard() {
   const missCmp = m == null ? "" : m < MISS_CRIT_M ? "under 1 km" : m <= MISS_ELEV_M ? "1–5 km" : "over 5 km";
   const cautions = e.cautions?.length ? e.cautions : e.needs_review ? ["needs_review"] : [];
   const demoted = e.baseline_tier > e.tier;
+  const noCov = cautions.includes("no_covariance"); // placeholder sigma: Pc is greyed, not to be relied on alone
   card.style.setProperty("--tier", t.color);
   card.innerHTML = `
     <button type="button" class="gc-close" data-act="close" aria-label="Close the event card">×</button>
@@ -302,7 +260,7 @@ function paintCard() {
     <p class="gc-sub num">EVT ${esc(e.event_id)} · ${esc(String(L.object_type).toLowerCase())}</p>
     <dl class="gc-rows">
       <div><dt>Miss distance</dt><dd class="num">${m == null ? "—" : fmtDist(m)} <span class="muted">${missCmp}</span></dd></div>
-      <div><dt>Pc upper bound</dt><dd class="num">${pcOk ? `≤ ${fmtPc(pc)}` : "missing"}</dd>${pcScale(pcOk ? pc : null)}</div>
+      <div${noCov ? ` class="grey" title="No usable covariance: do not rely on Pc alone"` : ""}><dt>Pc upper bound</dt><dd class="num">${pcOk ? `≤ ${fmtPc(pc)}` : "missing"}${noCov ? ` <span class="muted">no covariance</span>` : ""}</dd>${pcScale(pcOk ? pc : null, noCov)}</div>
       <div><dt>Time to TCA</dt><dd class="num">${r > 0 ? fmtDays(r) : "passed"}</dd></div>
       <div><dt>Rule fired</dt><dd>${esc(rule.text)}</dd></div>
       ${rule.basis ? `<div><dt>Basis</dt><dd><span class="gc-basis ${rule.basis === "Pc-backed" ? "pc" : "dist"}">${rule.basis}</span></dd></div>` : ""}
@@ -310,7 +268,7 @@ function paintCard() {
     ${cautions.length ? `<p class="gc-cautions">${cautions.map((c) => `<span class="caution">${esc(CAUTIONS[c] || c)}</span>`).join("")}</p>` : ""}
     ${e.tier === 2 ? `<p class="gc-line">Rule-defined Critical: Second Look cannot downgrade it. The analyst decides what to do.</p>` : ""}
     ${demoted ? `<p class="gc-line">The rule said <b style="color:${TIERS[e.baseline_tier].color}">${esc(TIERS[e.baseline_tier].name)}</b>; Second Look downgraded it. The decision record is in review.</p>` : ""}
-    <a class="gc-open" href="/static/review.html#event=${encodeURIComponent(e.event_id)}">Open in review <span aria-hidden="true">→</span></a>`;
+    ${reviewPage ? `<a class="gc-open" href="/static/review.html#event=${encodeURIComponent(e.event_id)}">Open in review <span aria-hidden="true">→</span></a>` : ""}`;
   card.hidden = false;
 }
 
@@ -425,25 +383,11 @@ function resize() {
   if (d3 && isOpen()) draw();
 }
 
-// Leave room around the sphere for the debris shells and the header line.
+// Leave room around the sphere for the dots above it and the header line.
 const projection = () => {
   const pad = Math.max(28, Math.min(w, h) * 0.1);
   return d3.geoOrthographic().fitExtent([[pad, pad + 24], [w - pad, h - pad]], { type: "Sphere" }).rotate([rot, -tilt]).clipAngle(90);
 };
-
-// 3D helpers shared by debris and the target ring: orbit-frame point -> view (x right, y up, z toward viewer).
-function view(x, y, z) {
-  const yaw = rad(rot), c = Math.cos(yaw), s = Math.sin(yaw);
-  const x2 = x * c - y * s, y2 = x * s + y * c;
-  const p = rad(tilt), cp = Math.cos(p), sp = Math.sin(p);
-  const toward = -y2;
-  return [x2, z * cp - toward * sp, z * sp + toward * cp];
-}
-function onOrbit(rr, inc, node, theta) {
-  const x = rr * Math.cos(theta), y0 = rr * Math.sin(theta);
-  const y = y0 * Math.cos(inc), z = y0 * Math.sin(inc);
-  return [x * Math.cos(node) - y * Math.sin(node), x * Math.sin(node) + y * Math.cos(node), z];
-}
 
 function drawStars() {
   for (const warm of [false, true]) {
@@ -458,44 +402,6 @@ function drawStars() {
   ctx.globalAlpha = 1;
 }
 
-// back = pass behind the globe (drawn first, hidden where the disc covers it); otherwise in front.
-function drawDebris(back, cx, cy, R) {
-  const { list, pos } = parts;
-  let kind = -1;
-  for (let i = 0; i < list.length; i++) {
-    const p = list[i];
-    const o = onOrbit(p.rr, p.inc, p.node, p.phase + p.omega * clock);
-    const [vx, vy, vz] = view(o[0], o[1], o[2]);
-    pos[i * 3] = vx; pos[i * 3 + 1] = vy; pos[i * 3 + 2] = vz;
-    const behind = vz < 0;
-    if (behind !== back) continue;
-    if (behind && vx * vx + vy * vy < 1) continue; // hidden by the planet
-    if (p.kind !== kind) { kind = p.kind; ctx.fillStyle = KINDS[kind].color; }
-    ctx.globalAlpha = back ? 0.18 : 0.3;
-    const s = KINDS[kind].size;
-    ctx.fillRect(cx + vx * R - s / 2, cy - vy * R - s / 2, s, s);
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawRing(back, cx, cy, R) {
-  const inc = rad(98), node = rad(40), steps = 160;
-  ctx.lineWidth = back ? 1 : 1.2;
-  ctx.strokeStyle = back ? "rgba(150,205,255,.18)" : "rgba(150,205,255,.5)";
-  ctx.beginPath();
-  let pen = false;
-  for (let i = 0; i <= steps; i++) {
-    const o = onOrbit(orbitR, inc, node, (i / steps) * 6.2832);
-    const [vx, vy, vz] = view(o[0], o[1], o[2]);
-    const behind = vz < 0, hidden = behind && vx * vx + vy * vy < 1;
-    if (behind !== back || hidden) { pen = false; continue; }
-    const x = cx + vx * R, y = cy - vy * R;
-    pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-    pen = true;
-  }
-  ctx.stroke();
-}
-
 function draw() {
   if (!d3 || !w) return;
   ctx.clearRect(0, 0, w, h);
@@ -503,9 +409,6 @@ function draw() {
 
   const proj = projection(), path = d3.geoPath(proj, ctx);
   const [cx, cy] = proj.translate(), R = proj.scale();
-
-  drawDebris(true, cx, cy, R);
-  drawRing(true, cx, cy, R);
 
   // atmosphere: a soft blue rim just outside the limb
   const atm = ctx.createRadialGradient(cx, cy, R * 0.97, cx, cy, R * 1.12);
@@ -537,8 +440,6 @@ function draw() {
 
   ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = "rgba(140,200,255,.25)"; ctx.lineWidth = 1; ctx.stroke();
 
-  drawRing(false, cx, cy, R);
-  drawDebris(false, cx, cy, R);
   drawDots(proj, cx, cy);
 }
 
