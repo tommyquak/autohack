@@ -12,7 +12,8 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="mark" aria-hidden="true"></span><b>CONJUNCTION TRIAGE</b><span class="muted" id="source"></span></div>
+  <span class="top-l" aria-hidden="true"></span>
+  <div class="spacey" aria-label="spaceY">space<b>Y</b></div>
   <div class="clock" id="clock" role="group" aria-label="Replay clock"></div>
 </header>
 
@@ -22,14 +23,6 @@
       <h1>Which encounters need a maneuver?</h1>
       <p class="muted" id="stamp">Loading&hellip;</p>
     </div>
-    <details class="fold" id="filter-fold">
-      <summary><h2 id="h-filter">Filter</h2><span class="fold-sum" id="filter-sum">All events</span></summary>
-      <div class="fold-body">
-        <div class="chips" id="tier-chips" role="group" aria-label="Tier"></div>
-        <label class="check"><input type="checkbox" id="f-review"> Needs review only</label>
-        <label class="select-row"><span class="label">Object type</span><select id="f-type"><option value="">All</option></select></label>
-      </div>
-    </details>
     <section class="block grow" aria-labelledby="h-queue">
       <div class="qhead">
         <h2 id="h-queue">Queue</h2>
@@ -66,7 +59,7 @@
 
   <aside class="rail right" aria-label="Selected event and next 24 hours">
     <section class="block sel" aria-labelledby="h-sel">
-      <h2 id="h-sel">Selected event</h2>
+      <h2 id="h-sel" class="sr">Selected event</h2>
       <div id="detail" class="detail"><p class="muted">Pick an event from the queue or click a dot.</p></div>
     </section>
     <details class="fold" id="window-fold">

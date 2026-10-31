@@ -17,11 +17,24 @@ export function initDetail() {
   });
   el.addEventListener("click", (ev) => {
     if (ev.target.closest("[data-llm]")) explain(true);
+    const more = ev.target.closest("[data-expand]");
+    if (more) {
+      const open = more.closest(".explain").classList.toggle("open");
+      more.textContent = open ? "Show less" : "Show more";
+    }
   });
   el.addEventListener("toggle", (ev) => {
     if (ev.target.id === "d-more") moreOpen = ev.target.open;
   }, true);
 }
+
+// Small drawn tile per object type (one stroke weight, no emoji): payload = satellite, debris = shard, rocket body = cylinder.
+const GLYPHS = {
+  PAYLOAD: '<rect x="9.5" y="9" width="5" height="6" rx="1"/><rect x="2.5" y="10" width="5.5" height="4" rx=".5"/><rect x="16" y="10" width="5.5" height="4" rx=".5"/><path d="M8 12h1.5M14.5 12H16M12 9V6"/>',
+  DEBRIS: '<path d="M5 15l4-9 5 3 4 6-5 4z"/><path d="M9 6l2 6 7 3"/>',
+  "ROCKET BODY": '<rect x="8" y="3" width="8" height="14" rx="3"/><path d="M10 17l-2 4h8l-2-4M8 9h8"/>',
+};
+const glyph = (type) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${GLYPHS[type] || '<circle cx="12" cy="12" r="8"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/>'}</svg>`;
 
 async function show() {
   const id = state.selectedId;
@@ -32,6 +45,7 @@ async function show() {
     const e = await api.event(id);
     if (mine !== token) return;
     el.innerHTML = render(e);
+    el.closest(".sel")?.style.setProperty("--tier", TIERS[e.tier].color); // colours the card's bottom edge
     el.removeAttribute("aria-busy");
     explain(false);
   } catch (err) {
@@ -47,7 +61,8 @@ async function explain(llm) {
   try {
     const r = await api.explain(id, llm);
     if (mine !== token) return;
-    box.innerHTML = `<p>${esc(r.text)}</p><div class="src">${r.source === "claude" ? "Written by Claude from the fields above" : "Template summary of the fields above"}</div>` +
+    box.classList.remove("open");
+    box.innerHTML = `<p class="clamp">${esc(r.text)}</p><button type="button" class="more-text" data-expand>Show more</button><div class="src">${r.source === "claude" ? "Written by Claude from the fields above" : "Template summary of the fields above"}</div>` +
       (r.source === "template" ? `<button type="button" data-llm>Rewrite with Claude</button>` : "");
   } catch (err) {
     if (mine === token) box.innerHTML = `<p class="muted">Explanation unavailable: ${esc(err.message)}</p>`;
@@ -87,8 +102,12 @@ function render(e) {
   const cautions = (e.cautions && e.cautions.length ? e.cautions : e.needs_review ? ["needs_review"] : []);
   return `
     <div class="hero">
+      <div class="dcard-head">
+        <span class="otile" style="color:${t.color}" aria-hidden="true">${glyph(L.object_type)}</span>
+        <div><div class="dcard-title num">EVT ${esc(e.event_id)}</div>
+          <div class="dcard-sub num">${esc(L.object_type.toLowerCase())} · TCA in <span id="d-tca">${r > 0 ? fmtDays(r) : "passed"}</span></div></div>
+      </div>
       <div class="tier-name" style="color:${t.color}"><span aria-hidden="true">${t.icon}</span> ${t.name}</div>
-      <p class="hero-sub num">EVT ${esc(e.event_id)} · ${esc(L.object_type.toLowerCase())} · TCA in <span id="d-tca">${r > 0 ? fmtDays(r) : "passed"}</span></p>
       ${demoted ? `<p class="hero-rule">Rule said <b style="color:${TIERS[e.baseline_tier].color}">${TIERS[e.baseline_tier].name}</b>; the model demoted it.</p>` : ""}
     </div>
     ${gauge({ label: "Pc upper bound", valueText: fmtPc(L.max_risk_estimate_log10), lo: -9, hi: -2, value: L.max_risk_estimate_log10, ticks: [[-6, "1e-6"], [-4, "1e-4"]], bands: [[-9, -6, TIERS[0].color], [-6, -4, TIERS[1].color], [-4, -2, TIERS[2].color]] })}
