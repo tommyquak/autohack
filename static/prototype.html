@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conjunction Ops Preview</title>
+<!-- TEMPORARY operator preview (Tommy). The real dashboard is static/dashboard.* (Reagan). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#080a0b; --panel:#0d1011; --well:#141819; --rule:#55666a; --rule-strong:#617377;
+  --line-soft:#1d2426; --ink:#e9eff0; --label:#8da0a5; --dim:#74868b;
+  --t0:#3fe0a0; --t1:#e8a33c; --t2:#ff4a3d; --own:#5ea9ff; --accent:#3fe0a0;
+  --mono:"Spline Sans Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans:Archivo, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --ease:260ms cubic-bezier(.2,.8,.25,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--ground);color:var(--ink);font:400 12.5px/1.5 var(--sans);display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--accent);color:var(--ground)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+*{scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.mono,.num{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+.lbl{font:500 11px/1.35 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--label)}
+.t0{color:var(--t0)} .t1{color:var(--t1)} .t2{color:var(--t2)} .dim{color:var(--dim)}
+button{font:600 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:0;padding:8px 10px;cursor:pointer;transition:background-color var(--ease),color var(--ease),border-color var(--ease)}
+button:hover{background:var(--well);border-color:var(--rule-strong)}
+button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--well)}
+label.chk{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+input[type=checkbox]{accent-color:var(--accent)}
+
+/* status line */
+header.status{height:40px;flex:none;display:flex;align-items:stretch;background:var(--panel);border-bottom:1px solid var(--rule)}
+header.status>*{display:flex;align-items:center;padding:0 14px;border-right:1px solid var(--rule);font:600 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--label);white-space:nowrap}
+header.status h1{margin:0;color:var(--ink);font:700 12px/1 var(--mono);letter-spacing:.18em}
+header.status .grow{flex:1;border-right:0}
+.tag{border:1px dashed var(--t1);color:var(--t1);padding:3px 6px;margin-left:10px;letter-spacing:.12em}
+.lamp{gap:8px}
+.lamp i{width:7px;height:7px;display:inline-block;border:1px dotted var(--rule-strong)}
+.lamp.ok{color:var(--accent)} .lamp.ok i{background:var(--accent);border:1px solid var(--accent)}
+.lamp.fault{color:var(--t2)} .lamp.fault i{background:var(--t2);border:1px solid var(--t2)}
+
+/* reading strip */
+.strip{flex:none;display:flex;gap:1px;background:var(--rule);border-bottom:1px solid var(--rule);overflow-x:auto}
+.cell{background:var(--panel);padding:8px 16px 9px;min-width:132px;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between}
+.cell .lbl{font:600 12px/1 var(--mono);letter-spacing:.14em;align-self:stretch;text-align:right}
+.cell .fig{font:600 34px/1 var(--mono);font-variant-numeric:tabular-nums;margin-top:6px}
+.cell .fig small{font-size:19px;font-weight:400;color:var(--dim)}
+.cell .sub{font:400 10.5px/1.2 var(--mono);color:var(--dim);letter-spacing:.06em;margin-top:5px;text-transform:uppercase;text-align:right}
+.cell.wide{min-width:260px}
+.cell.fill{flex:1;align-items:flex-start}
+.cell.fill .lbl{text-align:left}
+.unk{color:var(--dim);font-weight:400!important;border-bottom:1px dotted var(--dim)}
+
+/* tabs */
+nav.tabs{flex:none;display:flex;gap:6px;padding:6px 14px;border-bottom:1px solid var(--rule);background:var(--ground);align-items:center}
+nav.tabs .note{margin-left:auto;font:400 11px/1.3 var(--sans);color:var(--dim)}
+
+main{flex:1;min-height:0;display:grid}
+#view-triage{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr) 430px;gap:1px;background:var(--rule);min-height:0}
+#view-triage>section{background:var(--ground);min-height:0;display:flex;flex-direction:column}
+#view-eval{overflow:auto;padding:14px 18px 30px}
+[hidden]{display:none!important}
+
+.sechead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.sechead h2{margin:0;font:700 12px/1.2 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink);margin-right:auto}
+.sechead button{padding:6px 8px;font-size:11px}
+
+/* queue */
+.qcols,.qrow{display:grid;grid-template-columns:12px 52px 1fr 70px 62px 22px;gap:8px;align-items:center;padding:0 14px}
+.qcols{height:26px;border-bottom:1px solid var(--line-soft)}
+.qcols span{font:500 10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.qcols span.r,.qrow .r{text-align:right}
+#qscroll{flex:1;overflow-y:auto;position:relative}
+#qspacer{position:relative}
+.qrow{position:absolute;left:0;right:0;height:34px;border-bottom:1px solid var(--line-soft);cursor:pointer;font:500 12px/1 var(--mono);font-variant-numeric:tabular-nums;transition:background-color var(--ease)}
+.qrow:hover{background:var(--well)}
+.qrow.sel{background:var(--panel);box-shadow:0 0 0 1px var(--ink) inset}
+.pip{width:7px;height:7px;display:inline-block}
+.pip.t0{background:var(--t0)} .pip.t1{background:var(--t1)} .pip.t2{background:var(--t2)}
+.qrow .nm{color:var(--label);font-size:11px;letter-spacing:.06em;overflow:hidden;white-space:nowrap;text-overflow:clip}
+.rv{width:12px;height:12px;border:1px dashed var(--t1);display:inline-block}
+.qfoot{border-top:1px solid var(--rule);padding:7px 14px;font:400 11px/1.3 var(--sans);color:var(--dim)}
+
+/* scatter */
+.plotwrap{position:relative;flex:1;min-height:300px}
+.plotwrap canvas{position:absolute;inset:0;width:100%;height:100%}
+#tip{position:absolute;pointer-events:none;background:rgba(8,10,11,.9);border:1px solid var(--rule);padding:6px 8px;font:500 11px/1.4 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;display:none;z-index:2}
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid var(--rule);font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--label);align-items:center}
+.legend .num{color:var(--ink)}
+.legend .delta{margin-left:auto;color:var(--ink)}
+#rel3d{height:240px;flex:none;position:relative;border-top:1px solid var(--rule)}
+#rel3d canvas{display:block;width:100%;height:100%}
+#rel3d .cap{position:absolute;left:10px;top:8px;pointer-events:none}
+#rel3d .cap2{position:absolute;left:10px;bottom:8px;pointer-events:none;font:400 10.5px/1.3 var(--mono);color:var(--dim)}
+#rel3d .ax{position:absolute;font:600 11px/1 var(--mono);color:var(--label);pointer-events:none}
+#rel3d .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:400 11.5px/1.4 var(--sans);color:var(--dim)}
+
+/* detail */
+#detail{overflow-y:auto;flex:1}
+.plate{padding:13px 14px 16px;border-top:1px solid var(--rule)}
+.plate:first-child{border-top:0}
+.plate h3{margin:0 0 9px;font:700 12px/1.2 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
+.plate h3 .sub{display:block;font:400 10px/1.4 var(--mono);letter-spacing:.13em;color:var(--dim);margin-top:3px}
+.empty{color:var(--dim);font:400 11.5px/1.5 var(--sans);padding:24px 14px}
+.dhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dhead .tiername{font:600 26px/1 var(--mono);letter-spacing:.02em}
+.dhead .eid{font:500 13px/1 var(--mono);color:var(--label);margin-left:auto}
+.badge{font:600 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:5px 7px;border:1px solid currentColor;display:inline-flex;gap:6px;align-items:center}
+.badge.review{color:var(--t1);border-style:dashed}
+.badge.nocov{color:var(--t1)}
+.badge.plain{color:var(--label);border-color:var(--rule)}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+dl.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;margin:0}
+dl.kv dt,dl.kv dd{padding:5px 0;border-top:1px solid var(--line-soft);margin:0}
+dl.kv dt:first-of-type,dl.kv dt:first-of-type+dd{border-top:0}
+dl.kv dt{font:500 11px/1.35 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--label)}
+dl.kv dd{font:500 13px/1.35 var(--mono);font-variant-numeric:tabular-nums;text-align:right;min-width:110px}
+ul.reasons{margin:0;padding:0;list-style:none}
+ul.reasons li{font:500 12px/1.45 var(--mono);padding:5px 0 5px 14px;border-top:1px solid var(--line-soft);position:relative}
+ul.reasons li:first-child{border-top:0}
+ul.reasons li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:1px;background:var(--label)}
+.caution{border:1px solid var(--t1);color:var(--t1);padding:8px 10px;margin-top:10px;font:400 11.5px/1.45 var(--sans)}
+.caution b{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+.explain{font:400 12.5px/1.55 var(--sans);color:var(--ink)}
+.explain .src{display:block;margin-top:8px;font:400 10.5px/1.3 var(--mono);color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+svg text{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.chartnote{font:400 10.5px/1.4 var(--sans);color:var(--dim);margin-top:6px}
+
+/* eval */
+.evgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;align-items:start}
+table{border-collapse:collapse;width:100%}
+th,td{padding:7px 10px;border-top:1px solid var(--line-soft);text-align:right;font:500 13px/1.3 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+th{font:500 10.5px/1.3 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--label);border-top:0;border-bottom:1px solid var(--rule);vertical-align:bottom}
+th:first-child,td:first-child{text-align:left}
+tr.model td{color:var(--accent)}
+tr.model td:first-child::after{content:" (ours)";color:var(--dim);font-weight:400}
+.cm td.diag{color:var(--ink);font-weight:700}
+.cm td.over{color:var(--t1)} .cm td.under{color:var(--t2)} .cm td.zero{color:var(--dim)}
+.evh{font:700 12px/1.2 var(--mono);letter-spacing:.18em;text-transform:uppercase;margin:22px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--rule)}
+.evh:first-child{margin-top:0}
+.prose{font:400 12.5px/1.55 var(--sans);color:var(--label);max-width:72ch}
+.prose b{color:var(--ink);font-weight:600}
+.fault{color:var(--t2);border:1px solid var(--t2);padding:11px 16px;margin:14px;font:500 12px/1.4 var(--mono)}
+
+@media (max-width:1200px){
+  body{overflow:auto} main{display:block}
+  #view-triage{grid-template-columns:320px minmax(0,1fr);grid-template-rows:680px auto}
+  #view-triage>section.detailcol{grid-column:1 / -1}
+  #detail{overflow:visible}
+}
+@media (max-width:760px){
+  #view-triage{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  #view-triage>section:first-child{height:60vh}
+  .plotwrap{flex:none;height:380px}
+  header.status{overflow-x:auto}
+  nav.tabs .note{display:none}
+  .evgrid{grid-template-columns:minmax(0,1fr)}
+  #view-eval table{display:block;overflow-x:auto}
+  .cell{min-width:110px;padding:8px 10px}
+  .cell .fig{font-size:26px}
+  .cell .lbl{font-size:9.5px;letter-spacing:.08em}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:1ms!important}}
+</style>
+</head>
+<body>
+<header class="status">
+  <h1>Conjunction triage<span class="tag">ops preview · temporary</span></h1>
+  <div id="st-events">— events</div>
+  <div id="st-window">24 h window —</div>
+  <div class="grow"></div>
+  <div class="lamp" id="lamp"><i></i><span>connecting</span></div>
+</header>
+
+<div class="strip" id="strip">
+  <div class="cell"><span class="lbl t2">Critical</span><span class="fig t2 num" id="r-c"><span class="unk">—</span></span><span class="sub">model tier</span></div>
+  <div class="cell"><span class="lbl t1">Elevated</span><span class="fig t1 num" id="r-e"><span class="unk">—</span></span><span class="sub">model tier</span></div>
+  <div class="cell"><span class="lbl t0">Below threshold</span><span class="fig t0 num" id="r-b"><span class="unk">—</span></span><span class="sub">model tier</span></div>
+  <div class="cell"><span class="lbl">Needs review</span><span class="fig num" id="r-nr"><span class="unk">—</span></span><span class="sub">uncertain → escalated</span></div>
+  <div class="cell"><span class="lbl">Critical caught</span><span class="fig num" id="r-cc"><span class="unk">—</span></span><span class="sub" id="r-cc-sub">critical recall · test</span></div>
+  <div class="cell wide"><span class="lbl">Workload (flagged)</span><span class="fig num" id="r-wl"><span class="unk">—</span></span><span class="sub" id="r-wl-sub">Pc rule → model</span></div>
+  <div class="cell fill"><span class="lbl">Source</span><span class="sub" style="text-align:left;text-transform:none;font-family:var(--sans);font-size:11.5px;color:var(--label);margin-top:8px" id="r-src">/api/summary · /api/events · /api/metrics</span></div>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button id="tab-triage" aria-pressed="true">Triage</button>
+  <button id="tab-eval" aria-pressed="false">Evaluation</button>
+  <span class="note">Temporary local preview. The team dashboard lives at <code>/</code>.</span>
+</nav>
+
+<main>
+  <div id="view-triage">
+    <section>
+      <div class="sechead">
+        <h2>Event queue</h2>
+        <button data-tf="all" aria-pressed="true">All</button>
+        <button data-tf="2" aria-pressed="false">Crit</button>
+        <button data-tf="1" aria-pressed="false">Elev</button>
+        <button data-tf="0" aria-pressed="false">Below</button>
+        <label class="chk lbl"><input type="checkbox" id="f-review"> Needs review</label>
+      </div>
+      <div class="qcols"><span></span><span>ID</span><span>Object</span><span class="r">TCA d</span><span class="r">Miss km</span><span></span></div>
+      <div id="qscroll" tabindex="0" aria-label="Event queue, arrow keys move selection"><div id="qspacer"></div></div>
+      <div class="qfoot" id="qfoot">Urgency order as served (tier, then soonest TCA).</div>
+    </section>
+
+    <section>
+      <div class="sechead">
+        <h2>Triage funnel</h2>
+        <span class="lbl">Colour by</span>
+        <button id="m-base" aria-pressed="false">Rule baseline</button>
+        <button id="m-model" aria-pressed="true">Model</button>
+      </div>
+      <div class="plotwrap" id="plotwrap">
+        <canvas id="cv-base"></canvas>
+        <canvas id="cv-over"></canvas>
+        <div id="tip"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div id="rel3d">
+        <span class="cap lbl">Relative position · enlarged, not to scale</span>
+        <div class="msg" id="rel3d-msg">Select an event.</div>
+        <span class="cap2">Blue: own satellite (target) at origin · other object at its RTN offset · drag to rotate</span>
+      </div>
+    </section>
+
+    <section class="detailcol">
+      <div class="sechead"><h2>Selected event</h2></div>
+      <div id="detail"><div class="empty">Select an event in the queue or the funnel.</div></div>
+    </section>
+  </div>
+
+  <div id="view-eval" hidden></div>
+</main>
+
+<script>
+"use strict";
+const API = "/api";
+const TIER_NAME = ["Below threshold", "Elevated", "Critical"];
+const TIER_COL = ["#3fe0a0", "#e8a33c", "#ff4a3d"];
+const SIGMA_CEIL = 6.3e7;
+const S = { summary:null, events:[], byId:new Map(), metrics:null, mode:"model",
+            tf:"all", review:false, list:[], sel:null, detail:new Map(), explain:new Map() };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtInt = (n) => n == null ? "—" : Number(n).toLocaleString("en-US");
+const pct = (x, d=1) => x == null ? "—" : (100*x).toFixed(d) + "%";
+const fmtM = (m) => m == null ? "—" : (m >= 10000 ? (m/1000).toFixed(1)+" km" : Math.round(m).toLocaleString("en-US")+" m");
+const pcTier = (l) => l == null ? 0 : (l >= -4 ? 2 : l >= -6 ? 1 : 0);
+const missTier = (m) => m == null ? 0 : (m < 1000 ? 2 : m <= 5000 ? 1 : 0);
+const baseTier = (e) => (e.baseline_tier != null) ? e.baseline_tier
+  : Math.max(pcTier(e.latest.max_risk_estimate_log10), missTier(e.latest.miss_distance_m));
+const tierOf = (e) => S.mode === "model" ? e.tier : e._bt;
+const noCov = (sig) => !!sig && ((sig.chaser != null && sig.chaser >= SIGMA_CEIL) || (sig.target != null && sig.target >= SIGMA_CEIL));
+const pcSup = (l) => l == null ? '<span class="unk">—</span>' : `10<sup>${l.toFixed(2).replace("-", "−")}</sup>`;
+
+async function getJSON(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error(`${path} → HTTP ${r.status}`);
+  return r.json();
+}
+
+function setLamp(state, text) {
+  const l = $("lamp"); l.className = "lamp " + state; l.querySelector("span").textContent = text;
+}
+
+/* ---------------- header ---------------- */
+function renderHeader() {
+  const s = S.summary, m = S.metrics;
+  if (s) {
+    $("r-c").textContent = fmtInt(s.by_tier["Critical"]);
+    $("r-e").textContent = fmtInt(s.by_tier["Elevated"]);
+    $("r-b").textContent = fmtInt(s.by_tier["Below threshold"]);
+    $("r-nr").innerHTML = `${fmtInt(s.needs_review)}<small>/${fmtInt(s.n_events)}</small>`;
+    $("st-events").textContent = `${fmtInt(s.n_events)} events`;
+    const w = s.warnings_24h || {};
+    $("st-window").textContent = `${w.window_days != null ? w.window_days*24 : "—"} h window · ${fmtInt(w.events_in_window)} events`;
+  }
+  if (m && m.results) {
+    const mo = m.results.model, ru = m.results.max_risk_estimate_rule;
+    if (mo) {
+      const crit = m.class_counts && m.class_counts.CRITICAL;
+      $("r-cc").textContent = pct(mo.critical_recall, 1);
+      $("r-cc-sub").textContent = crit != null
+        ? `${fmtInt(Math.round(mo.critical_recall*crit))}/${fmtInt(crit)} critical CDMs · ${m.split}` : `critical recall · ${m.split}`;
+    }
+    if (mo && ru) {
+      $("r-wl").innerHTML = `${pct(ru.flagged_rate)}<small> → </small>${pct(mo.flagged_rate)}`;
+      const rel = 1 - mo.flagged_rate / ru.flagged_rate;
+      $("r-wl-sub").textContent = `Pc rule → model · ${(rel*100).toFixed(1)}% fewer flagged`;
+    }
+  }
+}
+
+/* ---------------- queue (virtualised) ---------------- */
+const ROW_H = 34;
+function applyFilter() {
+  S.list = S.events.filter(e => (S.tf === "all" || e.tier === +S.tf) && (!S.review || e.needs_review));
+  $("qspacer").style.height = (S.list.length * ROW_H) + "px";
+  $("qscroll").scrollTop = 0;
+  $("qfoot").textContent = `${fmtInt(S.list.length)} of ${fmtInt(S.events.length)} shown · urgency order as served (tier, then soonest TCA).`;
+  renderRows();
+}
+function renderRows() {
+  const sc = $("qscroll"), top = sc.scrollTop, h = sc.clientHeight || 600;
+  const i0 = Math.max(0, Math.floor(top / ROW_H) - 6), i1 = Math.min(S.list.length, Math.ceil((top + h) / ROW_H) + 6);
+  let html = "";
+  for (let i = i0; i < i1; i++) {
+    const e = S.list[i], L = e.latest;
+    html += `<div class="qrow${S.sel === e.event_id ? " sel" : ""}" style="top:${i*ROW_H}px" data-id="${e.event_id}">`
+      + `<span class="pip t${e.tier}" title="${TIER_NAME[e.tier]}"></span>`
+      + `<span>${e.event_id}</span>`
+      + `<span class="nm">${esc((L.object_type || "—").toLowerCase())}</span>`
+      + `<span class="r">${L.time_to_tca_days.toFixed(2)}</span>`
+      + `<span class="r">${(L.miss_distance_m/1000).toFixed(2)}</span>`
+      + `<span>${e.needs_review ? '<i class="rv" title="needs review"></i>' : ""}</span></div>`;
+  }
+  $("qspacer").innerHTML = html;
+}
+
+/* ---------------- scatter ---------------- */
+const P = { w:0, h:0, dpr:1, pad:{l:62, r:16, t:16, b:40}, x0:0, x1:7, y0:1.5, y1:5, pts:null };
+function sx(d) { const p = P.pad; return p.l + (P.x1 - d) / (P.x1 - P.x0) * (P.w - p.l - p.r); } // TCA approaches → right
+function sy(l) { const p = P.pad; return P.h - p.b - (l - P.y0) / (P.y1 - P.y0) * (P.h - p.t - p.b); }
+
+function setupScatter() {
+  const e = S.events;
+  let maxT = 0, minM = Infinity, maxM = 0;
+  for (const v of e) { const L = v.latest; maxT = Math.max(maxT, L.time_to_tca_days); if (L.miss_distance_m > 0) { minM = Math.min(minM, L.miss_distance_m); maxM = Math.max(maxM, L.miss_distance_m); } }
+  P.x1 = Math.ceil(maxT); P.x0 = 0;
+  P.y0 = Math.floor(Math.log10(minM) * 2) / 2; P.y1 = Math.ceil(Math.log10(maxM) * 2) / 2;
+  new ResizeObserver(() => drawScatter()).observe($("plotwrap"));
+  const over = $("cv-over");
+  over.addEventListener("mousemove", onHover);
+  over.addEventListener("mouseleave", () => { $("tip").style.display = "none"; P.hover = null; drawOverlay(); });
+  over.addEventListener("click", (ev) => { const v = nearest(ev); if (v) select(v.event_id, true); });
+}
+function sizeCanvas(cv) {
+  const r = $("plotwrap").getBoundingClientRect(); P.dpr = window.devicePixelRatio || 1;
+  P.w = r.width; P.h = r.height;
+  cv.width = Math.round(r.width * P.dpr); cv.height = Math.round(r.height * P.dpr);
+  const c = cv.getContext("2d"); c.setTransform(P.dpr, 0, 0, P.dpr, 0, 0); return c;
+}
+function drawScatter() {
+  if (!S.events.length) return;
+  const c = sizeCanvas($("cv-base")); sizeCanvas($("cv-over"));
+  const p = P.pad, W = P.w, H = P.h;
+  c.clearRect(0, 0, W, H);
+  // 24 h window
+  c.fillStyle = "rgba(255,74,61,0.06)"; c.fillRect(sx(1), p.t, sx(0) - sx(1), H - p.t - p.b);
+  c.setLineDash([2, 3]); c.strokeStyle = "#74868b"; c.beginPath(); c.moveTo(sx(1)+.5, p.t); c.lineTo(sx(1)+.5, H - p.b); c.stroke(); c.setLineDash([]);
+  c.fillStyle = "#74868b"; c.font = "500 10.5px 'Spline Sans Mono', monospace"; c.textAlign = "center";
+  c.save(); c.translate((sx(1) + sx(0)) / 2, p.t + 10);
+  c.fillText("24 H WINDOW", 0, 4);
+  c.fillText(S.summary ? `${S.summary.warnings_24h.events_in_window} EVENTS` : "", 0, 18);
+  c.restore();
+  // axes + grid
+  c.strokeStyle = "#1d2426"; c.lineWidth = 1; c.fillStyle = "#8da0a5"; c.textAlign = "center";
+  for (let d = P.x0; d <= P.x1; d++) { const x = Math.round(sx(d)) + .5; c.beginPath(); c.moveTo(x, p.t); c.lineTo(x, H - p.b); c.stroke(); c.fillText(String(d), x, H - p.b + 15); }
+  c.fillText("TIME TO TCA (DAYS) →  CLOSEST APPROACH", (p.l + W - p.r) / 2, H - 6);
+  c.textAlign = "right";
+  const ticks = [[50,"50 m"],[100,"100 m"],[500,"500 m"],[1000,"1 km"],[5000,"5 km"],[10000,"10 km"],[50000,"50 km"],[100000,"100 km"]];
+  for (const [m, t] of ticks) { const l = Math.log10(m); if (l < P.y0 || l > P.y1) continue; const y = Math.round(sy(l)) + .5;
+    c.strokeStyle = "#1d2426"; c.beginPath(); c.moveTo(p.l, y); c.lineTo(W - p.r, y); c.stroke(); c.fillText(t, p.l - 8, y + 4); }
+  c.save(); c.translate(13, (p.t + H - p.b) / 2); c.rotate(-Math.PI / 2); c.textAlign = "center"; c.fillText("MISS DISTANCE (LOG)", 0, 0); c.restore();
+  // threshold lines
+  for (const [m, col, t] of [[1000, "#ff4a3d", "1 KM · CRITICAL"], [5000, "#e8a33c", "5 KM · ELEVATED"]]) {
+    const y = Math.round(sy(Math.log10(m))) + .5; c.strokeStyle = col; c.setLineDash([6, 4]); c.beginPath(); c.moveTo(p.l, y); c.lineTo(W - p.r, y); c.stroke(); c.setLineDash([]);
+    c.fillStyle = col; c.textAlign = "left"; c.fillText(t, p.l + 6, y - 5);
+  }
+  c.strokeStyle = "#55666a"; c.beginPath(); c.moveTo(p.l + .5, p.t); c.lineTo(p.l + .5, H - p.b); c.lineTo(W - p.r, H - p.b + .5); c.stroke();
+  // points: tier 0 first so criticals sit on top
+  const pts = new Float32Array(S.events.length * 2);
+  S.events.forEach((e, i) => { pts[2*i] = sx(e.latest.time_to_tca_days); pts[2*i+1] = sy(Math.log10(Math.max(1, e.latest.miss_distance_m))); });
+  P.pts = pts;
+  const counts = [0, 0, 0];
+  for (let t = 0; t <= 2; t++) {
+    c.fillStyle = TIER_COL[t]; c.globalAlpha = t === 0 ? 0.55 : 0.9; c.beginPath();
+    S.events.forEach((e, i) => { if (tierOf(e) !== t) return; counts[t]++; const r = t === 2 ? 2.6 : 2.2; c.moveTo(pts[2*i] + r, pts[2*i+1]); c.arc(pts[2*i], pts[2*i+1], r, 0, Math.PI * 2); });
+    c.fill();
+  }
+  c.globalAlpha = 1;
+  renderLegend(counts);
+  drawOverlay();
+}
+function renderLegend(counts) {
+  const fb = S.events.filter(e => e._bt >= 1).length, fm = S.events.filter(e => e.tier >= 1).length;
+  const fa = (k) => S.events.filter(e => (k === "m" ? e.tier : e._bt) >= 1 && e.true_tier === 0).length;
+  const hasTruth = S.events.some(e => e.true_tier != null);
+  const label = S.mode === "model" ? "Model" : "Rule baseline (max of Pc tier, miss tier)";
+  $("legend").innerHTML =
+    `<span>${esc(label)}</span>`
+    + [2, 1, 0].map(t => `<span><i class="pip t${t}"></i> ${TIER_NAME[t]} <span class="num">${fmtInt(counts[t])}</span></span>`).join("")
+    + `<span class="delta num">Flagged: rule ${fmtInt(fb)} → model ${fmtInt(fm)}`
+    + (hasTruth ? ` · flagged-but-truly-below: ${fmtInt(fa("b"))} → ${fmtInt(fa("m"))}` : "") + `</span>`;
+}
+function drawOverlay() {
+  const cv = $("cv-over"), c = cv.getContext("2d");
+  c.setTransform(P.dpr, 0, 0, P.dpr, 0, 0); c.clearRect(0, 0, P.w, P.h);
+  if (!P.pts) return;
+  const ring = (id, col, r) => { const i = S.idx.get(id); if (i == null) return; c.strokeStyle = col; c.lineWidth = 1.5; c.beginPath(); c.arc(P.pts[2*i], P.pts[2*i+1], r, 0, Math.PI*2); c.stroke(); };
+  if (P.hover != null) ring(P.hover, "#8da0a5", 6);
+  if (S.sel != null) { ring(S.sel, "#e9eff0", 8); ring(S.sel, "#e9eff0", 3.5); }
+}
+function nearest(ev) {
+  if (!P.pts) return null;
+  const r = $("cv-over").getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+  let best = -1, bd = 100; // 10 px radius
+  for (let i = 0; i < S.events.length; i++) { const dx = P.pts[2*i] - x, dy = P.pts[2*i+1] - y, d = dx*dx + dy*dy; if (d < bd) { bd = d; best = i; } }
+  return best < 0 ? null : S.events[best];
+}
+function onHover(ev) {
+  const v = nearest(ev), tip = $("tip");
+  P.hover = v ? v.event_id : null; drawOverlay();
+  if (!v) { tip.style.display = "none"; $("cv-over").style.cursor = "default"; return; }
+  $("cv-over").style.cursor = "pointer";
+  const L = v.latest, t = tierOf(v);
+  tip.innerHTML = `#${v.event_id} · <span class="t${t}">${TIER_NAME[t]}</span>${S.mode !== "model" ? " (rule)" : ""}<br>`
+    + `TCA ${L.time_to_tca_days.toFixed(2)} d · miss ${fmtM(L.miss_distance_m)}<br>Pc 1e${L.max_risk_estimate_log10.toFixed(2)}`;
+  const r = $("plotwrap").getBoundingClientRect(); let x = ev.clientX - r.left + 12, y = ev.clientY - r.top + 12;
+  tip.style.display = "block"; if (x + tip.offsetWidth > r.width) x -= tip.offsetWidth + 24; if (y + tip.offsetHeight > r.height) y -= tip.offsetHeight + 24;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function setMode(m) {
+  S.mode = m; $("m-model").setAttribute("aria-pressed", m === "model"); $("m-base").setAttribute("aria-pressed", m !== "model"); drawScatter();
+}
+
+/* ---------------- selection + detail ---------------- */
+async function select(id, scrollQueue) {
+  S.sel = id; renderRows(); drawOverlay();
+  if (scrollQueue) {
+    const i = S.list.findIndex(e => e.event_id === id), sc = $("qscroll");
+    if (i >= 0 && (i * ROW_H < sc.scrollTop || (i + 1) * ROW_H > sc.scrollTop + sc.clientHeight)) sc.scrollTop = i * ROW_H - sc.clientHeight / 2;
+  }
+  const base = S.byId.get(id);
+  renderDetail(base, null, null);
+  rel3d(base);
+  try {
+    let d = S.detail.get(id); if (!d) { d = await getJSON(`/events/${id}`); S.detail.set(id, d); }
+    if (S.sel !== id) return;
+    renderDetail(base, d, S.explain.get(id) || null);
+    let x = S.explain.get(id); if (!x) { x = await getJSON(`/explain/${id}?llm=false`); S.explain.set(id, x); }
+    if (S.sel !== id) return;
+    renderDetail(base, d, x);
+  } catch (err) {
+    if (S.sel === id) $("detail").insertAdjacentHTML("beforeend", `<div class="fault">${esc(err.message)}</div>`);
+  }
+}
+
+function gauge(val, lo, hi, marks, zones, fmtTick, title) {
+  const W = 400, H = 46, x = (v) => 26 + (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * (W - 52);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(title)}">`;
+  for (const [a, b, col] of zones) s += `<rect x="${x(a)}" y="12" width="${x(b) - x(a)}" height="8" fill="${col}" opacity=".22"/>`;
+  for (const [v, t] of marks) s += `<line x1="${x(v)}" x2="${x(v)}" y1="8" y2="24" stroke="#8da0a5"/><text x="${x(v)}" y="38" fill="#8da0a5" font-size="10.5" text-anchor="middle">${t}</text>`;
+  if (val != null) s += `<path d="M${x(val)-6} 2 L${x(val)+6} 2 L${x(val)} 11 Z" fill="#e9eff0"/><line x1="${x(val)}" x2="${x(val)}" y1="11" y2="22" stroke="#e9eff0" stroke-width="2"/>`;
+  return s + `</svg>`;
+}
+
+function historyChart(h) {
+  if (!h || !h.length) return '<div class="chartnote">No history served.</div>';
+  const W = 400, H = 170, pl = 40, pr = 10, pt = 10, pb = 30;
+  const ts = h.map(p => p.time_to_tca_days), xmax = Math.ceil(Math.max(...ts, 2)), xmin = 0;
+  const vals = h.map(p => p.max_risk_estimate_log10).filter(v => v != null);
+  const ymin = Math.min(-8, Math.floor(Math.min(...vals))), ymax = Math.max(-2, Math.ceil(Math.max(...vals)));
+  const X = (d) => pl + (xmax - d) / (xmax - xmin) * (W - pl - pr), Y = (l) => pt + (ymax - l) / (ymax - ymin) * (H - pt - pb);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Pc upper bound over time">`;
+  s += `<rect x="${pl}" y="${Y(ymax)}" width="${W-pl-pr}" height="${Y(-4)-Y(ymax)}" fill="#ff4a3d" opacity=".10"/>`;
+  s += `<rect x="${pl}" y="${Y(-4)}" width="${W-pl-pr}" height="${Y(-6)-Y(-4)}" fill="#e8a33c" opacity=".10"/>`;
+  for (let l = ymin; l <= ymax; l++) s += `<line x1="${pl}" x2="${W-pr}" y1="${Y(l)}" y2="${Y(l)}" stroke="#1d2426"/><text x="${pl-6}" y="${Y(l)+3.5}" fill="${l===-4?"#ff4a3d":l===-6?"#e8a33c":"#74868b"}" font-size="10" text-anchor="end">${String(l).replace("-","−")}</text>`;
+  for (const [l, col] of [[-4, "#ff4a3d"], [-6, "#e8a33c"]]) s += `<line x1="${pl}" x2="${W-pr}" y1="${Y(l)}" y2="${Y(l)}" stroke="${col}" stroke-dasharray="5 4"/>`;
+  for (let d = xmin; d <= xmax; d++) s += `<text x="${X(d)}" y="${H-pb+14}" fill="#74868b" font-size="10" text-anchor="middle">${d}</text>`;
+  s += `<rect x="${X(1)}" y="${pt}" width="${X(0)-X(1)}" height="${H-pt-pb}" fill="none" stroke="#74868b" stroke-dasharray="2 3"/>`;
+  s += `<text x="${(pl+W-pr)/2}" y="${H-3}" fill="#8da0a5" font-size="10" text-anchor="middle">TIME TO TCA (DAYS) · LOG10 Pc UPPER BOUND</text>`;
+  const pts = h.filter(p => p.max_risk_estimate_log10 != null).sort((a, b) => b.time_to_tca_days - a.time_to_tca_days);
+  s += `<polyline fill="none" stroke="#e9eff0" stroke-width="1.5" points="${pts.map(p => `${X(p.time_to_tca_days).toFixed(1)},${Y(p.max_risk_estimate_log10).toFixed(1)}`).join(" ")}"/>`;
+  for (const p of pts) s += `<rect x="${X(p.time_to_tca_days)-3.5}" y="${Y(p.max_risk_estimate_log10)-3.5}" width="7" height="7" fill="${p.pred_tier != null ? TIER_COL[p.pred_tier] : "none"}" stroke="${p.pred_tier != null ? "none" : "#74868b"}"><title>${p.time_to_tca_days.toFixed(2)} d · Pc 1e${p.max_risk_estimate_log10.toFixed(2)} · miss ${fmtM(p.miss_distance_m)} · ${p.pred_tier != null ? TIER_NAME[p.pred_tier] : "no tier"}</title></rect>`;
+  return s + `</svg><div class="chartnote">Line: Pc upper bound per CDM update. Square colour: model tier at that update. Bands: ≥ 1e−4 critical, 1e−6 to 1e−4 elevated. Dotted box: 24 h window.</div>`;
+}
+
+function renderDetail(e, d, x) {
+  if (!e) return;
+  const L = (d && d.latest) || e.latest, t = e.tier, bt = e._bt, sig = L.sigma_r_m || {};
+  const nc = noCov(sig);
+  const sigVal = (v) => v == null ? '<span class="unk">—</span>' : (v >= SIGMA_CEIL ? `<span class="t1">${v.toExponential(2)} m · no usable uncertainty</span>` : `${v.toFixed(1)} m`);
+  const rtn = L.relative_position_rtn_m || [];
+  let h = `<div class="plate">
+    <div class="dhead"><span class="tiername t${t}">${TIER_NAME[t]}</span><span class="eid num">EVENT ${e.event_id}</span></div>
+    <div class="badges">
+      ${e.needs_review ? '<span class="badge review"><i class="rv"></i>Needs review</span>' : ""}
+      ${nc ? '<span class="badge nocov">No usable uncertainty</span>' : ""}
+      <span class="badge plain">Confidence ${e.confidence != null ? e.confidence.toFixed(2) : "—"}</span>
+      <span class="badge plain">Rule baseline: <span class="t${bt}">${TIER_NAME[bt]}</span></span>
+    </div>
+  </div>
+  <div class="plate"><h3>Why this tier</h3><ul class="reasons">${(e.reasons || []).map(r => `<li>${esc(r)}</li>`).join("") || '<li class="dim">No reasons served.</li>'}</ul></div>
+  <div class="plate"><h3>Latest CDM<span class="sub">${fmtInt(e.n_updates)} updates · ${esc((L.object_type || "unknown").toLowerCase())}</span></h3>
+    <dl class="kv">
+      <dt>Time to TCA</dt><dd>${L.time_to_tca_days.toFixed(2)} d <span class="dim">(${(L.time_to_tca_days*24).toFixed(0)} h)</span></dd>
+      <dt>Miss distance</dt><dd>${fmtInt(Math.round(L.miss_distance_m))} m</dd>
+      <dt>Relative speed</dt><dd>${L.relative_speed_ms != null ? (L.relative_speed_ms/1000).toFixed(2) + " km/s" : '<span class="unk">—</span>'}</dd>
+      <dt>Pc upper bound</dt><dd class="t${pcTier(L.max_risk_estimate_log10)}">${pcSup(L.max_risk_estimate_log10)}</dd>
+      <dt>RTN offset (m)</dt><dd>${rtn.length === 3 ? rtn.map(v => v.toFixed(0)).join(" · ") : '<span class="unk">—</span>'}</dd>
+      <dt>σ radial · chaser</dt><dd>${sigVal(sig.chaser)}</dd>
+      <dt>σ radial · target</dt><dd>${sigVal(sig.target)}</dd>
+    </dl>
+    ${nc ? `<div class="caution"><b>No usable uncertainty</b>Radial sigma is at the data's ceiling placeholder (≥ 6.3e7 m) for at least one object, so the Pc estimate should not be relied on by itself. The miss-distance rule still applies.</div>` : ""}
+  </div>
+  <div class="plate"><h3>Pc vs thresholds</h3>
+    ${gauge(L.max_risk_estimate_log10, -10, -2, [[-10,"1e−10"],[-8,"1e−8"],[-6,"1e−6"],[-4,"1e−4"],[-2,"1e−2"]], [[-10,-6,"#3fe0a0"],[-6,-4,"#e8a33c"],[-4,-2,"#ff4a3d"]], null, "Pc on log scale")}
+    <h3 style="margin-top:8px">Miss distance vs thresholds</h3>
+    ${(() => { const lm = Math.log10(Math.max(1, L.miss_distance_m)); return gauge(-lm, -5, -1.5, [[-5,"100 km"],[-Math.log10(5000),"5 km"],[-3,"1 km"],[-2,"100 m"]], [[-5,-Math.log10(5000),"#3fe0a0"],[-Math.log10(5000),-3,"#e8a33c"],[-3,-1.5,"#ff4a3d"]], null, "Miss distance, log scale, closer to the right"); })()}
+  </div>
+  <div class="plate"><h3>Risk over time<span class="sub">from /api/events/${e.event_id} history</span></h3>${d ? historyChart(d.history) : '<div class="chartnote">Loading history…</div>'}</div>
+  <div class="plate"><h3>Explanation<span class="sub">/api/explain · template (llm=false)</span></h3>
+    ${x ? `<div class="explain">${esc(x.text)}<span class="src">source: ${esc(x.source)}</span></div>` : '<div class="chartnote">Loading explanation…</div>'}
+  </div>`;
+  if (e.true_tier != null) h += `<div class="plate"><h3>Evaluation only</h3><dl class="kv"><dt>Ground-truth tier</dt><dd class="t${e.true_tier}">${TIER_NAME[e.true_tier]}</dd></dl></div>`;
+  const keep = $("detail").scrollTop; $("detail").innerHTML = h; $("detail").scrollTop = keep;
+}
+
+/* ---------------- three.js relative-position view (optional) ---------------- */
+const R3 = { THREE:null, loading:null, scene:null };
+async function rel3d(e) {
+  const box = $("rel3d"), msg = $("rel3d-msg");
+  try {
+    if (!R3.THREE) { msg.textContent = "Loading 3D view…"; R3.loading = R3.loading || import("https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"); R3.THREE = await R3.loading; initR3(box); }
+  } catch (err) { console.warn(err); R3.THREE = null; msg.textContent = "3D view unavailable (" + (err && err.message ? err.message : "three.js did not load") + "). Figures above are unaffected."; return; }
+  msg.style.display = "none";
+  const T = R3.THREE, rtn = e.latest.relative_position_rtn_m;
+  if (!rtn || rtn.length !== 3) { msg.style.display = "flex"; msg.textContent = "No RTN offset served for this event."; return; }
+  // scene axes: T → x, R → y, N → z. Normalised length: enlarged, not to scale.
+  const len = Math.hypot(rtn[0], rtn[1], rtn[2]) || 1;
+  const v = new T.Vector3(rtn[1] / len, rtn[0] / len, rtn[2] / len).multiplyScalar(1.6);
+  R3.other.position.copy(v); R3.other.material.color.set(TIER_COL[e.tier]);
+  R3.line.geometry.setFromPoints([new T.Vector3(0, 0, 0), v]);
+  R3.label = `${fmtInt(Math.round(e.latest.miss_distance_m))} m`;
+  R3.render();
+}
+function initR3(box) {
+  const T = R3.THREE, W = () => box.clientWidth, H = () => box.clientHeight;
+  const renderer = new T.WebGLRenderer({ antialias:true }); renderer.setPixelRatio(window.devicePixelRatio || 1); renderer.setClearColor(0x080a0b);
+  box.prepend(renderer.domElement);
+  const scene = new T.Scene(), cam = new T.PerspectiveCamera(40, 1, 0.1, 100);
+  const own = new T.Mesh(new T.SphereGeometry(0.09, 20, 14), new T.MeshBasicMaterial({ color:0x5ea9ff })); scene.add(own);
+  R3.other = new T.Mesh(new T.SphereGeometry(0.07, 20, 14), new T.MeshBasicMaterial({ color:0xffffff })); scene.add(R3.other);
+  R3.line = new T.Line(new T.BufferGeometry(), new T.LineBasicMaterial({ color:0xe9eff0 })); scene.add(R3.line);
+  const axCol = 0x55666a, axes = [["T", [2, 0, 0]], ["R", [0, 2, 0]], ["N", [0, 0, 2]]], labels = [];
+  for (const [n, p] of axes) {
+    scene.add(new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(-p[0], -p[1], -p[2]), new T.Vector3(...p)]), new T.LineBasicMaterial({ color:axCol })));
+    const el = document.createElement("span"); el.className = "ax"; el.textContent = n; box.appendChild(el); labels.push([el, new T.Vector3(...p).multiplyScalar(1.05)]);
+  }
+  const dist = document.createElement("span"); dist.className = "ax"; dist.style.color = "#e9eff0"; box.appendChild(dist);
+  const grid = new T.GridHelper(4, 8, 0x1d2426, 0x1d2426); scene.add(grid);
+  let yaw = 0.7, pitch = 0.45, drag = null;
+  R3.render = () => {
+    renderer.setSize(W(), H(), false); renderer.domElement.style.width = "100%"; renderer.domElement.style.height = "100%";
+    cam.aspect = W() / H(); cam.updateProjectionMatrix();
+    const r = 5.2; cam.position.set(r * Math.cos(pitch) * Math.sin(yaw), r * Math.sin(pitch), r * Math.cos(pitch) * Math.cos(yaw)); cam.lookAt(0, 0, 0);
+    renderer.render(scene, cam);
+    const place = (el, v3) => { const p = v3.clone().project(cam); el.style.left = ((p.x + 1) / 2 * W() + 4) + "px"; el.style.top = ((1 - p.y) / 2 * H() - 6) + "px"; el.style.display = p.z < 1 ? "block" : "none"; };
+    for (const [el, v] of labels) place(el, v);
+    dist.textContent = R3.label || ""; place(dist, R3.other.position.clone().multiplyScalar(0.5));
+  };
+  renderer.domElement.addEventListener("pointerdown", (ev) => { drag = [ev.clientX, ev.clientY, yaw, pitch]; renderer.domElement.setPointerCapture(ev.pointerId); });
+  renderer.domElement.addEventListener("pointermove", (ev) => { if (!drag) return; yaw = drag[2] - (ev.clientX - drag[0]) * 0.01; pitch = Math.max(-1.4, Math.min(1.4, drag[3] + (ev.clientY - drag[1]) * 0.01)); R3.render(); });
+  renderer.domElement.addEventListener("pointerup", () => { drag = null; });
+  new ResizeObserver(() => R3.render && R3.render()).observe(box);
+}
+
+/* ---------------- evaluation tab ---------------- */
+function renderEval() {
+  const m = S.metrics, el = $("view-eval");
+  if (!m) { el.innerHTML = '<div class="fault">/api/metrics unavailable.</div>'; return; }
+  const methods = ["majority_class", "miss_distance_rule", "max_risk_estimate_rule", "model"].filter(k => m.results[k]);
+  const extra = Object.keys(m.results).filter(k => !methods.includes(k));
+  const label = { majority_class:"Majority class", miss_distance_rule:"Miss-distance rule", max_risk_estimate_rule:"Pc (max risk) rule", model:"Model" };
+  const cols = [["critical_recall","Critical recall"],["critical_precision","Critical precision"],["false_alarm_rate","False alarm"],["macro_f1","Macro F1"],["flagged_rate","Flagged"],["under_tier_rate","Under-tier"]];
+  const rows = methods.concat(extra).map(k => { const r = m.results[k];
+    return `<tr class="${k === "model" ? "model" : ""}"><td>${esc(label[k] || k)}</td><td>${fmtInt(r.n)}</td>${cols.map(([c]) => `<td>${c === "macro_f1" ? (r[c] != null ? r[c].toFixed(3) : "—") : pct(r[c], c === "under_tier_rate" || c === "false_alarm_rate" ? 2 : 1)}</td>`).join("")}</tr>`; }).join("");
+  const cm = (mat, title, sub) => {
+    if (!mat) return "";
+    const names = ["Below thr.", "Elevated", "Critical"];
+    return `<div class="evh">${esc(title)}</div><div class="prose" style="margin-bottom:8px">${sub}</div>
+      <table class="cm"><tr><th>Truth ↓ / Pred →</th>${names.map(n => `<th>${n}</th>`).join("")}<th>Total</th></tr>
+      ${mat.map((row, i) => `<tr><td class="lbl">${names[i]}</td>${row.map((v, j) => `<td class="${v === 0 ? "zero" : i === j ? "diag" : j > i ? "over" : "under"}">${fmtInt(v)}</td>`).join("")}<td>${fmtInt(row.reduce((a, b) => a + b, 0))}</td></tr>`).join("")}</table>`;
+  };
+  // Event-level confusion (latest CDM per event) computed from /api/events, eval-only fields.
+  const evCM = (key) => { if (!S.events.some(e => e.true_tier != null)) return null; const M = [[0,0,0],[0,0,0],[0,0,0]]; for (const e of S.events) if (e.true_tier != null) M[e.true_tier][key === "m" ? e.tier : e._bt]++; return M; };
+  const mo = m.results.model, ru = m.results.max_risk_estimate_rule;
+  const fe = (r) => r && r.confusion ? r.confusion[0][1] + r.confusion[0][2] : null;
+  const lt = (m.by_lead_time && m.by_lead_time.model) || [];
+  const minLead = lt.length ? Math.min(...lt.map(b => b.days_to_tca[0])) : null;
+  const w = S.summary && S.summary.warnings_24h;
+  el.innerHTML = `<div class="evgrid"><div>
+    <div class="evh">Methods · ${esc(m.split)} split</div>
+    <div class="prose" style="margin-bottom:10px">Scored per CDM (n = ${fmtInt(mo ? mo.n : null)}), not per event. Class counts: Below threshold ${fmtInt(m.class_counts.SAFE)}, Elevated ${fmtInt(m.class_counts.ELEVATED)}, Critical ${fmtInt(m.class_counts.CRITICAL)}.</div>
+    <table><tr><th>Method</th><th>n</th>${cols.map(([, n]) => `<th>${n}</th>`).join("")}</tr>${rows}</table>
+    ${mo && ru ? `<div class="prose" style="margin-top:12px">Versus the Pc rule, the model keeps critical recall at <b>${pct(mo.critical_recall)}</b> (rule ${pct(ru.critical_recall)}) while flagging <b>${pct(mo.flagged_rate)}</b> of CDMs instead of ${pct(ru.flagged_rate)}. Truly-below CDMs raised to Elevated or Critical: ${fmtInt(fe(ru))} → <b>${fmtInt(fe(mo))}</b> (${((1 - fe(mo) / fe(ru)) * 100).toFixed(1)}% fewer). Missed criticals listed by the evaluator: <b>${fmtInt((m.missed_criticals || []).length)}</b>.</div>` : ""}
+    <div class="evh">Model by lead time</div>
+    <table><tr><th>Days to TCA</th><th>n</th><th>Critical recall</th><th>False alarm</th><th>Macro F1</th><th>Flagged</th></tr>
+      ${lt.map(b => `<tr><td>${b.days_to_tca[0]}–${b.days_to_tca[1]}</td><td>${fmtInt(b.n)}</td><td>${pct(b.critical_recall)}</td><td>${pct(b.false_alarm_rate, 2)}</td><td>${b.macro_f1.toFixed(3)}</td><td>${pct(b.flagged_rate)}</td></tr>`).join("")}</table>
+    <div class="caution" style="max-width:72ch"><b>24 h window is empty</b>The test set has no CDM within 2 days of TCA${minLead != null ? ` (earliest lead-time bucket served starts at ${minLead} days)` : ""}${w ? `; /api/summary reports ${fmtInt(w.events_in_window)} events in the ${w.window_days * 24} h window` : ""}. Nothing here measures performance inside the final day.</div>
+  </div><div>
+    ${cm(mo && mo.confusion, "Model confusion · per CDM", "Rows are truth, columns prediction. Amber: over-tiered (extra workload). Red: under-tiered (missed risk).")}
+    ${cm(ru && ru.confusion, "Pc rule confusion · per CDM", "Same layout, for comparison.")}
+    ${cm(evCM("m"), "Model · per event (latest CDM)", `Computed in the page from /api/events (tier vs true_tier), ${fmtInt(S.events.length)} events.`)}
+  </div></div>`;
+}
+
+/* ---------------- wiring ---------------- */
+function setTab(t) {
+  $("tab-triage").setAttribute("aria-pressed", t === "triage"); $("tab-eval").setAttribute("aria-pressed", t === "eval");
+  $("view-triage").hidden = t !== "triage"; $("view-eval").hidden = t !== "eval";
+  if (t === "eval") renderEval(); else { drawScatter(); renderRows(); }
+}
+function wire() {
+  $("tab-triage").onclick = () => setTab("triage"); $("tab-eval").onclick = () => setTab("eval");
+  $("m-model").onclick = () => setMode("model"); $("m-base").onclick = () => setMode("base");
+  document.querySelectorAll("[data-tf]").forEach(b => b.onclick = () => {
+    S.tf = b.dataset.tf; document.querySelectorAll("[data-tf]").forEach(x => x.setAttribute("aria-pressed", x === b)); applyFilter();
+  });
+  $("f-review").onchange = (ev) => { S.review = ev.target.checked; applyFilter(); };
+  let raf = 0; $("qscroll").addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; renderRows(); }); });
+  $("qspacer").addEventListener("click", (ev) => { const r = ev.target.closest(".qrow"); if (r) select(+r.dataset.id, false); });
+  $("qscroll").addEventListener("keydown", (ev) => {
+    if (ev.key !== "ArrowDown" && ev.key !== "ArrowUp") return; ev.preventDefault();
+    let i = S.list.findIndex(e => e.event_id === S.sel); i = i < 0 ? 0 : Math.max(0, Math.min(S.list.length - 1, i + (ev.key === "ArrowDown" ? 1 : -1)));
+    if (S.list[i]) select(S.list[i].event_id, true);
+  });
+}
+
+async function boot() {
+  wire();
+  try {
+    const [summary, ev, metrics] = await Promise.all([getJSON("/summary"), getJSON("/events"), getJSON("/metrics").catch(err => { console.warn(err); return null; })]);
+    S.summary = summary; S.metrics = metrics; S.events = ev.events;
+    S.idx = new Map(); S.events.forEach((e, i) => { e._bt = baseTier(e); S.byId.set(e.event_id, e); S.idx.set(e.event_id, i); });
+    const servedBaseline = S.events.some(e => e.baseline_tier != null);
+    $("r-src").textContent = `Live from /api · ${fmtInt(ev.total)} events · rule baseline ${servedBaseline ? "served by API" : "computed in page (baseline_tier not served yet)"}${metrics ? "" : " · metrics unavailable"}`;
+    setLamp("ok", "live /api");
+    renderHeader(); setupScatter(); applyFilter(); drawScatter();
+    if (S.events.length) select(S.events[0].event_id, false);
+    if (/base/.test(location.hash)) setMode("base");
+    if (/eval/.test(location.hash)) setTab("eval");
+  } catch (err) {
+    setLamp("fault", "api error");
+    document.querySelector("main").insertAdjacentHTML("afterbegin", `<div class="fault">Could not load data: ${esc(err.message)}. Start the API: uv run uvicorn server:app --port 8000</div>`);
+  }
+}
+boot();
+</script>
+</body>
+</html>
