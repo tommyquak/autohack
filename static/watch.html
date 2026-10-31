@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second Look · Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/close_approach.css">
+<link rel="stylesheet" href="/static/watch.css">
+</head>
+<body>
+<!--
+THESIS: one calm instrument that watches a single satellite and only raises its voice for a Critical; refuses the
+  dashboard-of-everything (tables, tier-tinted zones, colour bands) in favour of a quiet stage plus one alert.
+OWN-WORLD: Night Instrument. #080a0b ground, 1px hairlines, uppercase Spline Sans Mono labels, tabular figures,
+  Archivo for sentences. Blue #5ea9ff is only ever our satellite; red #ff4a3d only Critical; amber #e8a33c Elevated.
+STORY: the analyst sees the satellite alone, traffic drifting in as blips; a Critical crosses its 24 h window, the
+  camera closes in, a side box shows it to scale and walks through how it was detected; the analyst decides.
+FIRST VIEWPORT: full-bleed canvas stage, satellite dead centre; replay clock in the top bar; next-Critical countdown
+  top left; upcoming-Critical queue bottom left; legend and honesty note bottom right.
+FORM: extension of the established dashboard world (brief-pinned); no concept roll, no seed key.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+<header class="top">
+  <a class="brand" href="/" title="Back to the dashboard"><span class="mark" aria-hidden="true"></span><b>SECOND LOOK</b><span class="sep" aria-hidden="true">·</span><span>WATCH</span></a>
+  <div class="clock" id="clock" role="group" aria-label="Replay clock"></div>
+  <a class="toplink" href="/">Dashboard</a>
+</header>
+
+<main class="stage" id="stage">
+  <canvas id="watch-canvas" role="img" aria-label="Our satellite at the centre; encounters approach as blips. Elevated in amber, Critical in red, below-threshold events faint."></canvas>
+  <div class="alarm" id="alarm" aria-hidden="true"></div>
+  <div class="tip" id="tip" hidden></div>
+
+  <section class="readout" aria-live="off">
+    <p class="countdown num" id="countdown">T− <span>–.––</span> d</p>
+    <p class="countdown-cap" id="countdown-cap">Loading encounters&hellip;</p>
+  </section>
+
+  <section class="queue" aria-labelledby="q-h">
+    <h2 id="q-h">Upcoming Critical <span class="count num" id="q-count"></span></h2>
+    <ol id="q-list"></ol>
+    <p class="q-note" id="q-note"></p>
+  </section>
+
+  <section class="legend" aria-label="Legend and limits">
+    <ul class="keys" id="keys"></ul>
+    <p class="honest">Positions from the CDM relative geometry (bearing: radial up, normal across). Icons and distances on
+      the main stage are illustrative, not to scale; the side box is to scale (km). Below threshold means below the
+      alert thresholds, never &ldquo;safe&rdquo;.</p>
+  </section>
+
+  <aside class="alert" id="alert" role="dialog" aria-modal="false" aria-labelledby="a-title" hidden>
+    <header class="a-head">
+      <h2 id="a-title" tabindex="-1"></h2>
+      <button type="button" class="icon-btn" id="a-close" aria-label="Dismiss alert">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <p class="a-sentence" id="a-sentence"></p>
+    <div class="a-top">
+      <div id="a-plot" aria-label="Close-up of our satellite and the object at closest approach, to scale"></div>
+      <div class="a-side">
+        <div class="a-readings" id="a-readings"></div>
+        <p class="a-cap">Close-up to scale (km). RTN frame, our satellite at the centre, the 1 km shell drawn. Icons enlarged; a faded icon means no usable uncertainty.</p>
+      </div>
+    </div>
+    <section class="detect" aria-labelledby="d-h">
+      <h3 id="d-h">How we detected it</h3>
+      <ol id="steps"></ol>
+    </section>
+    <footer class="a-foot">
+      <button type="button" class="btn primary" id="a-ack">Acknowledge</button>
+      <button type="button" class="btn" id="a-dismiss">Back to watch</button>
+      <span class="a-next num" id="a-next"></span>
+    </footer>
+  </aside>
+  <p class="sr-only" id="announce" aria-live="assertive"></p>
+</main>
+
+<div class="banner" id="banner" role="alert" hidden></div>
+<script type="module" src="/static/js/watch.js"></script>
+</body>
+</html>
