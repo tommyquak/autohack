@@ -87,10 +87,11 @@ def api_event(event_id: int):
 
 @app.get("/api/metrics")
 def api_metrics():
-    """metrics.json, plus a "forecast" block (final tier from >= 2-day messages) when forecast_metrics.json exists."""
+    """metrics.json, plus a "forecast" block (final tier from >= 2-day messages) when forecast_metrics.json exists:
+    its summaries only (the per-fold detail stays in the file)."""
     out = load_report("metrics.json")
     try:
-        return {**out, "forecast": load_report("forecast_metrics.json")}
+        return {**out, "forecast": reports.forecast_summary(load_report("forecast_metrics.json"))}
     except ReportMissing:
         return out
 

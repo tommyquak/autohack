@@ -26,10 +26,12 @@ by event-grouped cross-validation on train only (scripts/eval_actions.py, docs/a
 
 "MANEUVER PLANNING" means an analyst should start planning; it is not a decision. The operator decides.
 
-Forecast hook (optional, not required): if the event carries Kalent's planned `forecast` object
-({"p_final": [p_below, p_elevated, p_critical], "prediction_set": [...]}), it can only raise the queue:
-Critical in the prediction set or p_critical >= `forecast_p_maneuver` -> MANEUVER PLANNING;
-p_elevated + p_critical >= `forecast_p_review` -> at least ANALYST REVIEW.
+Forecast hook (optional, not required): if the event carries a CALIBRATED `forecast` object (Kalent's planned
+contract: {"calibrated": true, "p_final": [p_below, p_elevated, p_critical], "prediction_set": [...]}), it can only
+raise the queue: Critical in the prediction set or p_critical >= `forecast_p_maneuver` -> MANEUVER PLANNING;
+p_elevated + p_critical >= `forecast_p_review` -> at least ANALYST REVIEW. The shipped final-tier forecast
+(triage.forecast) carries uncalibrated scores and `"calibrated": false`, so the hook ignores it: a queue never moves
+on an uncalibrated score.
 """
 
 from triage.explain import REVIEW_TEXT, review_kind
@@ -107,7 +109,7 @@ def escalation_watch(event: dict, params: dict | None = None) -> tuple[bool, lis
 def _forecast(event: dict, p: dict) -> tuple[str | None, str | None]:
     """(queue floor, reason) from Kalent's forecast object, or (None, None) when absent or malformed."""
     fc = event.get("forecast")
-    if not isinstance(fc, dict):
+    if not isinstance(fc, dict) or fc.get("calibrated") is not True:
         return None, None
     pset = fc.get("prediction_set") or []
     probs = fc.get("p_final")

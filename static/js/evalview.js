@@ -2,7 +2,7 @@
 // Every figure is derived from that file; nothing is typed in. Tiers are "Below threshold", never "safe".
 // The organisers' task (final tier from CDMs >= 2 days out, metrics.forecast) leads the tab; the per-message
 // nowcast (funnel + the figures below it) follows as supporting evidence.
-import { TIERS, esc, pct } from "./fmt.js";
+import { TIERS, esc, fmtDist, pct } from "./fmt.js";
 import { state, subscribe } from "./state.js";
 
 const LABEL = {
@@ -37,7 +37,8 @@ export function initEval() {
 
 // ---- Official task: final tier from CDMs >= 2 days out (metrics.forecast) ----
 const OFFICIAL = [
-  ["second_look_forecast", "Second Look forecast", "rule floor + model escalation"],
+  ["second_look_forecast", "Second Look forecast", "rule floor + model escalation (ranking scores)"],
+  ["floor_two_lines", "Two distance lines", "rule floor + miss-distance escalation lines · no model"],
   ["persistence_miss", "Keep today's tier", "miss-distance tier now · strongest baseline"],
   ["persistence_rule", "Pc-bound persistence", "Pc bound + miss rule tier now"],
 ];
@@ -90,8 +91,10 @@ function renderOfficial() {
     ? "Higher Critical recall and escalation catch than keeping today's tier, at lower precision and accuracy; the recall target is a target, not a guarantee."
     : `Against keeping today's tier: ${rec} Critical recall, ${caught} escalation catch, ${prec} precision and ${acc} accuracy. The recall target is a target, not a guarantee.`;
   const op = f.decision_layer?.shipped_thresholds;
-  const opLine = op
-    ? `Operating point: Critical recall target ${pct(op.critical_recall_target)} on out-of-fold training scores, giving t<sub>crit</sub> ${op.t_crit.toFixed(3)} and t<sub>elev</sub> ${op.t_elev.toFixed(3)}. Scores rank events; they are not calibrated probabilities.`
+  const lines = f.decision_layer?.two_lines_baseline_thresholds;
+  const opLine = op && Number.isFinite(op.t_crit) && Number.isFinite(op.t_elev)
+    ? `Operating point: Critical recall target ${pct(op.critical_recall_target)} on out-of-fold training scores, giving t<sub>crit</sub> ${op.t_crit.toFixed(3)} and t<sub>elev</sub> ${op.t_elev.toFixed(3)}. Scores rank events; they are not calibrated probabilities. A rule-defined Critical is never lowered.` +
+      (lines && Number.isFinite(lines.m_crit) ? ` The no-model baseline escalates at miss ≤ ${fmtDist(lines.m_crit)} (Critical) and ≤ ${fmtDist(lines.m_elev)} (Elevated).` : "")
     : "";
   const splitNote = isCV
     ? `Mean ± sd over ${nFolds} folds of ${n(nEvents)} events; escalation counts summed over folds.`

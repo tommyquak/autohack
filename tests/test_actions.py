@@ -110,12 +110,20 @@ def test_labels_are_never_read():
 
 
 def test_forecast_hook_only_raises_the_queue():
-    low = {"p_final": [0.98, 0.01, 0.01], "prediction_set": ["Below threshold"]}
+    low = {"calibrated": True, "p_final": [0.98, 0.01, 0.01], "prediction_set": ["Below threshold"]}
     assert action(make_event(tier=2, misses=(600.0,) * 3, pcs=(-3.0,) * 3, forecast=low))["queue"] == MANEUVER
     assert action(make_event(tier=1, forecast=low))["queue"] == REVIEW
-    assert action(make_event(tier=0, forecast={"p_final": [0.1, 0.2, 0.7]}))["queue"] == MANEUVER
-    assert action(make_event(tier=0, forecast={"p_final": [0.7, 0.25, 0.05]}))["queue"] == REVIEW
-    assert action(make_event(tier=0, forecast={"p_final": "bad"}))["queue"] == MONITOR  # malformed -> ignored
+    cal = {"calibrated": True}
+    assert action(make_event(tier=0, forecast={**cal, "p_final": [0.1, 0.2, 0.7]}))["queue"] == MANEUVER
+    assert action(make_event(tier=0, forecast={**cal, "p_final": [0.7, 0.25, 0.05]}))["queue"] == REVIEW
+    assert action(make_event(tier=0, forecast={**cal, "p_final": "bad"}))["queue"] == MONITOR  # malformed -> ignored
+
+
+def test_forecast_hook_ignores_uncalibrated_scores():
+    # The shipped final-tier forecast carries uncalibrated scores: it must never move a queue.
+    assert action(make_event(tier=0, forecast={"p_final": [0.1, 0.2, 0.7]}))["queue"] == MONITOR
+    shipped = {"calibrated": False, "p_final": [0.1, 0.2, 0.7], "predicted_final_tier": 2}
+    assert action(make_event(tier=0, forecast=shipped))["queue"] == MONITOR
 
 
 def test_build_events_attaches_actions(cdms):

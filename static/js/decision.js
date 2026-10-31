@@ -41,15 +41,28 @@ let dirty = true;
 const X = (d) => M.l + (1 - clamp(d, 0, X_MAX) / X_MAX) * (w - M.l - M.r);
 const Y = (km) => M.t + (1 - (clamp(Math.log10(km), Y_MIN, Y_MAX) - Y_MIN) / (Y_MAX - Y_MIN)) * (h - M.t - M.b);
 
-// event.forecast = {predicted_final_tier, p_final, ...}; p_final are class-weighted model scores, NOT calibrated probabilities.
+// event.forecast (triage/forecast.py, docs/CONTRACT.md): the decision, its floor and the one comparison behind an
+// escalation (score vs threshold). No probability is shown: the model's numbers are uncalibrated class-weighted
+// scores, so they appear only inside that comparison, labelled as ranking scores.
 function forecast(e) {
   const f = e.forecast;
   if (f && Number.isInteger(f.predicted_final_tier)) {
-    const t = f.predicted_final_tier;
-    const p = Array.isArray(f.p_final) ? f.p_final[t] : typeof f.p_final === "number" ? f.p_final : null;
-    return { tier: t, p: Number.isFinite(p) ? p : null, real: true };
+    const floor = Number.isInteger(f.floor_tier) ? f.floor_tier : e.tier;
+    return { tier: f.predicted_final_tier, floor, decision: f.decision || "", why: escalationText(f.escalation), real: true };
   }
-  return { tier: e.tier, p: null, real: false };
+  return { tier: e.tier, floor: e.tier, decision: "", why: "", real: false };
+}
+function escalationText(x) {
+  if (!x || !Number.isFinite(x.value) || !Number.isFinite(x.threshold)) return "";
+  if (x.rule === "miss_line") {
+    const to = TIERS[x.to_tier]?.name;
+    return `miss ${fmtDist(x.value)} ≤ ${fmtDist(x.threshold)}${to ? ` ${to}` : ""} escalation line`;
+  }
+  if (x.rule === "model_score") {
+    const to = TIERS[x.to_tier]?.name;
+    return `model score${to ? ` for final ${to}${x.to_tier === 1 ? " or worse" : ""}` : ""} ${x.value.toFixed(2)} ≥ threshold ${x.threshold.toFixed(2)} (a ranking score, not a probability)`;
+  }
+  return "";
 }
 const escalates = (e) => forecast(e).real && forecast(e).tier > e.tier;
 const n = (v) => v.toLocaleString("en");
@@ -219,7 +232,7 @@ const ESC_W = 14, ESC_H = 11;
 function layoutMarks() {
   const xa = X(DECISION) + 12, xb = X(0) - 4;
   const W = Math.max(1, xb - xa);
-  const order = (a, b) => ((forecast(b).p ?? -1) - (forecast(a).p ?? -1)) || (rank.get(a.event_id) - rank.get(b.event_id));
+  const order = (a, b) => rank.get(a.event_id) - rank.get(b.event_id);
   const escCols = Math.max(1, Math.floor(W / ESC_W));
   const groups = ZONES.map((z) => {
     const list = events.filter((e) => forecast(e).tier === z.tier).sort(order);
@@ -486,7 +499,7 @@ function onMove(ev) {
   } else {
     const ft = TIERS[f.tier];
     body = f.real
-      ? `Forecast final: <b style="color:${ft.color}">${ft.name}</b>${f.p != null ? ` · score ${f.p.toFixed(2)}` : ""}${escalates(e) ? " · escalation" : ""}`
+      ? `Forecast final: <b style="color:${ft.color}">${ft.name}</b> · ${escalates(e) ? `escalated: ${esc(f.why)}` : "floor kept"}`
       : `<span style="color:${C.muted}">Forecast pending: placed by current tier</span>`;
   }
   tip.innerHTML = `<b style="color:${t.color}">${t.icon} ${t.name}</b> now · EVT ${esc(e.event_id)}<br>${body}`;
@@ -569,7 +582,8 @@ function renderCard(e, pts) {
   const t = TIERS[e.tier], f = forecast(e), ft = TIERS[f.tier], L = e.latest;
   const fc = f.real
     ? `<span class="tier" style="color:${ft.color}">${ft.icon} ${ft.name}</span>` +
-      `<span class="sub">${f.p != null ? `model score ${f.p.toFixed(2)} (not a calibrated probability)` : "no model score"}${escalates(e) ? ` · <span class="esc">escalation from ${t.name}</span>` : ""}</span>`
+      `<span class="sub">Floor ${TIERS[f.floor].name} (never lowered)` +
+      `${escalates(e) ? ` · <span class="esc">escalated from ${t.name}</span>: ${esc(f.why)}` : " · floor kept"}</span>`
     : `<span class="sub">Forecast arrives with the final-tier forecaster; showing the current tier.</span>`;
   card.innerHTML =
     `<div class="dp-card-head"><h2>EVT ${esc(e.event_id)}</h2><button type="button" class="dp-x" aria-label="Close">×</button></div>` +

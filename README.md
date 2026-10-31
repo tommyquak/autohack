@@ -13,7 +13,8 @@ model may only remove over-warnings.
 
 > **Final predictions (official task) are in [`predictions/test_final_tier.csv`](predictions/test_final_tier.csv)**:
 > one row per test event (2,167), with the predicted **final tier** at closest approach, made from messages 2+ days out.
-> It also holds the three tier scores, the rule floor, the decision (floor kept / escalated) and the top reason.
+> It also holds the rule floor, the decision (floor kept / escalated), the two model scores with their thresholds
+> (uncalibrated ranking scores, not probabilities) and the reasons.
 > The same predictions, with units, latitude and every message, are in [`predictions/test_final_tier_predictions.xlsx`](predictions/test_final_tier_predictions.xlsx).
 > [`predictions/test_predictions.csv`](predictions/test_predictions.csv) is the per-message tier (one row per test CDM), not the final tier.
 
@@ -27,6 +28,7 @@ event cross-validation over the 11,942 usable train events (`usable_for_training
 | 5-fold event CV, 11,942 events | Critical recall | Critical precision | Critical F2 | Escalations caught | False escalations | Accuracy |
 |---|---|---|---|---|---|---|
 | Keep today's tier (miss-only) | 0.865 | **0.857** | 0.863 | 0/270 | **0** | **0.938** |
+| Two miss-distance lines on the same floor (no model) | 0.897 | 0.755 | 0.864 | 73/270 | 766 | 0.888 |
 | **Second Look forecast** | **0.911** | 0.757 | **0.875** | **79/270** | 775 | 0.888 |
 
 - Second Look starts from today's tier, never lowers a rule-defined Critical (it preserves every rule-defined
@@ -36,14 +38,16 @@ event cross-validation over the 11,942 usable train events (`usable_for_training
   0.757), and raises no false escalations. We buy higher Critical recall, better Critical F2 and 79 caught escalations
   with 775 false escalations over 11,942 events. It wins on Critical recall, Critical F2 and escalations caught, and
   loses on accuracy and Critical precision: it does not beat keeping today's tier across the board.
-- **A single distance rule does about as well for Critical escalation:** "Critical if the latest miss < m*" (m* tuned
-  train-only to the same 90% target, about 1.1 km) scores Critical recall 0.897, precision 0.755, F2 0.864, accuracy
-  0.892, with 47/270 escalations caught and 687 false. The model's added value is mainly the extra escalations caught
-  (79 vs 47), at the cost of more false escalations.
+- **Two distance lines come close to the model:** "Critical if the latest miss <= ~1.1 km, Elevated if <= ~5.4 km"
+  (both tuned train-only, the first to the same 90% target) gets Critical F2 0.864 vs 0.875 and 73 vs 79 escalations
+  caught. The model is ahead in 5 of 5 folds, but by 0.002-0.022 F2; it loses on the 80/20 split (0.883 vs 0.896), and
+  its thresholds move across folds where the lines do not. We do not claim the model beats a rule.
 - **Expected queue on test:** the forecast marks 255 of the 2,167 test events Critical, against 196 by rule. Test
-  events' latest message is mostly 2.0-2.4 days out (89% of events, median 2.19 d), so the 8,293-event cohort whose final message is never an input
-  (Critical recall 0.883, accuracy 0.876) is the better guide to test than the CV above. Scores are class-weighted,
-  not calibrated. Method, the 80/20 split, baselines and limits: [docs/FORECAST.md](docs/FORECAST.md).
+  events' latest message is mostly 2.0-2.4 days out (89% of events, median 2.19 d), so the 8,293-event cohort whose
+  final message is never an input is the better guide to test than the CV above: there, Critical recall 0.883,
+  precision 0.699, accuracy 0.876, so about 178 of the 255 would end Critical. Scores are class-weighted, not
+  calibrated, and are never shown as probabilities. Method, the 80/20 split, baselines and limits:
+  [docs/FORECAST.md](docs/FORECAST.md).
 
 ## See it
 
@@ -210,6 +214,7 @@ uv run python -m triage.evaluate       # -> reports/metrics.json
 uv run python -m triage.build_events   # -> reports/events.json
 uv run python -m triage.predict        # -> predictions/test_predictions.csv (per message)
 uv run python -m triage.forecast       # -> predictions/test_final_tier.csv (final tier per event; needs data/raw/labels/challenge1_event_labels.xlsx)
+uv run python scripts/export_final_tier_xlsx.py  # -> predictions/test_final_tier_predictions.xlsx (same predictions)
 uv run pytest -q                       # runs on data/sample, no key needed
 ```
 

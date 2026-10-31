@@ -1,6 +1,10 @@
 """Build reports/events.json for the dashboard (schema: docs/CONTRACT.md).
 
 uv run python -m triage.build_events --data data/sample/cdm_sample.csv
+
+On the default test CSV, the final-tier forecast (predictions/test_final_tier.csv, from `python -m triage.forecast`)
+is re-attached to every event as `forecast`. It is skipped, with a message, when the file is missing, covers other
+events, or its floor no longer matches the rebuilt tier (a stale forecast: re-run triage.forecast).
 """
 
 import argparse
@@ -153,12 +157,27 @@ def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
     return {"summary": summary, "events": events, "model_evidence": certify.model_evidence(artifact)}
 
 
+def attach_forecast(out: dict) -> str:
+    """Re-attach the saved final-tier forecast to built events (in place). Returns what happened, for the log."""
+    from triage import forecast
+
+    if not forecast.PREDICTIONS.exists():
+        return f"no forecast attached: {forecast.PREDICTIONS.name} missing (run `uv run python -m triage.forecast`)"
+    try:
+        forecast.attach(out, forecast.load_predictions())
+    except forecast.ForecastMismatch as err:
+        return f"no forecast attached: {err} (run `uv run python -m triage.forecast`)"
+    return f"forecast attached to {len(out['events'])} events"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", help="CSV path; default: test CSV under data/raw")
     args = ap.parse_args()
     path = Path(args.data) if args.data else find_csv("test", RAW_DIR)
     out = build(load_cdms(path))
+    if not args.data:  # event ids restart per file: the forecast belongs to the test CSV only
+        print(attach_forecast(out))
     REPORTS.mkdir(exist_ok=True)
     (REPORTS / "events.json").write_text(json.dumps(out, indent=2))
     print(json.dumps(out["summary"], indent=2))
