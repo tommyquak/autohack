@@ -23,7 +23,7 @@
     { color: C.critical, icon: "■", name: "Critical" },
   ];
   const CRITICAL_KM = 1, ELEVATED_KM = 5;
-  const SIGMA_CAP_M = 6.3e7; // dataset ceiling for missing sigmas (~63,781 km)
+  const SIGMA_SENTINEL_M = 1e7; // dataset placeholder for unusable sigmas is ~63,781 km (triage/features.py)
   const MAX_COMPARE = C.series.length;
   const CAUTION_TEXT = {
     needs_review: "Needs review",
@@ -71,7 +71,7 @@
     const L = event.latest;
     const [r, t, n] = L.relative_position_rtn_m.map(km);
     const sc = L.sigma_r_m.chaser, st = L.sigma_r_m.target;
-    const capped = Math.max(sc, st) >= SIGMA_CAP_M;
+    const capped = Math.max(sc, st) > SIGMA_SENTINEL_M;
     const sigmaKm = km(Math.hypot(sc, st));
     const tier = TIER[event.tier];
     // Zoom to the event: a 200 m miss must not be a dot inside a 5 km shell. Shells are drawn only if they fit.

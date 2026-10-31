@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from triage import model
+from triage import explain, model
 from triage.data import EVENT, RAW_DIR, find_csv, load_cdms
 from triage.tiers import MISS_CRITICAL_M, TIER_NAMES, Tier, reasons
 
@@ -53,6 +53,8 @@ def build(df: pd.DataFrame) -> dict:
                 ],
             }
         )
+    for e in events:
+        e["cautions"] = explain.cautions(e)
     # Most urgent first: tier, then soonest TCA.
     events.sort(key=lambda e: (-e["tier"], e["latest"]["time_to_tca_days"]))
     window = [e for e in events if e["latest"]["time_to_tca_days"] <= WARNING_WINDOW_DAYS]
@@ -60,6 +62,7 @@ def build(df: pd.DataFrame) -> dict:
         "n_events": len(events),
         "by_tier": {TIER_NAMES[t]: sum(e["tier"] == t for e in events) for t in Tier},
         "needs_review": sum(e["needs_review"] for e in events),
+        "cautions": {c: sum(c in e["cautions"] for e in events) for c in explain.CAUTIONS},
         "warnings_24h": {
             "window_days": WARNING_WINDOW_DAYS,
             "events_in_window": len(window),
