@@ -925,20 +925,12 @@
       "notes": "Now the honest part. The strongest simple baseline, the miss rule plus the Pc bound for Critical only, beats us on false alarms: 8 against our 2,214. The price is 1,012 truly Elevated messages shown as below threshold; we show one. Our value is the Pc-Elevated band. And on train cross-validation, the model removes 64.1 percent of false alarms, against 9.7 for a tuned Pc threshold.\n\n[about 31 s, from 3:41]\ndocs/EVAL.md and README \"Results\". Test table: status quo 100% / 4,534 / 0 under-tiered; miss-distance rule 95.9% (misses 91 Critical CDMs) / 0 / 1,116 (best macro F1 0.952, flattering by construction); miss rule + Pc for Critical only 100% / 8 / 1,012 (workload 31.5% vs our 44.7%); ours 100% / 2,214 / 1. The two untuned rules are fixed from the brief, so scoring them on test is a baseline, not tuning. CV (train only, nested, event-grouped 5-fold, same 99% rule): tuned Pc threshold 9.7% removed, 47 under-tiered; model 64.1%, 39 under-tiered."
     },
     {
-      "sceneId": "fail",
-      "notes": "Here's where it fails. One genuinely Elevated message was shown below threshold: event 1278, 4.62 days out. Its Pc bound was 10 to the minus 5.61; the truth was just over the Elevated line. The analyst would still see it: the updates before and after stayed Elevated. And on 26 junk and edge-case files, every one was rejected or flagged.\n\n[about 28 s, from 4:12]\nREADME \"Where it fails\": test row 14473, miss 23,375 m, true Pc 10^-5.92, shown below threshold with confidence 0.99 and no flag; the 5.12 d update before and the 4.39 d update after (needs review) stayed Elevated; baseline_tier is kept next to tier. Robustness 26/26 (docs/robustness.md): rejected clearly or flagged, never quietly tiered too low. Capture: dashboard Compare tab, #compare=1278."
-    },
-    {
-      "sceneId": "gate",
-      "notes": "We set our safety gate before testing and stuck to it. Model v2 cut false alarms by a further 23 percent, but it showed three truly Elevated messages as below threshold, against our limit of one. So it didn't ship. And we're honest that the gate is weak: test counts are noisy. The stricter gate is on cross-validation, and that's our next step.\n\n[about 29 s, from 4:40]\nREADME \"Our eval caught our bug\" and docs/EVAL.md \"Safety gate\". v1's CV rate predicts about 5.9 under-tiered CDMs on a test set this size, so seeing ≤ 1 had about a 2% chance (Poisson). Stricter gate: operator-invisible under-tier on train CV (not needs_review, no later update shown at its true tier): v1 23 CDMs in 10 events. v2@0.995: same workload (+1.1% false alarms), 17 under-tiered, 9 invisible; not shipped, never run on test. First model regressed log Pc and flagged 100% of CDMs."
-    },
-    {
       "sceneId": "next",
-      "notes": "Here's the forecast in full. On five-fold CV, 760 of 834 final-Critical events are forecast Critical, and most errors over-warn rather than under-warn. We ship the 90 percent target: 95 percent would catch 115 escalations, not 79, but with 1,139 false escalations instead of 775. And honestly, a single distance rule does about as well on Critical. Still open: calibrated scores, a live feed, and data inside two days.\n\n[about 32 s, from 5:09]\nConfusion matrix: 5-fold CV, summed over folds (as on the Evaluation tab), rows = true final tier, columns = forecast (below / Elevated / Critical): below 8,019 / 900 / 27; Elevated 119 / 1,824 / 219; Critical 10 / 64 / 760. Under-tiered: 193 events (119 + 10 + 64); over-tiered: 1,146. Persistence (miss-only) for comparison: Critical 14 / 99 / 721. Recall-target sweep (docs/FORECAST.md, re-tuned train-only per target): 0.85 → recall 0.873, precision 0.808, F2 0.859, 47/270 caught, 703 false escalations, accuracy 0.891; 0.90 (shipped) → recall 0.911, precision 0.757, F2 0.875, 79/270, 775, accuracy 0.888; 0.95 (sensitivity) → recall 0.950, precision 0.565, F2 0.835, 115/270, 1,139, accuracy 0.862. 0.95 was the pre-registered target; the team chose 0.90 after seeing CV (PR #74: best Critical F2 of the three, 364 fewer false escalations), so the CV numbers at 0.90 are slightly optimistic. Distance rule (nowcast floor + Critical if latest miss < m*, m* tuned train-only to 90% recall, 1.04-1.14 km): recall 0.897, precision 0.755, F2 0.864, 47/270 caught, 687 false escalations. No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
+      "notes": "Here's the forecast in full. On five-fold CV, 760 of 834 final-Critical events are forecast Critical, and most errors over-warn rather than under-warn. We ship the 90 percent target: 95 percent would catch 115 escalations, not 79, but with 1,139 false escalations instead of 775. And honestly, a single distance rule does about as well on Critical. Still open: calibrated scores, a live feed, and data inside two days.\n\n[about 32 s, from 4:12]\nConfusion matrix: 5-fold CV, summed over folds (as on the Evaluation tab), rows = true final tier, columns = forecast (below / Elevated / Critical): below 8,019 / 900 / 27; Elevated 119 / 1,824 / 219; Critical 10 / 64 / 760. Under-tiered: 193 events (119 + 10 + 64); over-tiered: 1,146. Persistence (miss-only) for comparison: Critical 14 / 99 / 721. Recall-target sweep (docs/FORECAST.md, re-tuned train-only per target): 0.85 → recall 0.873, precision 0.808, F2 0.859, 47/270 caught, 703 false escalations, accuracy 0.891; 0.90 (shipped) → recall 0.911, precision 0.757, F2 0.875, 79/270, 775, accuracy 0.888; 0.95 (sensitivity) → recall 0.950, precision 0.565, F2 0.835, 115/270, 1,139, accuracy 0.862. 0.95 was the pre-registered target; the team chose 0.90 after seeing CV (PR #74: best Critical F2 of the three, 364 fewer false escalations), so the CV numbers at 0.90 are slightly optimistic. Distance rule (nowcast floor + Critical if latest miss < m*, m* tuned train-only to 90% recall, 1.04-1.14 km): recall 0.897, precision 0.755, F2 0.864, 47/270 caught, 687 false escalations. No test CDM is closer than 2 days (minimum 2.0002 d), so the final window is untested. Claude-mode explanations are not evaluated (copilot eval was fallback mode)."
     },
     {
       "sceneId": "close",
-      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 5:41]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md and docs/FORECAST.md. Background: Horizon view pulled back to the globe (#view=globe; orbits real size, shape and tilt, orientation not in the data)."
+      "notes": "So, Second Look. Rules decide every tier. The model only removes over-warnings, and every removal is on the record. Claude only writes explanations. And the analyst always decides. It preserves every rule-defined Critical. Thank you, we'd love your questions.\n\n[about 18 s, from 4:44]\nRun it: uv sync, then uv run uvicorn server:app (serves the frozen data/demo reports); GET /api/audit for the live check. Interfaces: docs/CONTRACT.md. Method: docs/ALGO.md. Evaluation: docs/EVAL.md and docs/FORECAST.md. Background: Horizon view pulled back to the globe (#view=globe; orbits real size, shape and tilt, orientation not in the data)."
     }
   ]
 }
@@ -948,7 +940,7 @@
       id="root"
       data-composition-id="deck"
       data-start="0"
-      data-duration="130"
+      data-duration="110"
       data-width="1920"
       data-height="1080"
     >
@@ -1274,76 +1266,13 @@
         </div>
       </div>
 
-      <!-- ============ 9 · WHERE IT FAILS ============ -->
-      <div
-        id="s-fail"
-        class="scene clip"
-        data-composition-id="fail"
-        data-cap="We show our failure case, and how an analyst would still see it."
-        data-start="90"
-        data-duration="10"
-        data-label="9 Where it fails"
-        data-track-index="1"
-      >
-        <div class="grid-bg"></div>
-        <div class="pad">
-          <div class="eyebrow"><span class="num">9</span>Where it fails</div>
-          <h1 class="head">One truly Elevated CDM was shown below threshold</h1>
-        </div>
-        <div class="col-text" id="fail-col">
-          <div class="pt" style="border-left-color: #ffb547"><b>Event 1278, 4.62 days out:</b> demoted. The truth is Elevated.</div>
-          <div class="pt"><b>How you'd know:</b> the updates before and after stayed Elevated.</div>
-          <div class="card" id="fail-26" style="padding: 18px 22px; display: flex; gap: 20px; align-items: center">
-            <span class="mono" style="font-size: 56px; font-weight: 600">26/26</span>
-            <span class="note">junk and edge-case files rejected or flagged</span>
-          </div>
-        </div>
-        <div class="shot cap-r" id="fail-shot">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/compare-1278.webp" alt="Compare view, event 1278" /></div></div>
-          <svg class="ov"></svg>
-          <div class="tags"></div>
-          <div class="stag">OUR DASHBOARD · COMPARE</div>
-        </div>
-      </div>
-
-      <!-- ============ 10 · OUR SAFETY GATE ============ -->
-      <div
-        id="s-gate"
-        class="scene clip"
-        data-composition-id="gate"
-        data-cap="We set our safety gate before testing and stuck to it."
-        data-start="100"
-        data-duration="10"
-        data-label="10 Safety gate"
-        data-track-index="1"
-      >
-        <div class="grid-bg"></div>
-        <div class="pad">
-          <div class="eyebrow"><span class="num">10</span>Our safety gate</div>
-          <h1 class="head">Gate set before testing. We stuck to it.</h1>
-        </div>
-        <div class="abs card" id="gate-a" style="left: 96px; top: 340px; width: 840px; height: 480px; padding: 30px 34px; display: flex; flex-direction: column; gap: 24px">
-          <div class="label">Model v2</div>
-          <div class="pt" style="padding-left: 0; border: 0">Cut false alarms a further <b class="mono">23%</b>.</div>
-          <div class="pt" style="padding-left: 0; border: 0">But showed <b class="mono a">3</b> truly-Elevated CDMs low. Our limit, set before testing: <b class="mono">1</b>.</div>
-          <div><span class="stamp" id="gate-stamp">DIDN'T SHIP</span></div>
-          <div class="note" style="margin-top: auto">Our first model flagged 100% of CDMs; our eval caught it.</div>
-        </div>
-        <div class="abs card" id="gate-b" style="left: 984px; top: 340px; width: 840px; height: 480px; padding: 30px 34px; display: flex; flex-direction: column; gap: 24px">
-          <div class="label">Why that gate is weak</div>
-          <div class="pt">Under-tier counts on test are noisy.</div>
-          <div class="pt">A stricter gate: under-tier an operator can't see, on train CV.</div>
-          <div class="pt" style="border-left-color: #3fe0a0"><b>Next:</b> v2 at 0.995 halves it on CV. Not shipped.</div>
-        </div>
-      </div>
-
       <!-- ============ 11 · IN PROGRESS ============ -->
       <div
         id="s-next"
         class="scene clip"
         data-composition-id="next"
         data-cap="Most forecast errors over-warn. Recall targets are measured out of fold, not guarantees."
-        data-start="110"
+        data-start="90"
         data-duration="10"
         data-label="11 In progress"
         data-track-index="1"
@@ -1383,7 +1312,7 @@
         class="scene clip"
         data-composition-id="close"
         data-cap="Questions welcome."
-        data-start="120"
+        data-start="100"
         data-duration="10"
         data-label="Close"
         data-track-index="1"
@@ -1407,7 +1336,7 @@
 
     <!-- Slide timing: written by tools/build.py (live deck: 10 s scenes). -->
     <script id="stack-timing">
-      window.STACK_TIMING = /*TIMING*/{"total": 130, "scenes": [["s-cover", 0, 10, 0], ["s-problem", 10, 10, 0], ["s-usp", 20, 10, 0], ["s-stack", 30, 10, 0], ["s-pipe", 40, 10, 0], ["s-task", 50, 10, 0], ["s-record", 60, 10, 0], ["s-live", 70, 10, 0], ["s-eval", 80, 10, 0], ["s-fail", 90, 10, 0], ["s-gate", 100, 10, 0], ["s-next", 110, 10, 0], ["s-close", 120, 10, 0]]}/*END*/;
+      window.STACK_TIMING = /*TIMING*/{"total": 110, "scenes": [["s-cover", 0, 10, 0], ["s-problem", 10, 10, 0], ["s-usp", 20, 10, 0], ["s-stack", 30, 10, 0], ["s-pipe", 40, 10, 0], ["s-task", 50, 10, 0], ["s-record", 60, 10, 0], ["s-live", 70, 10, 0], ["s-eval", 80, 10, 0], ["s-next", 90, 10, 0], ["s-close", 100, 10, 0]]}/*END*/;
     </script>
     <script>
       (function () {
