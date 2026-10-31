@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomous Agent</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --text:#e6e8ee; --muted:#8a90a0; --accent:#d97757; --ok:#4fb47a; --err:#e05d5d; --tool:#5aa9e6; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 -apple-system, system-ui, sans-serif; display:flex; flex-direction:column; height:100vh; }
+  header { padding:12px 20px; border-bottom:1px solid #262a33; display:flex; justify-content:space-between; align-items:center; }
+  header b { color:var(--accent); }
+  header small { color:var(--muted); }
+  #log { flex:1; overflow-y:auto; padding:20px; max-width:900px; width:100%; margin:0 auto; }
+  .msg { margin:0 0 16px; white-space:pre-wrap; }
+  .user { background:var(--panel); padding:10px 14px; border-radius:10px; border-left:3px solid var(--accent); }
+  details.thinking { color:var(--muted); font-size:13px; margin:6px 0; }
+  details.thinking summary { cursor:pointer; }
+  .tool { font:12.5px ui-monospace, Menlo, monospace; background:var(--panel); border-radius:8px; padding:8px 10px; margin:6px 0; border-left:3px solid var(--tool); white-space:pre-wrap; word-break:break-all; }
+  .tool.ok { border-color:var(--ok); } .tool.err, .error { border-color:var(--err); color:var(--err); }
+  form { display:flex; gap:8px; padding:14px 20px; border-top:1px solid #262a33; max-width:900px; width:100%; margin:0 auto; }
+  textarea { flex:1; background:var(--panel); color:var(--text); border:1px solid #2c313c; border-radius:10px; padding:10px; font:inherit; resize:none; height:52px; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:10px; padding:0 18px; font-weight:600; cursor:pointer; }
+  button.secondary { background:#2c313c; }
+  button:disabled { opacity:.5; cursor:default; }
+</style>
+</head>
+<body>
+<header><div><b>Autonomous</b> agent</div><small id="model"></small></header>
+<div id="log"></div>
+<form id="f">
+  <textarea id="input" placeholder="Give the agent a task… (Enter to send, Shift+Enter for newline)" autofocus></textarea>
+  <button id="send">Run</button>
+  <button type="button" class="secondary" id="reset">New</button>
+</form>
+<script>
+const log = document.getElementById('log'), input = document.getElementById('input'), send = document.getElementById('send');
+let sessionId = null;
+fetch('/config').then(r => r.json()).then(c => document.getElementById('model').textContent = c.model);
+
+function add(cls, text = '', tag = 'div') {
+  const el = document.createElement(tag); el.className = cls; el.textContent = text;
+  log.appendChild(el); log.scrollTop = log.scrollHeight; return el;
+}
+
+async function run(message) {
+  add('msg user', message);
+  send.disabled = true;
+  let textEl = null, thinkEl = null;
+  const res = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ message, session_id: sessionId }) });
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n'); buf = lines.pop();
+    for (const line of lines) {
+      if (!line) continue;
+      const e = JSON.parse(line);
+      if (e.type === 'session') sessionId = e.session_id;
+      else if (e.type === 'thinking') {
+        if (!thinkEl) { thinkEl = add('thinking', '', 'details'); thinkEl.innerHTML = '<summary>thinking…</summary><div></div>'; }
+        thinkEl.lastChild.textContent += e.text;
+      } else if (e.type === 'text') {
+        if (!textEl) textEl = add('msg');
+        textEl.textContent += e.text; log.scrollTop = log.scrollHeight;
+      } else if (e.type === 'tool_call') {
+        add('tool', `→ ${e.name}(${JSON.stringify(e.input)})`); textEl = thinkEl = null;
+      } else if (e.type === 'tool_result') {
+        add('tool ' + (e.is_error ? 'err' : 'ok'), `← ${e.output.slice(0, 600)}`);
+      } else if (e.type === 'server_tool') {
+        add('tool', `⚙ ${e.name}`); textEl = thinkEl = null;
+      } else if (e.type === 'error') add('msg error', '✗ ' + e.text);
+    }
+  }
+  send.disabled = false; input.focus();
+}
+
+document.getElementById('f').onsubmit = ev => { ev.preventDefault(); const m = input.value.trim(); if (m) { input.value = ''; run(m); } };
+input.onkeydown = ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); document.getElementById('f').requestSubmit(); } };
+document.getElementById('reset').onclick = async () => {
+  await fetch('/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: '', session_id: sessionId }) });
+  sessionId = null; log.innerHTML = '';
+};
+</script>
+</body>
+</html>
