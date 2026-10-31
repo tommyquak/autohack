@@ -33,6 +33,9 @@ REVIEW_TEXT = {
     "close_call": "close call: near the demotion bar, likely over-warning; analyst can clear (needs review)",
     "input": "needs review: an input is missing or unreliable, so the model did not act on it; a human should check it",
 }
+# The operator decides on a manoeuvre; the explanation must not advise one either way.
+ADVICE = re.compile(r"\b(manoeuv\w*|maneuv\w*|burn|recommend\w*|should (move|act|wait))\b", re.IGNORECASE)
+NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 
 SYSTEM_PROMPT = """You write short explanations of satellite conjunction (close-approach) events for
 spacecraft operators. You receive a JSON object of facts that a deterministic risk pipeline
@@ -155,17 +158,33 @@ def template_explanation(f: dict) -> str:
     return " ".join(parts)
 
 
+def check(text: str, f: dict) -> str | None:
+    """Why Claude's text can't be shown (None if it can). Enforced in code, not only asked for in the prompt:
+    no "safe", no manoeuvre advice, and every number must already appear in the facts."""
+    if BANNED.search(text):
+        return 'says "safe"'
+    if m := ADVICE.search(text):
+        return f'gives manoeuvre advice ("{m.group(0)}")'
+    known = {n.replace(",", "") for n in NUMBER.findall(json.dumps(f))}
+    if unknown := sorted({n.replace(",", "") for n in NUMBER.findall(text)} - known):
+        return f"has numbers not in the facts ({', '.join(unknown[:3])})"
+    return None
+
+
 async def explain(event: dict, use_llm: bool = True) -> dict:
     f = facts(event)
+    out = {"text": template_explanation(f), "source": "template", "facts": f}
     if use_llm and _has_credentials():
         text = await _claude(f)
-        if text:
+        if text and not (reason := check(text, f)):
             return {"text": text, "source": "claude", "facts": f}
-    return {"text": template_explanation(f), "source": "template", "facts": f}
+        if text:
+            out["claude_rejected"] = reason  # shown text is the template; this says why Claude's was thrown out
+    return out
 
 
 async def _claude(f: dict) -> str | None:
-    """Claude's wording of the facts, or None so the caller falls back to the template."""
+    """Claude's wording of the facts (unchecked; `check` decides), or None if the call failed."""
     from agent import MODEL, client  # imported lazily so the template path needs no client
 
     try:
@@ -182,10 +201,7 @@ async def _claude(f: dict) -> str | None:
         return None
     if response.stop_reason != "end_turn":
         return None
-    text = "".join(b.text for b in response.content if b.type == "text").strip()
-    if not text or BANNED.search(text):
-        return None
-    return text
+    return "".join(b.text for b in response.content if b.type == "text").strip() or None
 
 
 def _has_credentials() -> bool:

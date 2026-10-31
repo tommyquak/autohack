@@ -114,3 +114,29 @@ def test_review_text_says_close_call_only_for_kept_candidates():
     sentinel = _event("Elevated", miss=20_000.0, pc=-5.5, sigma=(6.4e7, 5.1), needs_review=True)
     assert explain.review_kind(sentinel, ["needs_review", "no_covariance"]) == "input"
     assert explain.review_kind(_event(), []) is None
+
+
+@pytest.mark.parametrize(
+    ("text", "reason"),
+    [
+        ("Event 7 is Critical: miss distance 600 m in 2.0 days.", None),
+        ("Event 7 is safe.", "safe"),
+        ("Event 7 is Critical; a manoeuvre is advised.", "manoeuvre"),
+        ("We recommend waiting for the next update.", "recommend"),
+        ("Event 7 passes 450 m away.", "450"),
+        ("The 1,234 m figure is new.", "1234"),
+    ],
+)
+def test_check_enforces_wording_in_code(text, reason):
+    got = explain.check(text, explain.facts(_event()))
+    assert got is None if reason is None else reason in got
+
+
+async def test_rejected_claude_text_falls_back_with_reason(monkeypatch):
+    async def invents(_facts):
+        return "Event 7 passes 42 m away."
+
+    monkeypatch.setattr(explain, "_has_credentials", lambda: True)
+    monkeypatch.setattr(explain, "_claude", invents)
+    out = await explain.explain(_event())
+    assert out["source"] == "template" and "42" in out["claude_rejected"]
