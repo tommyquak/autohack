@@ -26,6 +26,7 @@ from triage import explain
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
 REPORTS = ROOT / "reports"
+DEMO = ROOT / "data" / "demo"  # frozen copy of the full-test-set reports, used when reports/ has none
 BUILD_HINT = {
     "events.json": "uv run python -m triage.build_events",
     "metrics.json": "uv run python -m triage.evaluate",
@@ -40,11 +41,10 @@ SESSIONS: dict[str, list] = {}  # in-memory conversation history per browser tab
 
 
 def _stamp(name: str) -> tuple[Path, float]:
-    path = REPORTS / name
-    try:
-        return path, path.stat().st_mtime
-    except FileNotFoundError:
-        raise HTTPException(503, f"reports/{name} not found - run `{BUILD_HINT[name]}`") from None
+    for path in (REPORTS / name, DEMO / name):
+        if path.exists():
+            return path, path.stat().st_mtime
+    raise HTTPException(503, f"reports/{name} not found - run `{BUILD_HINT[name]}`")
 
 
 # Keyed on (path, mtime): re-read only when the file changes, so a rebuild shows up without a restart.

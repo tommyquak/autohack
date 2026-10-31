@@ -87,6 +87,7 @@ def test_api_explain_route(tmp_path, monkeypatch, events):
 
     (tmp_path / "events.json").write_text(json.dumps({"summary": {}, "events": events}))
     monkeypatch.setattr(server, "REPORTS", tmp_path)
+    monkeypatch.setattr(server, "DEMO", tmp_path / "no-demo")
     client = TestClient(server.app)
 
     r = client.get(f"/api/explain/{events[0]['event_id']}?llm=false")

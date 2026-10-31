@@ -23,7 +23,7 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
                      "within_dangerous_distance": 3, "critical_in_window": 5}
   },
   "events": [{
-    "event_id": 123, "tier": 2, "tier_name": "Critical", "confidence": 0.8, "needs_review": false,
+    "event_id": 123, "tier": 2, "tier_name": "Critical", "baseline_tier": 2, "confidence": 0.8, "needs_review": false,
     "reasons": ["Pc 10^-3.20 >= 1e-4 (critical threshold)"], "cautions": ["needs_review"],
     "latest": {"time_to_tca_days": 0.6, "miss_distance_m": 640.0, "relative_speed_ms": 12000.0,
                "relative_position_rtn_m": [12.0, -480.0, 420.0],
@@ -31,11 +31,12 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
                "max_risk_estimate_log10": -3.2, "object_type": "DEBRIS"},
     "true_tier": 2,
     "history": [{"time_to_tca_days": 5.5, "miss_distance_m": 900.0,
-                 "max_risk_estimate_log10": -4.1, "risk_log10": -4.4, "pred_tier": 2}]
+                 "max_risk_estimate_log10": -4.1, "risk_log10": -4.4, "pred_tier": 2, "baseline_tier": 2}]
   }]
 }
 ```
 - Events sorted most urgent first (tier desc, then soonest TCA).
+- `baseline_tier` = the conservative rule (worse of the `max_risk_estimate` tier and the miss tier) the model improves on; `summary.by_baseline_tier` counts it. The model only ever demotes, so `tier <= baseline_tier`.
 - `true_tier` / `risk_log10` are `null` when the file has no labels (live use). Show them only in the evaluation view.
 - `cautions` (from `triage.explain.cautions`, latest CDM): `needs_review` (as above) · `no_covariance` (a sigma is the
   dataset's 63,781 km placeholder, so Pc can't be trusted alone) · `pc_diluted` (combined radial sigma > miss/√2 while
@@ -58,7 +59,7 @@ Methods: `majority_class`, `miss_distance_rule`, `max_risk_estimate_rule` (basel
 Confusion matrix rows = truth, columns = prediction, order Safe/Elevated/Critical.
 
 ## 4. HTTP API (owner: Model & API, `server.py`; consumer: dashboard)
-All read `reports/*.json` and pick up a rebuilt file without a server restart. A missing report → `503` with the command that builds it.
+All read `reports/*.json` (falling back to the frozen full-test-set copy in `data/demo/` when `reports/` has none, so teammates without the raw data still get real numbers) and pick up a rebuilt file without a server restart. A missing report → `503` with the command that builds it.
 
 | route | returns |
 |---|---|
