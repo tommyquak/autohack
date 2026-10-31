@@ -888,7 +888,7 @@
     },
     {
       "sceneId": "task",
-      "notes": "On 31 October the organisers sharpened the task: from the updates at least two days out, predict each event's final tier. The bar is keeping today's tier. Our bounded forecast lifts Critical recall from 0.865 to 0.950 on five-fold CV and catches 115 of 270 escalations, against none. The cost is honest: more false escalations, lower accuracy.\n\n[about 27 s, from 2:18]\ndocs/FORECAST.md, data/demo/forecast_metrics.json (shipped operating point: 95% final-Critical recall target, t_crit 0.054, t_elev 0.345). 5-fold event CV, 11,942 cohort events, mean over folds: Critical recall 0.950 ± 0.025 vs 0.865 ± 0.042 for miss-only persistence (\"keep today's tier\"); Critical precision 0.565 vs 0.857; Critical F2 0.835 vs 0.863; escalations caught 115/270 vs 0/270; false escalations 1,139 vs 0; accuracy 0.862 vs 0.938 (lower; macro F1 0.767 vs 0.887). On accuracy, macro F1 and F2 we do NOT beat persistence. Organisers' 80/20 split (2,389 validation events): recall 0.970 vs 0.886, 24/50 escalations caught, 218 false escalations, accuracy 0.871 vs 0.943. Bounded: predicted = max(floor, model escalation); a rule-defined Critical at the latest ≥ 2 d update is never lowered. 616 of the 1,139 false escalations come from the floor (keeping Pc-only Elevated at Elevated). The 95% is a recall target measured out of fold, not a guarantee. p_final is a class-weighted score, not a calibrated probability. Then the dashboard's default \"Final tier\" view (#67; \"Now\" restores per-message tiers): the escalated event card shows why the forecast lifts it (e.g. EVT 1634, Elevated floor → Critical, score 0.06 ≥ threshold 0.05); header 802 → 842 to review (rule floor → forecast, 301 escalated). Capture: /static/decision.html with real forecasts on the 2,167 test events (no outcomes, never scored): 477 Critical, 365 Elevated, 1,325 below threshold, 301 escalated."
+      "notes": "On 31 October the organisers sharpened the task: from the updates at least two days out, predict each event's final tier. The bar is keeping today's tier. Our bounded forecast lifts Critical recall from 0.865 to 0.950 on five-fold CV and catches 115 of 270 escalations, against none. The cost is honest: more false escalations, lower accuracy.\n\n[about 27 s, from 2:18]\ndocs/FORECAST.md, data/demo/forecast_metrics.json (shipped operating point: 95% final-Critical recall target, t_crit 0.054, t_elev 0.345). 5-fold event CV, 11,942 cohort events, mean over folds: Critical recall 0.950 ± 0.025 vs 0.865 ± 0.042 for miss-only persistence (\"keep today's tier\"); Critical precision 0.565 vs 0.857; Critical F2 0.835 vs 0.863; escalations caught 115/270 vs 0/270; false escalations 1,139 vs 0; accuracy 0.862 vs 0.938 (lower; macro F1 0.767 vs 0.887). On accuracy, macro F1 and F2 we do NOT beat persistence. Organisers' 80/20 split (2,389 validation events): recall 0.970 vs 0.886, 24/50 escalations caught, 218 false escalations, accuracy 0.871 vs 0.943. Bounded: predicted = max(floor, model escalation); a rule-defined Critical at the latest ≥ 2 d update is never lowered. 616 of the 1,139 false escalations come from the floor (keeping Pc-only Elevated at Elevated). The 95% is a recall target measured out of fold, not a guarantee. p_final is a class-weighted score, not a calibrated probability. Then the dashboard's default \"Final tier\" view (#67; \"Now\" restores per-message tiers): the escalated event card shows why the forecast lifts it (e.g. EVT 1634, Elevated floor → Critical, score 0.06 ≥ threshold 0.05); header 802 → 842 to review (rule floor → forecast, 301 escalated). Last frame: the dashboard's Evaluation tab, which now leads with the official panel (#68): the same 5-fold CV table (Second Look / keep today's tier / Pc-bound persistence, 80/20 on a toggle) and the 3x3 confusion matrix, read live from /api/metrics. Capture: /static/decision.html with real forecasts on the 2,167 test events (no outcomes, never scored): 477 Critical, 365 Elevated, 1,325 below threshold, 301 escalated."
     },
     {
       "sceneId": "record",
@@ -1149,10 +1149,10 @@
           </div>
         </div>
         <div class="shot cap-r" id="task-shot">
-          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/decision.webp" alt="Decision point chart" /><img src="assets/ui/dash-final.webp" alt="Dashboard in Final tier mode: forecast final tier for the 2,167 test events" /></div></div>
+          <div class="view"><div class="cam" data-layout-allow-overflow><img src="assets/ui/decision.webp" alt="Decision point chart" /><img src="assets/ui/dash-final.webp" alt="Dashboard in Final tier mode: forecast final tier for the 2,167 test events" /><img src="assets/ui/eval.webp" alt="Evaluation tab, official task panel: 5-fold CV results and confusion matrix" /></div></div>
           <svg class="ov"></svg>
           <div class="tags"></div>
-          <div class="stag">OUR DECISION POINT · DASHBOARD</div>
+          <div class="stag">OUR DECISION POINT · DASHBOARD · EVALUATION TAB</div>
         </div>
       </div>
 
@@ -1452,6 +1452,9 @@
           dpLine: { x: 1290, y: 175, w: 16, h: 820 },
           dpRight: { x: 1310, y: 195, w: 470, h: 550 },
           dfCardWhy: { x: 1590, y: 658, w: 300, h: 92 },
+          evo: { x: 324, y: 97, w: 980, h: 534 },
+          evoModel: { x: 324, y: 221, w: 980, h: 48 },
+          evoCm: { x: 324, y: 386, w: 479, h: 219 },
           rvRule: { x: 468, y: 362, w: 720, h: 26 },
           rvElig: { x: 468, y: 393, w: 720, h: 26 },
           rvScore: { x: 468, y: 425, w: 720, h: 26 },
@@ -1655,11 +1658,14 @@
         // then the dashboard's default "Final tier" view (#67): an escalated event's card
         var tRingDash = ring(ts, tC, R.dfCardWhy, "#ffb547", 4);
         var tTagDash = tag(ts, tC, R.dfCardWhy, "dashboard default: forecast final tier, 2,167 test events", "l", null, 380);
-        LEN["s-task"] = 8.6;
+        // and the Evaluation tab's official panel (#68): the same 5-fold CV numbers and the confusion matrix
+        var tE = camFit(ts, R.evo, 10);
+        var tRingModel = ring(ts, tE, R.evoModel, "#3fe0a0", 2), tRingCm = ring(ts, tE, R.evoCm, "#3fe0a0", 4);
+        LEN["s-task"] = 11.2;
         B["s-task"] = function (tl, t, k) {
           var m = M(tl, k);
           head(m, "s-task", t);
-          m.hide(ts.imgs[1], t);
+          m.hide(ts.imgs.slice(1), t);
           m.rise($$("#task-col > .pt"), t + 0.4 * k, 0.25);
           m.fade(ts.el, t + 0.6 * k);
           tl.set(ts.cam, { x: tW.x, y: tW.y, scale: tW.scale, immediateRender: true }, t);
@@ -1671,6 +1677,10 @@
           m.out([tRingLine, tTagLine, tRingRight, tTagRight], t + 6.9 * k);
           m.xfade(ts.imgs[1], t + 6.9 * k, 0.9);
           m.draw(tRingDash, t + 7.8 * k); m.rise(tTagDash, t + 8.1 * k);
+          m.out([tRingDash, tTagDash], t + 9.2 * k);
+          m.xfade(ts.imgs[2], t + 9.2 * k, 0.9);
+          m.cam(ts, tE, t + 9.2 * k, 1.2);
+          m.draw([tRingModel, tRingCm], t + 10.4 * k, 0.6, 0.2);
         };
 
         // Decision record: event 1071 (demoted), then event 482 (not eligible), on the review page

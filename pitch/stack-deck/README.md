@@ -40,5 +40,5 @@ forecast vs keep today's tier, 5-fold CV) · 6 Decision record · 7 It proves it
 11 In progress (forecast confusion matrix, the 0.90 vs 0.95 choice) · Close
 
 Forecast numbers come from docs/FORECAST.md and data/demo/forecast_metrics.json at the shipped operating point
-(95% final-Critical recall target). dash-final is the dashboard's default Final tier view (#67); the per-message captures (dash-model,
-dash-baseline, eval, compare-1278) are from deck v2 (the dashboard's Now view).
+(95% final-Critical recall target). dash-final is the dashboard's default Final tier view (#67); eval is the Evaluation tab's official panel
+(#68); the per-message captures (dash-model, dash-baseline, compare-1278) are from deck v2 (the dashboard's Now view).

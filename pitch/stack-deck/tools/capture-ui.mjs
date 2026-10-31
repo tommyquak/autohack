@@ -68,8 +68,8 @@ await p.close();
 p = await open(`${BASE}/`, "#queue .row");
 await p.evaluate(() => document.querySelector('#tabs [data-tab="eval"]').click());
 await wait(3000);
-await shot(p, "eval");
-await rects_(p, { evLead: ".ev-lead", evTable: ".ev-table", evMatrix: ".ev-matrix", evFailure: ".ev-failure" });
+await shot(p, "eval"); // leads with the official task panel (#68): final tier, 5-fold CV, confusion matrix
+await rects_(p, { evo: ".evo", evoTable: ".evo-table", evoModel: ".evo-table tr.is-model", evoCm: ".evo-cm", evLead: ".ev-lead", evTable: ".ev-table", evMatrix: ".ev-matrix", evFailure: ".ev-failure" });
 await p.evaluate(() => {
   const rows = [...document.querySelectorAll(".ev-table tbody tr")];
   window.__rowRects = rows.map((r) => { const b = r.getBoundingClientRect(); return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height), text: r.innerText.slice(0, 120) }; });

@@ -88,61 +88,110 @@
   "y": 0,
   "w": 0,
   "h": 0,
-  "text": "Flagged for review1,021rule aloneCritical kept196Critical recall100%24,484 test CDMs, per message"
+  "text": "Flagged for review1,015rule aloneCritical kept196Critical recall100%24,484 test CDMs, per message"
+ },
+ "evo": {
+  "x": 324,
+  "y": 97,
+  "w": 980,
+  "h": 534,
+  "text": "Official task: final tier from CDMs ≥ 2 days out\n\n80/20 split by event + 5-fold CV over 11,942 usable train events; Critical ≈ 7% of events\n\n5-FOLD CV\n80/20 HEL"
+ },
+ "evoTable": {
+  "x": 324,
+  "y": 201,
+  "w": 980,
+  "h": 165,
+  "text": "METHOD\tCRITICAL RECALL\tCRITICAL PRECISION\tCRITICAL F2\tESCALATIONS CAUGHT / FALSE\tACCURACY\tMACRO F1\nSecond Look forecast\nrule floor + model escalation\n\t95.0%\n± 2"
+ },
+ "evoModel": {
+  "x": 324,
+  "y": 221,
+  "w": 980,
+  "h": 48,
+  "text": "Second Look forecast\nrule floor + model escalation\n\t95.0%\n± 2.5\n\t56.5%\n± 1.3\n\t0.835\n± 0.010\n\t115 / 1,139\ncaught of 270\n\t86.2%\n± 1.1\n\t0.767\n± 0.011"
+ },
+ "evoCm": {
+  "x": 324,
+  "y": 386,
+  "w": 479,
+  "h": 219,
+  "text": "SECOND LOOK FORECAST, OUT-OF-FOLD EVENTS SUMMED OVER THE 5 FOLDS\nTRUE FINAL TIER\nPREDICTED FINAL TIER\n\t○ Below threshold\t▲ Elevated\t■ Critical\n○ Below threshold"
  },
  "evLead": {
   "x": 328,
-  "y": 660,
+  "y": 1263,
   "w": 711,
   "h": 56,
   "text": "The model misses 0 of 2,227 Critical CDMs and flags 44.7% of them for review, against 54.2% for the Pc upper-bound rule, which misses 0."
  },
  "evTable": {
-  "x": 328,
-  "y": 834,
-  "w": 972,
-  "h": 229,
-  "text": "METHOD\tCRITICAL MISSED\tCRITICAL RECALL\tFLAGGED\tFALSE ELEVATED\tUNDER-TIERED\tMACRO F1\nMajority class\nalways below threshold\n\t2,227\t0%\t0%\t0\t8,728\t0.261\nMiss-distan"
+  "x": 324,
+  "y": 201,
+  "w": 980,
+  "h": 165,
+  "text": "METHOD\tCRITICAL RECALL\tCRITICAL PRECISION\tCRITICAL F2\tESCALATIONS CAUGHT / FALSE\tACCURACY\tMACRO F1\nSecond Look forecast\nrule floor + model escalation\n\t95.0%\n± 2"
  },
  "evMatrix": {
   "x": 328,
-  "y": 1385,
+  "y": 1988,
   "w": 469,
   "h": 127,
   "text": "\t○ Below threshold\t▲ Elevated\t■ Critical\n○ Below threshold\t13,542\t2,206\t8\n▲ Elevated\t1\t6,335\t165\n■ Critical\t0\t0\t2,227"
  },
  "evFailure": {
   "x": 328,
-  "y": 1547,
+  "y": 2150,
   "w": 513,
   "h": 62,
   "text": "WHERE IT IS WRONG\n\n1 CDM was rated lower than the truth (amber cell). The metrics file does not name the event, so there is nothing to link to yet."
  },
  "evRows": [
   {
+   "x": 324,
+   "y": 221,
+   "w": 980,
+   "h": 48,
+   "text": "Second Look forecast\nrule floor + model escalation\n\t95.0%\n± 2.5\n\t56.5%\n± 1.3\n\t0.835\n± 0.010\n\t115 / 1,139\ncaught of 270\n\t"
+  },
+  {
+   "x": 324,
+   "y": 269,
+   "w": 980,
+   "h": 48,
+   "text": "Keep today's tier\nmiss-distance tier now · strongest baseline\n\t86.5%\n± 4.2\n\t85.7%\n± 2.9\n\t0.863\n± 0.037\n\t0 / 0\ncaught of "
+  },
+  {
+   "x": 324,
+   "y": 317,
+   "w": 980,
+   "h": 48,
+   "text": "Pc-bound persistence\nPc bound + miss rule tier now\n\t87.3%\n± 4.1\n\t80.8%\n± 3.6\n\t0.859\n± 0.036\n\t40 / 2,135\ncaught of 270\n\t7"
+  },
+  {
    "x": 328,
-   "y": 855,
+   "y": 1458,
    "w": 972,
    "h": 52,
    "text": "Majority class\nalways below threshold\n\t2,227\t0%\t0%\t0\t8,728\t0.261"
   },
   {
    "x": 328,
-   "y": 907,
+   "y": 1510,
    "w": 972,
    "h": 52,
    "text": "Miss-distance rule\nflags by distance only\n\t91\t95.9%\t31.4%\t0\t1,116\t0.952"
   },
   {
    "x": 328,
-   "y": 959,
+   "y": 1562,
    "w": 972,
    "h": 52,
    "text": "Pc upper-bound rule\nthe baseline the model improves on\n\t0\t100%\t54.2%\t4,526\t0\t0.841"
   },
   {
    "x": 328,
-   "y": 1011,
+   "y": 1614,
    "w": 972,
    "h": 52,
    "text": "Model\nrules plus a demotion classifier\n\t0\t100%\t44.7%\t2,206\t1\t0.910"
@@ -665,7 +714,7 @@
   "y": 132,
   "w": 320,
   "h": 909,
-  "text": "EVT 482\n×\nNOW\n■ Critical\nCritical: miss distance 601 m is under 1 km\nFORECAST FINAL TIER\n■ Critical\nP 0.98 for this tier\nLATEST UPDATE\n2.00 d to TCA · 601 m · P"
+  "text": "EVT 482\n×\nNOW\n■ Critical\nCritical: miss distance 601 m is under 1 km\nFORECAST FINAL TIER\n■ Critical\nmodel score 0.98 (not a calibrated probability)\nLATEST UPDAT"
  },
  "dpChip482": {
   "x": 964,
