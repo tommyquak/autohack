@@ -63,13 +63,31 @@ function status(summary, events, aud) {
     const checks = aud.checks || [];
     const ok = checks.filter((c) => c.passed).length;
     const failed = checks.filter((c) => !c.passed).map((c) => c.name).join(", ");
-    inv = `<span class="seg" title="Safety invariants checked over every event${failed ? `; failed: ${esc(failed)}` : ""}">Invariants <b class="${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</b> <span class="muted num">${ok}/${checks.length}</span></span>`;
+    const label = (name) => name.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+    const items = checks.map((c) => `<li class="${c.passed ? "ok" : "fail"}"><b>${c.passed ? "\u2713" : "\u2717"} ${esc(label(c.name))}</b><span>${esc(c.detail || "")}</span></li>`).join("");
+    inv = `<details class="seg guard"><summary title="Safety guardrails re-checked over every event${failed ? `; failed: ${esc(failed)}` : ""}">Guardrails <b class="${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</b> <span class="muted num">${ok}/${checks.length}</span></summary><ul>${items}</ul></details>`;
   }
   $("status").innerHTML = `
     <span class="seg" title="${esc(tip)}">Flagged <b class="num">${n(after)}</b> <span class="muted num">(${delta <= 0 ? "\u2212" : "+"}${n(Math.abs(delta))} vs rule)</span></span>
     <span class="seg" title="${esc(tip)}">In queues <b class="num">${n(plan + review)}</b></span>
     <span class="seg" title="${esc(winNote)}">Next 24 h: <b class="num${within ? " warn" : ""}">${n(within)}</b> within 1 km</span>
+    ${insights(summary)}
     ${inv}`;
+}
+
+// Two facts from /api/summary worth seeing before opening anything.
+function insights(summary) {
+  const out = [];
+  const crit = summary.by_tier?.Critical, d = summary.critical_drivers;
+  if (crit && d && d.miss_only != null) {
+    out.push(`<span class="seg" title="Critical only because the miss distance is under 1 km; the Pc upper bound is below 1e-4">`
+      + `<b class="num">${n(d.miss_only)}</b> of <span class="num">${n(crit)}</span> Critical are distance-only</span>`);
+  }
+  if (summary.escalation_watch != null) {
+    out.push(`<span class="seg" title="Near the next threshold up with time left before TCA: later updates may raise the tier">`
+      + `<b class="num">${n(summary.escalation_watch)}</b> on escalation watch</span>`);
+  }
+  return out.join("");
 }
 
 function row(e) {
@@ -77,7 +95,7 @@ function row(e) {
   const why = reasonOf(e);
   const L = e.latest || {};
   return `<li class="row${done ? " done" : ""}" data-id="${e.event_id}">
-    <input type="checkbox" class="tick" data-id="${e.event_id}" ${done ? "checked" : ""} aria-label="Event ${e.event_id} reviewed" title="Reviewed">
+    <input type="checkbox" class="tick" data-id="${e.event_id}" ${done ? "checked" : ""} aria-label="Event ${e.event_id} reviewed (this browser only)" title="Reviewed (this browser only)">
     <button type="button" class="pick" data-id="${e.event_id}" aria-label="Event ${e.event_id}, ${esc(why.long)}">
       <span class="id num">${e.event_id}</span>
       <span class="chip ${why.cls}">${esc(why.short)}</span>
@@ -105,8 +123,8 @@ function renderList(events) {
     groups[q].push(e);
     queueOf.set(e.event_id, q);
   }
-  listEl.innerHTML = `<div class="cols-h" aria-hidden="true"><span></span><span>Event</span><span>Reason</span><span class="r">Miss</span><span class="r">TCA in</span></div>` +
-    QUEUES.map(section).join("");
+  listEl.innerHTML = `<div class="cols-h" aria-hidden="true"><span title="Reviewed ticks: this browser only">\u2713</span><span>Event</span><span>Reason</span><span class="r">Miss</span><span class="r">TCA in</span></div>` +
+    QUEUES.map(section).join("") + `<p class="muted small tick-note">\u2713 Reviewed ticks are kept in this browser only.</p>`;
 }
 
 function setFold(open) {
