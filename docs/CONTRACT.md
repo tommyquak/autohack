@@ -52,3 +52,16 @@ Input: CDM rows from `triage.data.load_cdms` (allowed features only). Output ind
 ```
 Methods: `majority_class`, `miss_distance_rule`, `max_risk_estimate_rule` (baselines), `model`.
 Confusion matrix rows = truth, columns = prediction, order Safe/Elevated/Critical.
+
+## 4. HTTP API (owner: Model & API, `server.py`; consumer: dashboard)
+All read `reports/*.json` and pick up a rebuilt file without a server restart. A missing report → `503` with the command that builds it.
+
+| route | returns |
+|---|---|
+| `GET /api/summary` | `events.json` → `summary` |
+| `GET /api/events[?tier=0\|1\|2][&needs_review=true\|false]` | `{"total": n, "events": [...]}`: each event as in §2 **without `history`**, plus `n_updates` (number of CDMs). Same urgency order. |
+| `GET /api/events/{event_id}` | one event exactly as in §2, with `history`; `404` if unknown |
+| `GET /api/metrics` | `metrics.json` as in §3 |
+| `GET /api/explain/{event_id}` | see `triage/explain.py` (owner: Integration & trust) |
+
+Pages: `/` serves `static/dashboard.html` (placeholder until it exists); other dashboard files are served under `/static/` (e.g. `/static/dashboard.js`). The agent chat moved to `/chat`.
