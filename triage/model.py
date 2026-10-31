@@ -53,8 +53,9 @@ def predict_with(artifact: dict, df: pd.DataFrame) -> pd.DataFrame:
     demote = cand & (s < t)
     tier = np.where(demote, Tier.SAFE, out["pred_tier"].to_numpy())
     if artifact.get("kind", "classifier") == "ensemble":
-        # s is a mean OOF percentile in [0, 1]: kept but within 5 points of the threshold -> human review
-        near = cand & ~demote & (s < t + ENSEMBLE_REVIEW_BAND)
+        # s is a mean OOF percentile in [0, 1]: kept but within `band` points of the threshold -> human review
+        band = artifact.get("review_band", ENSEMBLE_REVIEW_BAND)
+        near = cand & ~demote & (s < t + band)
         model_conf = 0.5 + 0.49 * np.minimum(1.0, np.abs(s - t) / 0.25)
     else:
         # s is P(Elevated): kept but within 2x of the threshold -> human review

@@ -22,6 +22,16 @@ Nested event-grouped CV on train (scripts/cv_compare.py, 162,634 CDMs, test set 
     v1@0.99   under-tier 39   false Elevated 10,049   flagged 34.9%   critical recall 100%
     v2@0.992  under-tier 33   false Elevated  9,185   flagged 34.4%   critical recall 100%
     (matched recall 0.992: v1 33 / 10,594 vs v2 33 / 9,185 -> -13% false Elevated)
+
+Operator-visible gate (triage/visibility.py; same nested CV). An under-tiered CDM is *invisible* when
+it is not needs_review and no later CDM of its event is shown at >= its true tier:
+    v1@0.99   invisible under-tier 23 CDMs / 10 events   needs_review 6,840
+    v2@0.992  invisible under-tier 20 CDMs /  7 events   needs_review 6,602   <- chosen (CV only)
+    v2@0.995  invisible under-tier  9 CDMs /  2 events   but false Elevated 10,163 (> v1)
+Widening the ensemble review band (0.05 -> 0.30) changes nothing here: under-tiered rows are demoted
+rows, and the band only flags rows that were KEPT just above the threshold.
+Test, once: v1 under-tier 1 / invisible 0, v2@0.992 under-tier 3 / invisible 0 (all seen at
+Elevated on a later CDM 0.23-0.66 days later).
 """
 
 import argparse

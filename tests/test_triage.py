@@ -91,3 +91,27 @@ def test_trained_model_keeps_safety_rails(config):
     assert (pred[base == Tier.CRITICAL] == Tier.CRITICAL).all()
     diluted = dilution_flag(df)
     assert (pred[diluted] == base[diluted]).all()  # unusable covariance is never demoted
+
+
+def test_visibility_counts_only_unseen_under_tier():
+    import pandas as pd
+
+    from triage.visibility import later_max, visibility
+
+    # event 0: CDM 1 under-tiered but CDM 2 shows Elevated -> visible
+    # event 1: CDM 0 under-tiered, never shown again, not reviewed -> invisible
+    # event 2: CDM 0 under-tiered but needs_review -> visible
+    df = pd.DataFrame(
+        {
+            "event_id": [0, 0, 0, 1, 1, 2],
+            "time_to_tca": [5.0, 4.0, 3.0, 5.0, 4.0, 5.0],
+            "true_tier": [0, 1, 1, 1, 0, 1],
+        }
+    )
+    pred = np.array([0, 0, 1, 0, 0, 0])
+    review = np.array([False, False, False, False, False, True])
+    assert later_max(df, pred).tolist() == [1, 1, -1, 0, -1, -1]
+    v = visibility(df, pred, review)
+    assert v["under"].tolist() == [False, True, False, True, False, True]
+    assert v["invisible"].tolist() == [False, False, False, True, False, False]
+    assert v["delay_days"].iloc[1] == pytest.approx(1.0)
