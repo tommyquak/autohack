@@ -25,6 +25,26 @@ def _opt(row, col: str) -> float | None:
     return float(row[col]) if col in row.index and pd.notna(row[col]) else None
 
 
+def _orbit(row) -> dict | None:
+    """Latest orbital elements per object, or None when the file has no element columns."""
+
+    def elems(p: str) -> dict | None:
+        sma, ecc, inc = (_opt(row, f"{p}_j2k_{k}") for k in ("sma", "ecc", "inc"))
+        return None if sma is None else {"sma_km": sma, "ecc": ecc, "inc_deg": inc}
+
+    target, chaser = elems("t"), elems("c")
+    return None if target is None and chaser is None else {"target": target, "chaser": chaser}
+
+
+def _approach(row) -> dict | None:
+    """Approach direction: azimuth / elevation (deg) and relative velocity in R/T/N (m/s)."""
+    vel = [_opt(row, f"relative_velocity_{a}") for a in "rtn"]
+    az, el = _opt(row, "azimuth"), _opt(row, "elevation")
+    if az is None and el is None and all(v is None for v in vel):
+        return None
+    return {"azimuth_deg": az, "elevation_deg": el, "relative_velocity_rtn_ms": vel}
+
+
 def latitude_bands(events: list[dict]) -> list[dict] | None:
     """Events per 30-degree band of conjunction-point latitude (display context, not a model input)."""
     lats = [(e["latest"]["geocentric_latitude_deg"], e["tier"]) for e in events]
@@ -83,6 +103,12 @@ def build(df: pd.DataFrame, artifact: dict | None = None) -> dict:
                     "target_altitude_km": [_opt(last, "t_h_per"), _opt(last, "t_h_apo")]
                     if "t_h_per" in g and "t_h_apo" in g
                     else None,
+                    # Display only: which of our satellites (the CDM's target) this event concerns
+                    "mission_id": int(m) if (m := _opt(last, "mission_id")) is not None else None,
+                    # Display only: orbital elements (sma km, ecc, inc deg) of our satellite and the other object,
+                    # and the approach direction. RAAN, argument of perigee and longitude are not in the data.
+                    "orbit": _orbit(last),
+                    "approach": _approach(last),
                 },
                 "true_tier": int(last["true_tier"]) if "true_tier" in g else None,
                 "certificate": cert,

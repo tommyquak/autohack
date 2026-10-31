@@ -23,9 +23,28 @@ FEATURES = [
     "F10",
     "AP",
 ]
-# Display-only context (NOT allowed as model inputs): where and how high the conjunction happens.
-# Kept for the dashboard; feature_matrix() only ever reads FEATURES, so these never reach the model.
-DISPLAY_ONLY = ["geocentric_latitude", "t_h_per", "t_h_apo"]
+# Display-only context (NOT allowed as model inputs): where and how high the conjunction happens, and which of our
+# satellites (mission_id) it concerns. Kept for the dashboard; feature_matrix() only ever reads FEATURES, so these
+# never reach the model.
+DISPLAY_ONLY = [
+    "geocentric_latitude",
+    "t_h_per",
+    "t_h_apo",
+    "mission_id",
+    # orbital elements of our satellite (t_) and the other object (c_): semi-major axis (km), eccentricity, inclination
+    # (deg); and the approach direction. Display only: they draw the orbits in the Horizon view, never reach the model.
+    "t_j2k_sma",
+    "t_j2k_ecc",
+    "t_j2k_inc",
+    "c_j2k_sma",
+    "c_j2k_ecc",
+    "c_j2k_inc",
+    "azimuth",
+    "elevation",
+    "relative_velocity_r",
+    "relative_velocity_t",
+    "relative_velocity_n",
+]
 EVENT = "event_id"
 LABEL = "risk"  # log10(Pc) - target only, never a feature
 CATEGORICAL = ["c_object_type"]

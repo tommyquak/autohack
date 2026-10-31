@@ -32,7 +32,8 @@ def test_worse_rule_wins():
 
 
 def test_loader_keeps_only_allowed_columns(cdms):
-    assert "mission_id" not in cdms.columns
+    # mission_id is kept as display-only context (which satellite), never as a model input
+    assert "mission_id" not in feature_matrix(cdms).columns
     assert set(feature_matrix(cdms).columns) == set(FEATURES)
     assert LABEL not in feature_matrix(cdms).columns  # the label must never leak into features
 
@@ -97,7 +98,11 @@ def test_display_only_columns_never_reach_the_model(cdm_csv, tmp_path):
     from triage.features import build_features
 
     raw = pd.read_csv(cdm_csv)
-    raw["geocentric_latitude"], raw["t_h_per"], raw["t_h_apo"] = 71.5, 690.0, 710.0
+    raw["geocentric_latitude"], raw["t_h_per"], raw["t_h_apo"], raw["mission_id"] = 71.5, 690.0, 710.0, 7
+    raw["t_j2k_sma"], raw["t_j2k_ecc"], raw["t_j2k_inc"] = 7071.0, 0.001, 98.0
+    raw["c_j2k_sma"], raw["c_j2k_ecc"], raw["c_j2k_inc"] = 7080.0, 0.002, 86.0
+    raw["azimuth"], raw["elevation"] = 12.0, -1.5
+    raw["relative_velocity_r"], raw["relative_velocity_t"], raw["relative_velocity_n"] = 5.0, -14000.0, 900.0
     path = tmp_path / "with_display.csv"
     raw.to_csv(path, index=False)
     df = load_cdms(path)
@@ -106,6 +111,14 @@ def test_display_only_columns_never_reach_the_model(cdm_csv, tmp_path):
     assert not set(DISPLAY_ONLY) & set(build_features(df).columns)
     out = build(df)
     assert out["events"][0]["latest"]["geocentric_latitude_deg"] == 71.5
+    assert out["events"][0]["latest"]["mission_id"] == 7
+    assert out["events"][0]["latest"]["orbit"]["target"] == {"sma_km": 7071.0, "ecc": 0.001, "inc_deg": 98.0}
+    assert out["events"][0]["latest"]["orbit"]["chaser"]["inc_deg"] == 86.0
+    assert out["events"][0]["latest"]["approach"]["relative_velocity_rtn_ms"] == [5.0, -14000.0, 900.0]
+    # orbital elements and approach geometry are display only: never model features
+    from triage.data import FEATURES
+
+    assert not {"t_j2k_sma", "c_j2k_inc", "azimuth", "relative_velocity_t"} & set(FEATURES)
     assert out["events"][0]["latest"]["target_altitude_km"] == [690.0, 710.0]
     assert sum(b["events"] for b in out["summary"]["by_latitude_band"]) == out["summary"]["n_events"]
     assert build(load_cdms(cdm_csv))["summary"]["by_latitude_band"] is None  # columns absent -> None
