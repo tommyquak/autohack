@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second Look · Horizon</title>
+<meta name="description" content="Illustrative 3D horizon and globe view of the soonest Critical and Elevated conjunctions, with each flag linked to its decision record.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/horizon.css">
+</head>
+<body>
+<!--
+THESIS: the queue's soonest flagged conjunctions as a calm, moving scene; one flag speaks at a time. Refuses the
+  dashboard default (tables, many dots, everything at once).
+OWN-WORLD: Night Instrument. #080a0b ground, one dark 3D Earth with a thin physical atmosphere and latitude hairlines
+  only, grey low-poly objects, our satellite blue, rings red/amber, mono labels, no panels.
+STORY: our satellite flies; objects arrive on their own inclined orbits; the one entering its warning window is ringed
+  and named, with a link to its decision record. The honesty line says what is simulated.
+FIRST VIEWPORT: full-bleed horizon. Limb across the lower third, satellite left of centre, objects arriving from the
+  right. Brand top-left, Globe/Horizon top-right, transport bottom-centre, honesty line above it, legend bottom-left.
+FORM: extension of the established Night Instrument world (brief-pinned); no concept roll, seed n/a.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+<canvas id="scene" aria-label="Illustrative 3D view of our satellite and the objects in its soonest flagged conjunctions"></canvas>
+
+<header class="hz-top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span>SECOND LOOK <span class="sep">·</span> HORIZON</div>
+  <div class="views" role="group" aria-label="Camera view">
+    <button type="button" data-view="0" aria-pressed="true">Horizon</button>
+    <button type="button" data-view="1" aria-pressed="false">Globe</button>
+  </div>
+</header>
+
+<div id="callout" class="callout" hidden role="status" aria-live="polite"></div>
+<svg id="leader" class="leader" aria-hidden="true"><line x1="0" y1="0" x2="0" y2="0"/></svg>
+
+<footer class="hz-bottom">
+  <p class="honesty"><strong>Simulated orbits for illustration, not from the data.</strong>
+    Real: each event's crossing latitude, relative speed, time to closest approach and miss distance.</p>
+  <div class="bar">
+    <ul class="legend" aria-label="Legend">
+      <li><span class="ring crit" aria-hidden="true"></span>Critical</li>
+      <li><span class="ring elev" aria-hidden="true"></span>Elevated</li>
+      <li><span class="dot own" aria-hidden="true"></span>Our satellite</li>
+      <li class="muted">Below threshold not shown (not "safe")</li>
+    </ul>
+    <div class="transport">
+      <button type="button" id="play" class="play" aria-label="Pause replay" aria-pressed="true">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path class="i-pause" d="M3 2h2v8H3zM7 2h2v8H7z"/><path class="i-play" d="M3 1.5v9l7.5-4.5z"/></svg>
+      </button>
+      <div class="track">
+        <input id="time" type="range" min="0" max="60" step="0.01" value="0" aria-label="Replay time">
+        <div id="ticks" class="ticks" aria-hidden="true"></div>
+      </div>
+      <span id="readout" class="readout num">+0 min</span>
+    </div>
+    <p id="scale" class="scale"></p>
+  </div>
+</footer>
+
+<script src="/static/vendor/three-0.160.0.min.js"></script>
+<script type="module" src="/static/js/horizon.js"></script>
+</body>
+</html>
