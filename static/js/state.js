@@ -6,6 +6,7 @@ export const state = {
   events: [], // /api/events, urgency order, no history
   metrics: null,
   filters: { tiers: new Set([0, 1, 2]), review: false, type: "", slot: null, lat: null },
+  sort: "urgency", // queue order: urgency (the API order: tier, then soonest) | soonest | action
   selectedId: null,
   mode: "model", // funnel shows tiers from "baseline" (the rule) or "model"
   elapsed: 0, // replay clock, days since the snapshot
@@ -45,4 +46,11 @@ export function passesFilters(e) {
 
 // Events that haven't reached TCA yet in the replay.
 export const upcoming = () => state.events.filter((e) => remaining(e) > 0);
-export const visible = () => state.events.filter((e) => remaining(e) > 0 && passesFilters(e));
+const ACTION_RANK = { "MANEUVER PLANNING": 0, "ANALYST REVIEW": 1, MONITOR: 2 };
+export function visible() {
+  const rows = state.events.filter((e) => remaining(e) > 0 && passesFilters(e));
+  // The API order is already urgency (tier, then soonest TCA); the sorts are stable, so ties keep that order.
+  if (state.sort === "soonest") rows.sort((a, b) => remaining(a) - remaining(b));
+  else if (state.sort === "action") rows.sort((a, b) => (ACTION_RANK[a.action?.queue] ?? 3) - (ACTION_RANK[b.action?.queue] ?? 3) || remaining(a) - remaining(b));
+  return rows;
+}
