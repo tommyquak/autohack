@@ -65,9 +65,7 @@ def facts(event: dict) -> dict:
 
     cautions_text = []
     if "needs_review" in codes:
-        cautions_text.append(
-            "needs review: the pipeline is not confident here, so it keeps the higher tier for a human"
-        )
+        cautions_text.append("needs review: the pipeline is not confident in this tier, so a human should check it")
     if no_covariance:
         cautions_text.append(
             "no usable position uncertainty: the data reports its ceiling value for at least one object, "
@@ -75,7 +73,7 @@ def facts(event: dict) -> dict:
         )
     elif diluted:
         cautions_text.append(
-            f"probability dilution: combined radial position uncertainty ({_dist(sigma)}) exceeds the "
+            f"probability dilution: combined radial position uncertainty ({_dist(sigma)}) is large compared with the "
             f"miss distance ({_dist(miss)}), so a low Pc may reflect poor tracking rather than real separation"
         )
 
